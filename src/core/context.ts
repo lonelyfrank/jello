@@ -29,6 +29,12 @@ export interface GlassContextOptions {
   resolution?: number;
   /** `auto`: on for WebKit (not Chromium) user agents. */
   refreshIdOnUpdate?: boolean | 'auto';
+  /** End of the fallback chain when refraction is requested but not usable. */
+  fallback?: 'satin' | 'opaque';
+  /** Maps kept in the renderer cache (LRU). */
+  mapCacheSize?: number;
+  /** Verification records count only for this runtime version (see findVerification). */
+  runtimeVersion?: string;
 }
 
 export interface ContextStatus {
@@ -39,6 +45,7 @@ export interface ContextStatus {
   effective: RenderPath;
   reasons: string[];
   motionReduced: boolean;
+  suspended: boolean;
 }
 
 const QUERIES = {
@@ -58,10 +65,13 @@ export class GlassContext implements SurfaceHost {
   private readonly measureQueue = new Set<GlassSurface>();
   private readonly verification: readonly VerificationRecord[];
   private readonly requireVerified: boolean;
+  private readonly runtimeVersion: string | undefined;
   private readonly caps: Capabilities;
   private readonly engine: EngineInfo;
   private readonly media: Record<keyof typeof QUERIES, MediaQueryList>;
   private configured: PathRequest;
+  private fallback: 'satin' | 'opaque';
+  private suspended = false;
   private manualTransparency = false;
   private manualMotion = false;
   private measureRaf = 0;
@@ -72,15 +82,21 @@ export class GlassContext implements SurfaceHost {
     this.source = options.source;
     this.win = (options.source.ownerDocument.defaultView ?? window) as Window & typeof globalThis;
     this.configured = options.path ?? 'auto';
+    this.fallback = options.fallback ?? 'satin';
     this.requireVerified = options.requireVerified ?? false;
     this.verification = options.verification ?? [];
+    this.runtimeVersion = options.runtimeVersion;
     this.caps = detectCapabilities(this.win);
     this.engine = parseEngine(this.win.navigator.userAgent);
     const refresh =
       options.refreshIdOnUpdate === undefined || options.refreshIdOnUpdate === 'auto'
         ? this.engine.engine === 'webkit'
         : options.refreshIdOnUpdate;
-    this.renderer = new SourceFilter(this.source, { resolution: options.resolution ?? 1, refreshIdOnUpdate: refresh });
+    this.renderer = new SourceFilter(this.source, {
+      resolution: options.resolution ?? 1,
+      refreshIdOnUpdate: refresh,
+      ...(options.mapCacheSize ? { mapCacheSize: options.mapCacheSize } : {}),
+    });
     this.source.classList.add('jello-source');
 
     this.media = Object.fromEntries(
@@ -124,6 +140,44 @@ export class GlassContext implements SurfaceHost {
   setPath(request: PathRequest): void {
     this.configured = request;
     this.refresh();
+  }
+
+  setFallback(fallback: 'satin' | 'opaque'): void {
+    if (fallback === this.fallback) return;
+    this.fallback = fallback;
+    this.refresh();
+  }
+
+  /** Map pixels per CSS px. Every lens regenerates its map once at the new resolution. */
+  setResolution(resolution: number): void {
+    if (resolution === this.renderer.mapResolution) return;
+    this.renderer.setResolution(resolution);
+    for (const s of this.surfaces) s.invalidate();
+  }
+
+  /**
+   * Off-screen or hidden: gestures are cancelled and layout reads are
+   * deferred until resume(). There is no JS loop to stop at rest; what the
+   * browser still composites is outside this object's control.
+   */
+  suspend(): void {
+    if (this.suspended || this.destroyed) return;
+    this.suspended = true;
+    this.cancelInteractions();
+    if (this.measureRaf) cancelAnimationFrame(this.measureRaf);
+    this.measureRaf = 0;
+    this.refresh();
+  }
+
+  resume(): void {
+    if (!this.suspended || this.destroyed) return;
+    this.suspended = false;
+    this.refresh();
+    this.measureAll();
+  }
+
+  get isSuspended(): boolean {
+    return this.suspended;
   }
 
   setManualReduceTransparency(on: boolean): void {
@@ -194,7 +248,7 @@ export class GlassContext implements SurfaceHost {
   }
 
   private scheduleMeasure() {
-    if (this.measureRaf || this.destroyed) return;
+    if (this.measureRaf || this.destroyed || this.suspended) return;
     this.measureRaf = requestAnimationFrame(() => {
       this.measureRaf = 0;
       this.flushMeasure();
@@ -223,7 +277,7 @@ export class GlassContext implements SurfaceHost {
   }
 
   private computeStatus(): ContextStatus {
-    const verified = findVerification(this.engine, this.verification);
+    const verified = findVerification(this.engine, this.verification, this.runtimeVersion);
     const prefs = {
       reducedTransparency: this.media.reducedTransparency.matches,
       contrastMore: this.media.contrastMore.matches,
@@ -233,6 +287,7 @@ export class GlassContext implements SurfaceHost {
     const { effective, reasons } = resolvePath(this.configured, this.caps, prefs, {
       requireVerified: this.requireVerified,
       verified: verified !== null,
+      fallback: this.fallback,
     });
     return {
       configured: this.configured,
@@ -242,6 +297,7 @@ export class GlassContext implements SurfaceHost {
       effective,
       reasons,
       motionReduced: this.manualMotion || this.media.reducedMotion.matches,
+      suspended: this.suspended,
     };
   }
 

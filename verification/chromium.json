@@ -4,6 +4,8 @@
   "environment": "linux x64, Playwright 1.64.1, headless, progetto \"chromium\", viewport desktop",
   "mobileEmulated": false,
   "date": "2026-10-29",
+  "runtime": "0.2.0",
+  "backend": "svg",
   "checks": [
     "refraction visible on grid (blur 0, tint 0)",
     "refraction on/off differ; refraction 0 equals the source",
@@ -12,16 +14,23 @@
     "aligned after move, inner scroll and viewport resize",
     "aligned after page scroll",
     "foreground outside the filter, not displaced",
-    "translation updates attributes only, no map regeneration"
+    "translation updates attributes only, no map regeneration",
+    "navbar: lens aligned with the bar, unchanged while the content scrolls",
+    "navbar: foreground outside the filter, not displaced",
+    "blur renormalized at the source edge (no sharp content showing through)"
   ],
   "metrics": {
-    "rimMeanDifference": 24.42645164486731,
-    "passThroughMeanDifference": 0.00004275438861224284,
+    "rimMeanDifference": 27.319291728578843,
+    "passThroughMeanDifference": 0.00008411053653783552,
     "centreMeanDifference": 0,
-    "topMeanDifference": 29.436983471074573,
-    "bottomMeanDifference": 9.385704874835314,
-    "leftMeanDifference": 38.07558578987137,
-    "rightMeanDifference": 25.340513983371096,
-    "foregroundRimDifference": 0.00009908838684106222
+    "topMeanDifference": 26.856307641633883,
+    "bottomMeanDifference": 9.931990358126725,
+    "leftMeanDifference": 43.149725534734024,
+    "rightMeanDifference": 47.622562937724844,
+    "foregroundRimDifference": 0,
+    "navbarForegroundRimDifference": 0.010005312555339116,
+    "edgeBlurContrastNormalized": 6.24542656743791,
+    "edgeBlurContrastUnnormalized": 22.802932206336767,
+    "innerBlurContrast": 5.931384927695533
   }
 }

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Jello Preview</string>
+    <string name="title_activity_main">Jello Preview</string>
+    <string name="package_name">dev.jello.preview</string>
+    <string name="custom_url_scheme">dev.jello.preview</string>
+</resources>

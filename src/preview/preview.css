@@ -1,0 +1,78 @@
+/* Phone preview: the stage fills the screen, safe areas respected, no editor chrome. */
+html,
+body.preview-page {
+  height: 100%;
+}
+body.preview-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+.pv {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: max(8px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) 4px max(8px, env(safe-area-inset-left, 0px));
+}
+.pv .stages {
+  flex: 1 1 auto;
+}
+.pv-status {
+  margin: 0;
+  padding: 6px 12px max(6px, env(safe-area-inset-bottom, 0px));
+  color: var(--muted);
+  font-size: 12px;
+}
+.pv-status[data-kind='error'],
+.pv-status[data-kind='reconnecting'] {
+  color: var(--warn);
+}
+body.fixture-page {
+  display: block;
+  margin: 24px;
+  min-height: 0;
+  background: #fff;
+  color: #111;
+}
+body.fixture-page .pv {
+  display: block;
+  padding: 0;
+}
+body.fixture-page .pv-status {
+  padding: 12px 0 0;
+  color: #444;
+  font-size: 13px;
+}
+.pv-connect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px max(10px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 13px;
+}
+.pv-connect label {
+  flex: 1 0 100%;
+  color: var(--muted);
+}
+.pv-connect input {
+  flex: 1 1 200px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+}
+.pv-connect button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}

@@ -1,6 +1,16 @@
 node_modules/
 dist/
+dist-lib/
 test-results/
 playwright-report/
 *.log
 .vite/
+examples/navbar-bt/jello/
+apps/android-preview/node_modules/
+apps/android-preview/www/
+apps/android-preview/android/app/build/
+apps/android-preview/android/.gradle/
+apps/android-preview/android/build/
+examples/react-consumer/vendor/
+examples/react-consumer/node_modules/
+examples/react-consumer/dist/

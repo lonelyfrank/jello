@@ -1,0 +1,114 @@
+/**
+ * Architectural boundaries. The exportable runtime must never reach the
+ * editor, lab storage, the sync relay, the preview pages or React.
+ */
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+const repo = resolve(__dirname, '../..');
+const IMPORT = /^(?:import|export)\s[^;'"]*?from\s*['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)|^import\s+['"]([^'"]+)['"]/gm;
+
+/** Code only: comments and template strings (example sources written as text) are not imports. */
+const strip = (src: string) =>
+  src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+    .replace(/`(?:\\[\s\S]|[^`\\])*`/g, '``');
+
+function resolveImport(from: string, spec: string): string | null {
+  if (!spec.startsWith('.')) return spec;
+  const base = resolve(dirname(from), spec);
+  for (const c of [base, `${base}.ts`, `${base}.tsx`, join(base, 'index.ts')]) if (existsSync(c) && statSync(c).isFile()) return c;
+  return null;
+}
+
+/** Every module reachable from `entry` (relative paths) and every bare package imported. */
+function graph(entry: string) {
+  const seen = new Set<string>();
+  const packages = new Set<string>();
+  const stack = [resolve(repo, entry)];
+  while (stack.length) {
+    const f = stack.pop()!;
+    if (seen.has(f)) continue;
+    seen.add(f);
+    if (!/\.tsx?$/.test(f)) continue;
+    const src = strip(readFileSync(f, 'utf8'));
+    for (const m of src.matchAll(IMPORT)) {
+      const spec = m[1] ?? m[2] ?? m[3]!;
+      const r = resolveImport(f, spec);
+      if (r === null) throw new Error(`import non risolto ${spec} in ${f}`);
+      if (r === spec) packages.add(spec.split('/').slice(0, spec.startsWith('@') ? 2 : 1).join('/'));
+      else stack.push(r);
+    }
+  }
+  return { files: [...seen].map((f) => relative(repo, f)), packages: [...packages] };
+}
+
+describe('runtime boundary', () => {
+  const g = graph('src/runtime/index.ts');
+
+  it('reaches only core, model, component model and runtime modules', () => {
+    for (const f of g.files) expect(f, f).toMatch(/^src\/(core|model|components|runtime)\//);
+  });
+
+  it('imports no framework and no lab-only package', () => {
+    expect(g.packages.sort()).toEqual(['zod']);
+  });
+
+  it('the WebGL2 backend is reached only through a dynamic import', () => {
+    const index = readFileSync(join(repo, 'src/runtime/scene.ts'), 'utf8');
+    expect(index).toMatch(/import\('\.\/webgl2\/scene-view'\)/);
+    expect(index).not.toMatch(/^import .*webgl2/m);
+  });
+});
+
+describe('other boundaries', () => {
+  it('the phone preview does not load the editor or React', () => {
+    const g = graph('src/preview/main.ts');
+    expect(g.files.filter((f) => f.startsWith('src/lab/'))).toEqual([]);
+    expect(g.packages).not.toContain('react');
+    expect(g.packages).not.toContain('react-dom');
+  });
+
+  it('the exporter is pure: no DOM stage, no runtime renderer, no lab, no React', () => {
+    for (const entry of ['src/export/package.ts', 'src/export/adapters.ts']) {
+      const g = graph(entry);
+      for (const f of g.files) expect(f, f).toMatch(/^src\/(core|model|components|export)\//);
+      expect(g.packages.sort()).toEqual(['zod']);
+    }
+  });
+
+  it('the component model is pure data: no DOM renderer, no stage, no lab', () => {
+    const g = graph('src/components/index.ts');
+    for (const f of g.files) expect(f, f).toMatch(/^src\/(core|model|components)\//);
+    expect(g.packages.sort()).toEqual(['zod']);
+  });
+
+  it('components reach a material only through the material interface', () => {
+    const src = readFileSync(join(repo, 'src/runtime/bottom-navigation.ts'), 'utf8');
+    expect(src).toMatch(/from '\.\/materials'/);
+    expect(src).not.toMatch(/glass-group'|core\/renderer|core\/context/);
+  });
+
+  it('the shared stage does not import the editor', () => {
+    const g = graph('src/stage/controller.ts');
+    expect(g.files.filter((f) => f.startsWith('src/lab/'))).toEqual([]);
+    expect(g.packages).not.toContain('react');
+  });
+});
+
+describe('built library (when present)', () => {
+  const lib = join(repo, 'dist-lib');
+  it.skipIf(!existsSync(join(lib, 'manifest.json')))('contains no React, editor, relay or repository paths', () => {
+    const files = readdirSync(join(lib, 'chunks')).map((f) => join(lib, 'chunks', f)).concat(join(lib, 'jello.js'));
+    for (const f of files.filter((x) => x.endsWith('.js'))) {
+      const code = readFileSync(f, 'utf8');
+      expect(code, f).not.toMatch(/from\s*["']react/);
+      expect(code, f).not.toMatch(/src\/lab|tools\/relay|jello-lab/);
+    }
+    const manifest = JSON.parse(readFileSync(join(lib, 'manifest.json'), 'utf8')) as { files: string[] };
+    expect(manifest.files.some((f) => f.endsWith('.map'))).toBe(false);
+    expect(manifest.files).toContain('types/runtime/index.d.ts');
+  });
+});

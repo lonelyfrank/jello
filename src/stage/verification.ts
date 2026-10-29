@@ -1,4 +1,4 @@
-import type { VerificationRecord } from '../core';
+import type { VerificationRecord } from '../core/renderer/capabilities';
 
 /**
  * Raster verification records written by the Playwright suite

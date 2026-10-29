@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Navbar glass · esempio consumatore Jello</title>
+    <link rel="stylesheet" href="./jello/runtime/jello.css" />
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- GlassSource: opaque, scrolls; the navbar is outside it. -->
+      <main class="content" id="content" tabindex="0" aria-labelledby="sectionTitle">
+        <header class="top">
+          <p class="badge">Dati di esempio · non reali</p>
+          <h1 id="sectionTitle">Home</h1>
+          <p class="sub">Esempio consumatore del runtime Jello: navbar ispirata a una app di punteggi. Nessun dato proviene da un servizio.</p>
+        </header>
+        <section class="list" id="list" aria-label="Partite"></section>
+        <p class="end">Fine dell’elenco · l’ultima riga resta leggibile sopra la navbar.</p>
+      </main>
+      <nav class="tabbar" id="tabbar" aria-label="Sezioni">
+        <span class="tab-indicator" aria-hidden="true"></span>
+        <button type="button" class="tab" data-tab="home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.6 12 4l8 6.6"/><path d="M6.5 9.2V20h11V9.2"/></svg><span>Home</span></button>
+        <button type="button" class="tab" data-tab="live"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.1"/><path d="M8.3 8.3a5.2 5.2 0 0 0 0 7.4M15.7 8.3a5.2 5.2 0 0 1 0 7.4"/></svg><span>Live</span></button>
+        <button type="button" class="tab" data-tab="matrix"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.6"/><path d="M9.4 4v16M14.6 4v16M4 9.4h16M4 14.6h16"/></svg><span>Matrice</span></button>
+        <button type="button" class="tab" data-tab="results"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4.5h8v4.8a4 4 0 0 1-8 0V4.5Z"/><path d="M12 13.3v3.4M9 20h6"/></svg><span>Risultati</span></button>
+      </nav>
+      <p class="status" id="status" role="status">Caricamento…</p>
+    </div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

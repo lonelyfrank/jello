@@ -1,0 +1,807 @@
+.stages {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 16px;
+  min-height: 0;
+}
+.stages[data-compare='on'] {
+  grid-template-columns: 1fr 1fr;
+}
+.stages[data-device='phone'] {
+  grid-template-columns: min(390px, 100%);
+  justify-content: center;
+}
+.stages[data-device='tablet'] {
+  grid-template-columns: min(768px, 100%);
+  justify-content: center;
+}
+.stages[data-device='tablet'][data-compare='on'] {
+  grid-template-columns: repeat(2, min(768px, calc(50% - 8px)));
+}
+.stages[data-device='phone'][data-compare='on'] {
+  grid-template-columns: repeat(2, min(390px, calc(50% - 8px)));
+}
+.stages[data-device='custom'] {
+  grid-template-columns: min(var(--frame-w, 390px), 100%);
+  grid-template-rows: min(var(--frame-h, 720px), 100%);
+  justify-content: center;
+  align-content: start;
+}
+.stages[data-device='custom'][data-compare='on'] {
+  grid-template-columns: repeat(2, min(var(--frame-w, 390px), calc(50% - 8px)));
+}
+.stages[data-mode='scene'][data-compare='on'] {
+  grid-template-columns: 1fr;
+}
+.stages[data-mode='scene'][data-device='phone'] {
+  grid-template-columns: min(390px, 100%);
+}
+.stage {
+  position: relative;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--scene-bg);
+}
+.stage[hidden] {
+  display: none;
+}
+.stage-label {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  right: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* GlassSource: opaque, clipped, and the only thing the filter sees. */
+.source {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--scene-bg);
+}
+.scroller {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  /* Scenes size themselves on the visible area (cqh), on any screen. */
+  container-type: size;
+}
+.scroller:focus-visible {
+  outline-offset: -4px;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.overlay > * {
+  pointer-events: auto;
+}
+
+
+
+/* ---------- foreground on glass ---------- */
+.icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.capsule,
+.glass-button,
+.glass-segmented,
+.slider-label {
+  color: var(--fg-on-glass);
+  text-shadow: var(--fg-shadow);
+}
+.capsule {
+  cursor: grab;
+  border-radius: var(--jello-host-radius, 999px);
+}
+.capsule[data-dragging] {
+  cursor: grabbing;
+}
+.capsule-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  font-weight: 600;
+  font-size: 17px;
+  pointer-events: none;
+}
+.map-overlay {
+  position: absolute !important;
+  z-index: 3 !important;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  border-radius: var(--jello-host-radius, 999px);
+  opacity: 0.92;
+  pointer-events: none;
+}
+.show-map .map-overlay {
+  display: block;
+}
+
+.dock {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+.dock > * {
+  pointer-events: auto;
+}
+.dock[hidden] {
+  display: none;
+}
+
+.glass-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.glass-button:focus-visible {
+  outline-offset: 3px;
+}
+
+.glass-segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 288px;
+  height: 48px;
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: 999px;
+  -webkit-tap-highlight-color: transparent;
+}
+.glass-segmented label {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+}
+.glass-segmented input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.glass-segmented label:has(input:checked) {
+  font-weight: 650;
+}
+.glass-segmented label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .glass-segmented label:not(:has(input:checked)):hover {
+    background: rgb(255 255 255 / 0.12);
+  }
+}
+.seg-indicator {
+  position: absolute;
+  z-index: 1;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / 3);
+  border-radius: 999px;
+  background: var(--seg-fill);
+  transform: translateX(calc(var(--seg-index, 0) * 100%));
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+.glass-segmented:not([data-has-selection]) .seg-indicator {
+  opacity: 0;
+}
+
+.glass-slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.slider-label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.slider-track {
+  --thumb-w: 60px;
+  position: relative;
+  width: 240px;
+  height: 48px;
+}
+.slider-track::before,
+.slider-fill {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+.slider-track::before {
+  right: 0;
+  background: rgb(127 127 140 / 0.45);
+}
+.slider-fill {
+  width: calc(var(--thumb-w) / 2 + var(--v, 0.5) * (100% - var(--thumb-w)));
+  background: var(--accent);
+}
+/* The native range input keeps semantics, keyboard and pointer handling;
+ * only its painting is replaced by the glass thumb below. */
+.slider-track input {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.glass-thumb {
+  position: absolute !important;
+  z-index: 2;
+  top: 6px;
+  left: calc(var(--v, 0.5) * (100% - var(--thumb-w)));
+  width: var(--thumb-w);
+  height: 36px;
+  border-radius: 999px;
+  pointer-events: none;
+}
+.slider-track:has(input:focus-visible) .glass-thumb {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- navbar: BT Darts template of BottomNavigation, in the lab's theme ----------
+ * Layout, states and indicator come from the component (runtime/bottom-navigation.css);
+ * the lab only maps its light/dark tokens onto the component's custom properties. */
+.stage .navbar.jello-bnav {
+  --jbn-fg: var(--fg-on-glass) !important;
+  --jbn-active: var(--nav-active) !important;
+  --jbn-indicator: var(--nav-ind) !important;
+  --jbn-hover: var(--nav-hover) !important;
+  --jbn-press: var(--nav-press) !important;
+  --jbn-focus: var(--accent) !important;
+  --jbn-text-shadow: var(--fg-shadow);
+  z-index: 2;
+}
+.stage .navbar.jello-bnav[data-jello-path='opaque'] .nav-indicator {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* ---------- scenes ---------- */
+.scene {
+  position: relative;
+  min-height: 260%;
+  overflow: hidden;
+  background: var(--scene-bg);
+  color: var(--scene-ink);
+}
+.scene-motion {
+  position: relative;
+}
+.scene-grid .scene-motion {
+  position: absolute;
+  inset: -64px;
+  background-image:
+    linear-gradient(to right, var(--scene-ink) 2px, transparent 2px),
+    linear-gradient(to bottom, var(--scene-ink) 2px, transparent 2px);
+  background-size: 32px 32px;
+}
+.scene-grid-labels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 120px 0;
+  padding: 140px 64px;
+  font: 800 120px/1 system-ui, sans-serif;
+  color: #e5484d;
+  text-align: center;
+}
+.scene-text .scene-motion {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 32px 120px;
+  background: var(--scene-text-bg);
+  font: 19px/1.6 Georgia, 'Times New Roman', serif;
+}
+.scene-text h2 {
+  margin: 1.4em 0 0.4em;
+  font: 700 30px/1.2 system-ui, sans-serif;
+}
+.scene-blocks .scene-motion {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  padding: 24px;
+}
+.block {
+  aspect-ratio: 1;
+  border-radius: 14px;
+}
+.scene-photo .scene-motion img {
+  display: block;
+  width: 100%;
+  height: 130cqh;
+  object-fit: cover;
+  user-select: none;
+}
+.scene-photo .scene-motion img + img {
+  transform: scaleY(-1);
+}
+.scene-credit {
+  margin: 0;
+  padding: 10px 16px 24px;
+  font-size: 12.5px;
+}
+.scene-solid {
+  background: #7d93ab;
+}
+/* Diagnostic: colour encodes position (R = x across the stage, G = y within a
+ * 512 px period that repeats so the scene can scroll). A raster capture can be
+ * turned back into sampling coordinates; any displacement changes the colour. */
+.scene-coords {
+  background:
+    linear-gradient(to bottom, rgb(0 0 0), rgb(0 255 0)) 0 0 / 100% 512px repeat-y,
+    linear-gradient(to right, rgb(0 0 0), rgb(255 0 0));
+  background-blend-mode: screen;
+}
+
+/* Application scene: plausible UI with sample data, long enough to scroll under the navbar. */
+.scene-app {
+  min-height: 0;
+}
+.scene-app .scene-motion {
+  display: grid;
+  gap: 16px;
+  max-width: 880px;
+  margin: 0 auto;
+  /* Room for the navbar (64 px + gap) so the last line stays readable. */
+  padding: 24px 20px calc(120px + env(safe-area-inset-bottom, 0px));
+  font: 15px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+.app-badge {
+  justify-self: start;
+  padding: 3px 10px;
+  border: 1.5px dashed currentColor;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.app-head {
+  display: grid;
+  gap: 6px;
+}
+.app-title {
+  margin: 4px 0 0;
+  font: 800 34px/1.1 system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+.app-sub,
+.app-note,
+.app-foot {
+  margin: 0;
+  opacity: 0.8;
+}
+.app-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.app-kpi {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  color: #fff;
+}
+.app-kpi-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.app-kpi-value {
+  font: 800 46px/1 system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+.app-kpi-delta {
+  font-size: 12.5px;
+}
+.app-card {
+  padding: 14px 16px;
+  border: 1.5px solid var(--scene-ink);
+  border-radius: 4px;
+  background: var(--scene-card);
+}
+.app-card-title {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+.app-card p {
+  margin: 8px 0 0;
+}
+.app-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 160px;
+  border-bottom: 2px solid var(--scene-ink);
+}
+.app-bar {
+  flex: 1;
+}
+.app-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.app-table th,
+.app-table td {
+  padding: 6px 8px;
+  border: 1px solid var(--scene-ink);
+  text-align: left;
+}
+.app-table th {
+  background: var(--scene-ink);
+  color: var(--scene-bg);
+}
+.app-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+.app-tile {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border: 1.5px solid var(--scene-ink);
+  border-left: 10px solid var(--tile);
+  background: var(--scene-card);
+}
+.app-tile strong {
+  font-size: 18px;
+}
+
+.is-animated .scene-app .scene-motion {
+  animation: jello-rise 9s ease-in-out infinite alternate;
+}
+.is-animated .scene-grid .scene-motion {
+  animation: jello-pan 4s linear infinite;
+}
+.is-animated .scene-blocks .scene-motion,
+.is-animated .scene-text .scene-motion {
+  animation: jello-sway 7s ease-in-out infinite alternate;
+}
+.is-animated .scene-photo .scene-motion {
+  animation: jello-drift 12s ease-in-out infinite alternate;
+}
+@keyframes jello-pan {
+  to {
+    transform: translate(32px, 32px);
+  }
+}
+@keyframes jello-sway {
+  from {
+    transform: translateX(-40px);
+  }
+  to {
+    transform: translateX(40px);
+  }
+}
+@keyframes jello-rise {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-140px);
+  }
+}
+@keyframes jello-drift {
+  from {
+    transform: scale(1.04) translate(-2%, 0);
+  }
+  to {
+    transform: scale(1.04) translate(2%, -3%);
+  }
+}
+
+
+/* ---------- narrow screens (also the phone preview page) ---------- */
+@media (max-width: 900px) {
+  .stages {
+    min-height: 220px;
+    gap: 10px;
+  }
+  .stages[data-compare='on'] {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+  .stage {
+    min-height: 200px;
+    border-radius: 12px;
+  }
+  .dock {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    gap: 10px;
+  }
+  .glass-segmented {
+    width: min(288px, 100%);
+  }
+  .slider-track {
+    width: min(220px, 60vw);
+  }
+  .app-title {
+    font-size: 28px;
+  }
+  .app-kpi-value {
+    font-size: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seg-indicator {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .capsule,
+  .glass-button,
+  .glass-segmented,
+  .slider-label {
+    text-shadow: none;
+  }
+  .seg-indicator {
+    background: Highlight;
+  }
+  .glass-segmented label:has(input:checked) {
+    color: HighlightText;
+  }
+  .slider-fill {
+    background: Highlight;
+  }
+}
+
+
+/* ---------- paused preview (off-screen or hidden page) ---------- */
+.stages.is-paused .scene-motion {
+  animation-play-state: paused !important;
+}
+
+/* ---------- controlled scene (WebGL2) ---------- */
+.scene-stage {
+  background: #808084;
+}
+.scene-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+  touch-action: none;
+}
+.scene-canvas[data-dragging] {
+  cursor: grabbing;
+}
+.scene-canvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+}
+.scene-canvas[hidden] {
+  display: none;
+}
+.scene-lens-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* Controlled textures are light: dark text with a light halo, whatever the lab theme. */
+  color: #0c0c10;
+  text-shadow: 0 0 6px rgb(255 255 255 / 0.8), 0 0 1px rgb(255 255 255 / 0.9);
+  font-weight: 600;
+  font-size: 17px;
+  pointer-events: none;
+  will-change: transform;
+}
+.scene-fallback {
+  background-color: #f4f4f2;
+  background-size: cover;
+  background-position: center;
+}
+.scene-fallback[data-texture='pattern'] {
+  background-image: linear-gradient(#16161a 2px, transparent 2px), linear-gradient(90deg, #16161a 2px, transparent 2px);
+  background-size: 40px 40px;
+}
+
+/* ---------- demo components: button, card, panel ---------- */
+.demo-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  pointer-events: none;
+}
+.demo-center[hidden] {
+  display: none;
+}
+.demo-center > * {
+  pointer-events: auto;
+}
+.demo-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg-on-glass);
+  text-shadow: var(--fg-shadow);
+  font-size: 18px;
+  font-weight: 650;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.demo-button[hidden] {
+  display: none;
+}
+.demo-button:focus-visible,
+.demo-card :focus-visible,
+.demo-dialog :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.demo-count {
+  margin: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+}
+.demo-card,
+.demo-dialog {
+  width: min(360px, 100%);
+  padding: 20px 22px;
+  color: var(--fg-on-glass);
+  text-shadow: var(--fg-shadow);
+}
+.demo-dialog {
+  width: min(400px, 100%);
+}
+.demo-dialog[hidden] {
+  display: none;
+}
+.demo-kicker {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.demo-title {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+}
+.demo-text {
+  margin: 0 0 12px;
+}
+.demo-score {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin: 0 0 12px;
+  font-size: 34px;
+  font-variant-numeric: tabular-nums;
+}
+.demo-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.demo-icon-button,
+.demo-link,
+.demo-primary {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.demo-icon-button {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border-color: transparent;
+}
+.demo-primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--on-accent);
+  text-shadow: none;
+}
+.demo-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.demo-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 8px;
+}
+.demo-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+@media (forced-colors: active) {
+  .demo-button,
+  .demo-card,
+  .demo-dialog,
+  .scene-lens-label {
+    text-shadow: none;
+  }
+}

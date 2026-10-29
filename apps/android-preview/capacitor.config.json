@@ -1,0 +1,12 @@
+{
+  "appId": "dev.jello.preview",
+  "appName": "Jello Preview",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  },
+  "android": {
+    "webContentsDebuggingEnabled": true
+  }
+}

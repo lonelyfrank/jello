@@ -1,17 +1,21 @@
-# Jello Glass Lab
+# Jello Material Lab
 
-Jello sviluppa un materiale glass dinamico per componenti web, browser Android e app
-basate su WebView. Si ispira ai principi di Apple Liquid Glass (lente, luce che segue la
-geometria, risposta al tocco), ma **non** replica lo shader di Apple: parametri e modello
-ottico sono di Jello.
+![Jello](public/brand/jello-logo-480.png)
 
-Questa prima milestone contiene:
+![Laboratorio, modalità componenti reali](docs/screenshots/material-lab-desktop.png)
 
-- un **nucleo** riutilizzabile, indipendente da framework (`src/core/`);
-- il **laboratorio** interattivo per valutare blur, rifrazione, luce e movimento separatamente (`src/lab/`);
-- **test** unitari sulla geometria e test Playwright con confronti raster (`tests/`).
+Jello è un laboratorio di materiali e componenti UI, riutilizzabili su web desktop, browser
+mobile e app Android basate su WebView. Due modalità condividono lo stesso motore di anteprima:
 
-![Laboratorio, tema chiaro, fotografia](docs/screenshots/lab-desktop-photo.png)
+- **Material Lab** — si creano, modificano, verificano, salvano ed esportano materiali; **Glass**
+  è il primo materiale funzionante, **Gel/Jelly** è in sviluppo e non è utilizzabile.
+- **Component Builder** — si configura una componente che usa un materiale (oggi **Bottom
+  Navigation**, con il template BT Darts), la si salva nella libreria e la si esporta come
+  componente **React + TypeScript** installabile, oppure si esporta il solo materiale.
+  Vedi [Component Builder e componenti](docs/component-builder.md).
+
+Si ispira ai principi di Apple Liquid Glass (lente, luce che segue la geometria, risposta al
+tocco) ma **non** ne replica lo shader: parametri e modello ottico sono di Jello.
 
 ## Avvio
 
@@ -19,116 +23,132 @@ Richiede Node ≥ 20 (≥ 22.6 per `npm run geometry:cases`).
 
 ```sh
 npm install
-npm run dev          # http://localhost:5173
+npm run build:lib    # runtime in dist-lib/ (serve al laboratorio per esportare pacchetti)
+npm run dev          # laboratorio: http://localhost:5173 · anteprima leggera: /preview.html
 ```
 
-Il laboratorio accetta parametri nell'URL per riprodurre uno scenario, per esempio
-`/?preset=optics&scene=grid&animate=0&components=0&path=refraction`.
-Chiavi: `preset`, `scene` (`grid` `text` `blocks` `photo` `solid` `coords`), `path`
-(`auto` `refraction` `satin` `opaque`), `animate`, `compare`, `map`, `components`,
-`reduceMotion`, `reduceTransparency`, `theme` (`light` `dark`).
+| Comando | Cosa fa |
+| --- | --- |
+| `npm run typecheck` | TypeScript rigoroso |
+| `npm test` | Vitest: modello e migrazioni, geometria, molla, persistenza (fake-indexeddb), export, protocollo, relay, confini |
+| `npm run build` | `build:lib` + typecheck + build del laboratorio e della pagina di anteprima in `dist/` |
+| `npm run test:e2e:local` | Playwright su Chromium, Firefox e viewport Pixel 7 emulato (avvia laboratorio, esempio, progetto React esterno e relay) |
+| `npm run test:e2e` | come sopra + WebKit (dipendenze di sistema necessarie) |
+| `npm run test:perf` / `node scripts/perf.mjs --suite navbar\|scene` | misure headless → `docs/perf/` |
+| `npm run example:prepare` · `npm run example:serve` | pacchetto del preset navbar → esempio consumatore su :4175 |
+| `npm run consumer:prepare` · `npm run consumer:serve` | navbar React esportata → progetto esterno `examples/react-consumer` (npm install, typecheck, build) su :4176 |
+| `npm run relay` | relay locale per l’anteprima sul telefono (:5174) |
+| `npm run verify` | typecheck + unit + build + e2e locali |
 
-## Build e test
+## Il laboratorio
 
-```sh
-npm run typecheck    # TypeScript, modalità rigorosa
-npm run build        # typecheck + build Vite in dist/
-npm test             # Vitest: geometria, parametri, molla, scelta del percorso
-npx playwright install chromium firefox webkit
-npm run test:e2e:local   # Chromium, Firefox, viewport Pixel 7 emulato
-npm run test:e2e         # come sopra + WebKit (richiede le sue dipendenze di sistema)
-npm run test:perf        # confronto 1/4 superfici, sfondo fermo/animato → docs/perf/
-npm run verify           # typecheck + unit + build + e2e locali
-```
+Nell’intestazione: **Material Lab** / **Component Builder** e **Esporta…** (solo materiale,
+componente + materiale, configurazione JSON, con l’elenco di file e dipendenze).
 
-Quando la suite raster (`tests/e2e/raster.spec.ts`) passa per intero su un motore, scrive
-`verification/<progetto>.json`. Il laboratorio legge questi record per mostrare se il
-motore e la versione in uso sono stati **verificati visivamente**. Un record desktop o
-emulato non vale mai per un telefono o una WebView reali.
+Material Lab: dashboard React a tre colonne (pannelli laterali richiudibili, scorrimento indipendente; sotto
+900 px l’anteprima resta in alto e libreria e proprietà si aprono in un pannello inferiore).
 
-## Come funziona
+- **Sinistra** — libreria: preset inclusi (sola lettura) e materiali personali; nuovo, duplica,
+  rinomina, elimina, «Salva come copia»; famiglie in sviluppo mostrate disattivate. Componente
+  (capsula, navbar, pulsante, card, pannello), sorgente e sfondo (scene di prova, immagine locale,
+  texture della scena), ambiente (tema, movimento e trasparenza ridotti).
+- **Centro** — anteprima: «Componenti reali» (CSS/SVG su HTML vero) o «Scena controllata»
+  (WebGL2 su texture), Singola/A·B, desktop / telefono 390 px / dimensioni personalizzate, pausa,
+  ripristino, scroll in cima, metriche misurabili.
+- **Destra** — proprietà: materiale, geometria, comportamento (generati dalla tabella dei
+  parametri, con validazione dei campi numerici), profilo qualità, renderer richiesto ed
+  effettivo con motivi e livelli di supporto, compatibilità e diagnostica (mappa di displacement,
+  misura dei frame, risorse WebGL2, perdita del contesto simulata), import/export, anteprima sul
+  telefono.
 
-Tre ruoli espliciti (dettagli in [docs/rendering.md](docs/rendering.md)):
+Salvataggio automatico in IndexedDB con stato visibile («Salvato alle…», «Non salvato: spazio
+esaurito», «Non persistente: solo questa scheda»). Gli scenari restano riproducibili dall’URL; le
+chiavi delle milestone precedenti (`object`, `nav`, `scene`, `preset`, `path`, `animate`,
+`compare`, `map`, `components`, `reduceMotion`, `reduceTransparency`, `theme`, `device`)
+mantengono il significato, con in più `material`, `mode`, `texture`, `quality`, `device=custom&w=&h=`.
 
-| Ruolo          | Elemento                          | Cosa fa                                                                 |
-| -------------- | --------------------------------- | ----------------------------------------------------------------------- |
-| **GlassSource**  | `.jello-source` (es. `#sourceMain`) | Contenuto che può essere rifratto. Riceve `filter: url(#…)`.             |
-| **GlassSurface** | `span.jello-surface` nell'host    | Geometria e materiale: tinta, luce, ombra. Nessun filtro.               |
-| **Foreground**   | figli dell'host                   | Testi, icone, controlli. Fuori dalla sorgente, mai filtrati né scalati. |
+Component Builder: a sinistra materiali, componenti (template e tipi in arrivo), la mia libreria
+(componenti salvate, preset di materiale) e la struttura (radice e tab: aggiungi, riordina,
+duplica, elimina); al centro la stessa anteprima con i formati desktop, tablet e telefono, lo sfondo
+di prova e le modalità *Interagisci* / *Seleziona*; a destra l’inspector contestuale (struttura,
+layout, aspetto, tipografia, materiale, stati, interazioni, responsive).
+
+## Runtime
 
 ```ts
-import { GlassContext, bindDrag, bindPress, defaultParams } from './src/core';
-import './src/core/glass.css';
+import { createGlassGroup, parseMaterialText } from '@jello/runtime'; // dist-lib/ o runtime/ di un pacchetto
+import '@jello/runtime/jello.css';
 
-const overlay = document.querySelector<HTMLElement>('#overlay')!; // stesso riquadro della sorgente
-const ctx = new GlassContext({ source: document.querySelector('#source')!, path: 'auto' });
-const capsule = ctx.attach(document.querySelector('#capsule')!, { params: defaultParams(), sizing: 'params' });
-bindDrag(capsule, { bounds: () => ({ width: overlay.clientWidth, height: overlay.clientHeight }) });
-const button = ctx.attach(document.querySelector('#button')!, { params: defaultParams(), sizing: 'element' });
-bindPress(button);
-// ...
-ctx.destroy(); // rimuove filtri, observer, listener e loop
+const parsed = parseMaterialText(json);              // import atomico, migra jello-glass v1
+if (!parsed.ok) throw new Error(parsed.errors.join('\n'));
+const group = createGlassGroup({ source: document.querySelector('#content')!, material: parsed.doc });
+group.attach(document.querySelector('#nav')!, { sizing: 'element', interaction: 'press' });
+group.setMaterial(next);                              // solo la geometria rigenera la mappa
+group.destroy();                                      // filtri, strati, observer, listener, loop
 ```
 
-Percorsi di rendering, scelti da `resolvePath` e sempre visibili nel laboratorio:
-
-1. **Rifrazione** — filtro SVG sulla sorgente, con una catena di primitive per lente limitata
-   alla sua regione: mappa di displacement generata dalla geometria, blur, saturazione,
-   `feDisplacementMap`, ritaglio sulla forma.
-2. **Satinato** — `backdrop-filter: blur() saturate()` sulla superficie, senza rifrazione.
-3. **Opaco** — superficie opaca e bordo; usato con `forced-colors`, `prefers-contrast: more`,
-   `prefers-reduced-transparency` o la riduzione manuale della trasparenza.
-
-La mappa viene rigenerata solo quando cambia la geometria (dimensioni, raggio, fascia,
-profilo, lente centrale) ed è in cache per chiave. Spostamento, pressione ed elasticità
-aggiornano solo attributi e trasformazioni. Il ciclo `requestAnimationFrame` gira solo
-mentre una molla è in movimento.
-
-Il modello dei parametri, con unità, intervalli e valori iniziali, è in
-[docs/material-model.md](docs/material-model.md).
+Per una texture controllata: `await createSceneView({ canvas, material, source })` (backend WebGL2,
+caricato solo in quel momento). Componenti: `createBottomNavigation({ container, config, source,
+activeTab, controlled, onChange })` renderizza un documento `jello-component`; i componenti
+ottengono il materiale da `createMaterialGroup` (registro dei materiali), mai dal renderer Glass. Dettagli: [architettura](docs/architecture.md),
+[rendering](docs/rendering.md), [modello](docs/material-model.md), [export](docs/export.md).
 
 ## Struttura
 
 ```
-src/core/params.ts              parametri: tabella, valori iniziali, validazione, JSON
-src/core/geometry.ts            geometria della lente (pura, deterministica)
-src/core/spring.ts              molla a passo fisso
-src/core/presets.ts             preset (Cable e BT come approssimazioni dichiarate)
-src/core/renderer/              rilevamento, scelta del percorso, filtro SVG
-src/core/surface.ts             superficie: materiale, movimento, lente
-src/core/context.ts             sorgente + superfici + preferenze di sistema
-src/core/interaction.ts         pressione e trascinamento
-src/core/glass.css              materiale, percorsi, accessibilità
-src/lab/                        laboratorio
-tests/unit/, tests/e2e/         Vitest, Playwright
-verification/                   record delle verifiche raster superate
-docs/                           scelte, compatibilità, riferimenti, Android, misure
+src/model/         documento jello-material v2, famiglie, registro dei materiali, migrazioni, qualità, supporto
+src/components/    documento jello-component, BottomNavigation (schema, template, operazioni), icone SVG sicure
+src/core/          geometria, molla, interazioni, superficie, contesto, renderer SVG, glass.css
+src/runtime/       API pubblica: GlassGroup, MaterialGroup, BottomNavigation (DOM), createSceneView (WebGL2, lazy)
+src/stage/         anteprima condivisa: controller, stage, scene, navbar, componenti demo, scena WebGL2
+src/lab/           editor React, store, sessione, IndexedDB, autosave, invio al relay
+src/preview/       pagina leggera per telefono e WebView (senza editor)
+src/sync/          protocollo di sincronizzazione (versionato, validato)
+src/export/        adapter di export: materiale (runtime o solo CSS), componente React + TS, JSON; zip
+tools/relay/       relay di sviluppo (Node http)
+examples/navbar-bt esempio consumatore: navbar su contenuto che scorre, solo pacchetto esportato
+examples/react-consumer progetto React + TS esterno che installa la navbar esportata
+apps/android-preview contenitore Capacitor che carica preview.html
+tests/unit, tests/e2e, verification/, docs/
 ```
 
-## Stato delle verifiche (29 ottobre 2026)
+## Stato delle verifiche
 
-Riepilogo; evidenze e limiti in [docs/compatibility.md](docs/compatibility.md).
+Vedi [docs/compatibility.md](docs/compatibility.md) per evidenze, metriche e limiti.
 
-| Ambiente                                  | Esito                                                    |
-| ----------------------------------------- | -------------------------------------------------------- |
-| Chromium 156 headless, desktop            | e2e superati, rifrazione verificata sul raster           |
-| Firefox 157 headless, desktop             | e2e superati, rifrazione verificata sul raster           |
-| Viewport Pixel 7 emulato (Chromium 156)   | e2e superati; è emulazione, non un telefono              |
-| WebKit (Playwright)                       | **non eseguito**: dipendenze di sistema mancanti su Fedora |
-| Chrome Android reale, Android WebView     | **non verificati**: procedura in [docs/device-testing.md](docs/device-testing.md) |
+Runtime 0.2.0, 29 ottobre 2026, ThinkPad T14 Gen1 (i7-10510U, grafica Intel UHD), Fedora 44,
+browser headless via Playwright 1.64.1:
+
+| Verifica | Esito |
+| --- | --- |
+| typecheck · unit (101) · build | superati |
+| e2e Chromium 156 desktop | 89/89 superati, raster SVG verificato (`verification/chromium.json`, runtime 0.2.0) |
+| e2e Firefox 157 desktop | 88/88 superati, 1 saltato (solo CDP), raster SVG verificato |
+| e2e viewport Pixel 7 emulato | 89/89 superati — emulazione, non un telefono |
+| Anteprima ↔ pacchetto esportato (DOM e WebGL2, stessi backend, sorgente, 480×320, DPR 1, t = 0) | identici su tutti e tre (differenza media 0,0000) |
+| WebKit / Safari | **non eseguito** (librerie di sistema mancanti su Fedora) |
+| Telefono fisico, Chrome Android, Android WebView | **non verificati**: nessun dispositivo; emulatore non utilizzabile headless (vedi compatibilità) |
+| APK Capacitor | **non costruito**: manca un JDK con `javac` (presente solo JRE 25) |
+| Correttezza ottica WebGL2 con test raster dedicato | **non verificata** |
+
+Prestazioni: a riposo nessun loop JavaScript e nessun frame WebGL2. Con sorgente animata
+Firefox (GPU Intel) resta a ~17 ms su tutti i profili; Chromium headless usa SwiftShader (CPU) e
+scende a 50 ms (Balanced) e 117 ms (Quality), Economy resta a 16,7 ms. Tempo GPU non disponibile
+nei browser headless. Dati in `docs/perf/`.
 
 ## Documenti
 
-- [Scelte di rendering](docs/rendering.md)
-- [Modello del materiale](docs/material-model.md)
-- [Compatibilità ed evidenze](docs/compatibility.md)
+- [Architettura e confini](docs/architecture.md) · [Component Builder e componenti](docs/component-builder.md)
+- [Scelte di rendering](docs/rendering.md) · [Modello del materiale](docs/material-model.md)
+- [Esportazione](docs/export.md) · [Anteprima sul telefono e app Android](docs/phone-preview.md)
+- [Compatibilità ed evidenze](docs/compatibility.md) · [Prove su dispositivo](docs/device-testing.md)
+- [Mappatura Android nativa (prevista)](docs/android-mapping.md) · [Renderer Android: indicazioni](docs/android.md)
 - [Riferimenti e attribuzioni](docs/references.md)
-- [Renderer Android: indicazioni](docs/android.md)
-- [Prove su dispositivo](docs/device-testing.md)
 
 ## Licenze
 
-Il codice di Jello è scritto per questo progetto; non contiene codice copiato dai
-riferimenti (vedi [docs/references.md](docs/references.md)). La fotografia di prova è CC0
-([public/assets/ATTRIBUTION.md](public/assets/ATTRIBUTION.md)). La repository non dichiara
-ancora una licenza propria: `package.json` usa `UNLICENSED` finché non viene scelta.
+Il codice di Jello è scritto per questo progetto; non contiene codice copiato dai riferimenti
+(vedi [docs/references.md](docs/references.md)). La fotografia di prova è CC0
+([public/assets/ATTRIBUTION.md](public/assets/ATTRIBUTION.md)). Il logo in `public/brand/` è
+quello fornito per il progetto. La repository non dichiara ancora una licenza: `package.json` usa
+`UNLICENSED`.

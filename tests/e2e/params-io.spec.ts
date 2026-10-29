@@ -12,8 +12,10 @@ test('export → import round trip keeps every parameter', async ({ page }) => {
   await page.locator('#exportParams').click();
   const text = await page.locator('#paramsJson').inputValue();
   const doc = JSON.parse(text);
-  expect(doc.format).toBe('jello-glass');
-  expect(doc.params).toEqual(before);
+  // The preset JSON is now jello-material v2: same parameters, split into sections.
+  expect(doc.format).toBe('jello-material');
+  expect(doc.schemaVersion).toBe(2);
+  expect({ ...doc.material, ...doc.geometry, ...doc.behavior }).toEqual(before);
   await page.locator('#resetParams').click();
   expect(await lab<number>(page, `return h.params.refraction`)).toBe(22);
   await page.locator('#paramsJson').fill(text);
@@ -60,4 +62,19 @@ test('presets apply and approximations are labelled as such', async ({ page }) =
   expect(await lab<number>(page, `return h.params.refraction`)).toBe(0);
   await page.locator('#param-blur').fill('12');
   await expect(page.locator('#preset')).toHaveValue('');
+});
+
+test('the previous jello-glass v1 export is still available and reports what it drops', async ({ page }) => {
+  await lab(page, `h.setParams({ refraction: 12.5, blur: 3 })`);
+  const before = await lab<Record<string, unknown>>(page, `return h.params`);
+  await page.locator('#exportLegacy').click();
+  const doc = JSON.parse(await page.locator('#paramsJson').inputValue());
+  expect(doc).toEqual({ format: 'jello-glass', version: 1, params: before });
+  await expect(page.locator('#importMessages')).toContainText('Non rappresentabili e omessi');
+  await expect(page.locator('#importMessages')).toContainText('id (optics)');
+  // Importing it back migrates it without losing parameters.
+  await page.locator('#paramsJson').fill(JSON.stringify(doc));
+  await page.locator('#importParams').click();
+  await expect(page.locator('#importMessages')).toContainText('Migrato da jello-glass@1');
+  expect(await lab(page, `return h.params`)).toEqual(before);
 });

@@ -1,0 +1,273 @@
+/* Jello BottomNavigation. Every value comes from the component document
+ * through custom properties on the root (--jbn-*); integrators can override
+ * them in their own stylesheet. Layers:
+ *   .jello-surface        material (added by the material group)
+ *   .jello-bnav-track     tabs and the selection indicator, foreground
+ */
+
+.jello-bnav {
+  --jbn-side: max(var(--jbn-offset, 12px), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  --jbn-text-shadow: 0 0 6px rgb(255 255 255 / 0.75), 0 0 1px rgb(255 255 255 / 0.9);
+  box-sizing: border-box;
+  z-index: 10;
+  display: block;
+  height: var(--jbn-height, 64px);
+  padding: var(--jbn-padding, 6px);
+  border-radius: var(--jbn-radius, 9999px);
+  color: var(--jbn-fg, #0c0c10);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.jello-bnav[hidden] {
+  display: none;
+}
+.jello-bnav[data-font='inherit'] {
+  font-family: inherit;
+}
+.jello-bnav *,
+.jello-bnav *::before,
+.jello-bnav *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- anchoring and width ---------- */
+.jello-bnav[data-anchor='viewport'] {
+  position: fixed;
+}
+.jello-bnav[data-anchor='container'] {
+  position: absolute;
+}
+.jello-bnav[data-anchor='inline'] {
+  position: relative;
+}
+.jello-bnav:not([data-anchor='inline']) {
+  bottom: max(var(--jbn-offset, 12px), env(safe-area-inset-bottom, 0px));
+}
+.jello-bnav[data-width='fill'] {
+  width: min(var(--jbn-max-width, 440px), calc(100% - 2 * var(--jbn-side)));
+}
+.jello-bnav[data-width='fixed'] {
+  width: min(var(--jbn-width, 440px), calc(100% - 2 * var(--jbn-side)));
+}
+.jello-bnav[data-width='hug'] {
+  width: max-content;
+  max-width: calc(100% - 2 * var(--jbn-side));
+}
+.jello-bnav:not([data-anchor='inline'])[data-align='center'] {
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+}
+.jello-bnav:not([data-anchor='inline'])[data-align='start'] {
+  left: var(--jbn-side);
+}
+.jello-bnav:not([data-anchor='inline'])[data-align='end'] {
+  right: var(--jbn-side);
+}
+.jello-bnav[data-anchor='inline'][data-align='center'] {
+  margin-inline: auto;
+}
+.jello-bnav[data-anchor='inline'][data-align='end'] {
+  margin-left: auto;
+}
+/* Doubled class: wins over the alignment rules above. */
+.jello-bnav.jello-bnav[data-placement='docked'] {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  height: calc(var(--jbn-height, 64px) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--jbn-padding, 6px) + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---------- tabs ---------- */
+.jello-bnav-track {
+  position: relative;
+  display: flex;
+  gap: var(--jbn-gap, 2px);
+  height: 100%;
+  min-width: 0;
+}
+.jello-bnav[data-overflowing][data-overflow='scroll'] .jello-bnav-track {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.jello-bnav[data-overflowing][data-overflow='scroll'] .jello-bnav-track::-webkit-scrollbar {
+  display: none;
+}
+.jello-bnav-tab {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 3px 2px;
+  border: 0;
+  border-radius: max(0px, calc(var(--jbn-radius, 9999px) - var(--jbn-padding, 6px)));
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--jbn-tab-font-size, var(--jbn-font-size, 11.5px));
+  font-weight: var(--jbn-tab-font-weight, var(--jbn-font-weight, 600));
+  line-height: 1.15;
+  letter-spacing: var(--jbn-tab-letter-spacing, var(--jbn-letter-spacing, 0.1px));
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color calc(var(--jbn-duration, 340ms) * 0.5), color calc(var(--jbn-duration, 340ms) * 0.5), opacity calc(var(--jbn-duration, 340ms) * 0.5);
+}
+.jello-bnav[data-text-shadow='true'] .jello-bnav-tab {
+  text-shadow: var(--jbn-text-shadow);
+}
+.jello-bnav[data-item-layout='inline'] .jello-bnav-tab {
+  flex-direction: row;
+  gap: 6px;
+}
+.jello-bnav[data-width='hug'] .jello-bnav-tab {
+  flex: 0 0 auto;
+  min-width: var(--jbn-min-tab, 56px);
+  padding-inline: 12px;
+}
+.jello-bnav[data-overflowing][data-overflow='scroll'] .jello-bnav-tab {
+  flex: 0 0 var(--jbn-min-tab, 56px);
+  scroll-snap-align: start;
+}
+.jello-bnav-icon {
+  width: var(--jbn-tab-icon, var(--jbn-icon, 22px));
+  height: var(--jbn-tab-icon, var(--jbn-icon, 22px));
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--jbn-stroke, 1.8);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.jello-bnav-icon[data-paint='fill'] {
+  fill: currentColor;
+  stroke: none;
+}
+.jello-bnav-label {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* Hidden labels stay in the accessibility tree: they are the tab's name. */
+.jello-bnav[data-labels='hide'] .jello-bnav-label,
+.jello-bnav[data-labels='active'] .jello-bnav-tab:not([data-active]) .jello-bnav-label,
+.jello-bnav[data-overflowing][data-overflow='compress'] .jello-bnav-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.jello-bnav-icon,
+.jello-bnav-label {
+  transition: transform calc(var(--jbn-duration, 340ms) * 0.4);
+}
+
+/* ---------- states ---------- */
+.jello-bnav-tab[data-active] {
+  color: var(--jbn-active, #0a54bd);
+  font-weight: var(--jbn-active-weight, 750);
+}
+@media (hover: hover) and (pointer: fine) {
+  .jello-bnav-tab:not([data-active]):not([aria-disabled='true']):hover {
+    background: var(--jbn-hover, rgb(255 255 255 / 0.22));
+  }
+}
+.jello-bnav-tab:not([data-active])[data-preview-state='hover'] {
+  background: var(--jbn-hover, rgb(255 255 255 / 0.22));
+}
+/* Press is transient and drawn on the tab; selection is the indicator. */
+.jello-bnav-tab[data-pressed],
+.jello-bnav-tab[data-preview-state='pressed'] {
+  background: var(--jbn-press, rgb(0 0 0 / 0.08));
+}
+.jello-bnav-tab[data-pressed] :is(.jello-bnav-icon, .jello-bnav-label),
+.jello-bnav-tab[data-preview-state='pressed'] :is(.jello-bnav-icon, .jello-bnav-label) {
+  transform: scale(var(--jbn-press-scale, 1));
+}
+.jello-bnav-tab:focus-visible,
+.jello-bnav-tab[data-preview-state='focus'] {
+  outline: var(--jbn-focus-width, 2px) solid var(--jbn-focus, #7a2fb8);
+  outline-offset: var(--jbn-focus-offset, -2px);
+}
+.jello-bnav-tab[aria-disabled='true'] {
+  opacity: var(--jbn-disabled, 0.4);
+  cursor: not-allowed;
+}
+
+/* ---------- indicator: a visual layer, not a lens ---------- */
+.jello-bnav-indicator {
+  position: absolute !important;
+  z-index: 1 !important;
+  top: var(--jbn-indicator-inset, 0px);
+  bottom: var(--jbn-indicator-inset, 0px);
+  left: 0;
+  width: max(0px, calc(var(--jbn-ind-w, 0px) - 2 * var(--jbn-indicator-inset, 0px)));
+  border-radius: max(0px, calc(var(--jbn-radius, 9999px) - var(--jbn-padding, 6px) - var(--jbn-indicator-inset, 0px)));
+  background: var(--jbn-indicator, rgb(255 255 255 / 0.62));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / calc(var(--jbn-light, 0.5) * 0.85)),
+    inset 0 0 0 1px rgb(255 255 255 / calc(var(--jbn-light, 0.5) * 0.3)),
+    0 1px 3px rgb(0 0 0 / 0.1);
+  transform: translateX(calc(var(--jbn-ind-x, 0px) + var(--jbn-indicator-inset, 0px)));
+  transition:
+    transform var(--jbn-duration, 340ms) var(--jbn-easing, cubic-bezier(0.3, 1.2, 0.4, 1)),
+    width var(--jbn-duration, 340ms) var(--jbn-easing, cubic-bezier(0.3, 1.2, 0.4, 1));
+  pointer-events: none;
+}
+.jello-bnav[data-indicator='none'] .jello-bnav-indicator {
+  display: none;
+}
+.jello-bnav-indicator[data-instant],
+.jello-bnav[data-motion-reduced] .jello-bnav-indicator {
+  transition: none;
+}
+.jello-bnav[data-motion-reduced] :is(.jello-bnav-tab, .jello-bnav-icon, .jello-bnav-label) {
+  transition: none;
+}
+.jello-bnav[data-jello-path='opaque'] .jello-bnav-tab {
+  text-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jello-bnav-indicator,
+  .jello-bnav-tab,
+  .jello-bnav-icon,
+  .jello-bnav-label {
+    transition: none;
+  }
+  .jello-bnav-tab[data-pressed] :is(.jello-bnav-icon, .jello-bnav-label) {
+    transform: none;
+  }
+}
+@media (forced-colors: active) {
+  .jello-bnav-tab {
+    color: CanvasText;
+    text-shadow: none !important;
+  }
+  .jello-bnav-indicator {
+    background: Highlight;
+    box-shadow: none;
+  }
+  .jello-bnav-tab[data-active] {
+    color: HighlightText;
+  }
+  .jello-bnav-tab:focus-visible {
+    outline-color: Highlight;
+  }
+}

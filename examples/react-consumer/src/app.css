@@ -1,0 +1,42 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font: 15px/1.45 system-ui, sans-serif;
+  color: #121216;
+  background: #f4f4f6;
+}
+/* GlassSource: opaque and scrolling; the bar is outside it, fixed to the viewport. */
+.content {
+  position: fixed;
+  inset: 0;
+  overflow: auto;
+  padding: 24px 16px 140px;
+  background: #f4f4f6;
+}
+.badge {
+  display: inline-block;
+  margin: 0;
+  padding: 2px 8px;
+  border: 1px dashed currentColor;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.rows {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+.rows li {
+  min-height: 56px;
+  padding: 16px;
+  border-radius: 14px;
+  color: #fff;
+  font-weight: 600;
+}

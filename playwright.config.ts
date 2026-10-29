@@ -17,11 +17,12 @@ export default defineConfig({
     deviceScaleFactor: 1,
     trace: 'retain-on-failure',
   },
+  // Lab (4173), consumer example (4175) and sync relay (5174): see scripts/e2e-servers.mjs.
   webServer: {
-    command: 'npx vite build && npx vite preview --host 127.0.0.1 --port 4173 --strictPort',
+    command: 'node scripts/e2e-servers.mjs',
     url: 'http://127.0.0.1:4173/',
     reuseExistingServer: true,
-    timeout: 120_000,
+    timeout: 240_000,
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 860 }, deviceScaleFactor: 1 } },

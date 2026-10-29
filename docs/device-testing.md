@@ -1,6 +1,6 @@
 # Procedura di prova su dispositivi Android
 
-Nessuna di queste prove è stata eseguita in questa milestone. Lo scopo è renderle ripetibili:
+Nessuna di queste prove è stata eseguita (né nella milestone 1 né nella milestone Navbar). Lo scopo è renderle ripetibili:
 stessi scenari, stessi URL, risultati annotati nello stesso formato.
 
 ## Dispositivi
@@ -73,3 +73,36 @@ Screenshot: ...
 ```
 
 Non riportare FPS medi senza mediana e p95, e non estendere i risultati di un dispositivo agli altri.
+
+## Scenari navbar (da eseguire)
+
+| URL | Cosa osservare |
+| --- | -------------- |
+| `/?object=navbar&scene=app&animate=0` | Barra sopra la barra dei gesti / safe area (con `viewport-fit=cover`), target al tocco, leggibilità delle etichette sopra le card colorate. |
+| `/?object=navbar&scene=app&animate=0&compare=1` | Stesso oggetto nei due riquadri, selezione e scroll sincronizzati. |
+| `/?object=navbar&scene=grid&animate=0` | Rifrazione sul perimetro e taglio vicino al fondo della sorgente durante la pressione. |
+| `/?object=navbar&scene=app&animate=1` | Frame con sfondo animato (pannello Diagnostica → "Misura frame"). |
+
+Annotare anche: scroll del contenuto trascinando sopra la barra (sul desktop è inoltrata solo
+la rotella), risposta alla pressione e movimento dell'indicatore con "Rimuovi animazioni"
+attivo nelle impostazioni di accessibilità.
+
+## Anteprima leggera e sincronizzazione (dalla versione 0.2.0)
+
+Da eseguire su Pixel 7 Pro, poi su un dispositivo meno potente. Procedura di collegamento in
+[phone-preview.md](phone-preview.md).
+
+1. `preview.html?material=navbar&object=navbar&scene=app`: barra in basso, safe area, tab attiva,
+   pressione; annotare il percorso effettivo mostrato in basso.
+2. Sincronizzazione: avviare dal laboratorio, aprire il link sul telefono, muovere uno slider e
+   cambiare voce della navbar; poi spegnere il Wi-Fi del telefono per 10 s e riaccenderlo:
+   l’anteprima deve tornare allo stato corrente senza ricaricare.
+3. Immagine locale nel laboratorio (scena Foto): deve comparire sul telefono (URL del relay).
+4. `preview.html?mode=scene`: WebGL2 sul telefono, lente trascinabile, «Misura frame» non
+   disponibile qui: annotare l’intervallo tra frame dal pannello del laboratorio collegato via
+   `chrome://inspect` oppure con il profiler di Chrome remoto.
+5. App Capacitor (`apps/android-preview`): stessi punti 1–4 nella WebView; annotare la versione
+   di Android System WebView (Impostazioni → App → Android System WebView).
+
+Registrare per ogni punto: dispositivo, versione Android, versione Chrome/WebView, runtime Jello
+(`0.2.0`), backend effettivo, esito. Un risultato su emulatore va etichettato come emulatore.

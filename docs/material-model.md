@@ -4,8 +4,61 @@ Parametri e modello ottico sono di Jello. Non riproducono lo shader di Apple e n
 ne usano i nomi o i valori: descrivono una lente geometrica deterministica,
 calcolata in pixel CSS, e un materiale (blur, tinta, luce, ombra) separato da essa.
 
-La fonte di verità è [`src/core/params.ts`](../src/core/params.ts); questa tabella ne è
-generata e un test verifica che ogni chiave sia documentata qui.
+La fonte di verità dei parametri è [`src/core/params.ts`](../src/core/params.ts); le tabelle sotto ne
+sono generate e un test verifica che ogni chiave sia documentata qui.
+
+## Documento `jello-material` (schema 2)
+
+Dalla versione 0.2.0 del runtime un materiale è un documento versionato
+([`src/model/document.ts`](../src/model/document.ts)) che separa:
+
+| Sezione | Contenuto | Origine |
+| --- | --- | --- |
+| `material` | proprietà visive della famiglia (per Glass: ottica, tinta, luce, ombra) | parametri dei gruppi optics, material, light, shadow |
+| `geometry` | forma, dimensioni, raggio (la maschera deriva da questi) | gruppo shape |
+| `behavior` | molla, elasticità, pressione | gruppo motion |
+| `quality` | `profile` (economy, balanced, quality), `dprCap`, `internalScale`, `adaptive` | [`src/model/quality.ts`](../src/model/quality.ts) |
+| `source` | `{ kind: 'dom' }` oppure `{ kind: 'texture', texture: pattern \| image \| external }` | — |
+| `target` | `backend` richiesto (`auto`, `css`, `svg`, `webgl2`) e `fallback` finale (`css`, `opaque`) | — |
+| intestazione | `format`, `schemaVersion`, `id`, `name`, `family`, `familyVersion`, `runtime.min` | — |
+
+La sezione di ogni parametro è derivata dal suo gruppo nella tabella: valori iniziali, intervalli,
+unità, descrizioni, validazione e `affects` hanno **una sola fonte**. Zod valida l’involucro; i
+valori dei parametri passano da `checkValue` della tabella. Un documento è accettato per intero
+o rifiutato con tutti i motivi (import atomico): valori mancanti prendono il valore iniziale e
+sono segnalati, chiavi sconosciute sono ignorate e segnalate, versioni più recenti (schema,
+famiglia, `runtime.min`) sono rifiutate con un messaggio che nomina entrambe le versioni.
+
+**Famiglie.** `glass` è disponibile. `gel` è registrata come *in sviluppo*: il parser la rifiuta
+(«non è ancora disponibile») e il laboratorio la mostra disattivata. Una famiglia futura avrà la
+propria sezione `material`, senza ereditare l’ottica del vetro.
+
+**Migrazione da `jello-glass` v1.** I file v1 (`{ format, version: 1, params }`) sono migrati
+senza perdere parametri (24 su 24, verificato su tutti i preset e su un file personalizzato in
+`tests/unit/model.test.ts`). L’id è derivato dal contenuto. L’export inverso (v2 → v1) restituisce
+gli stessi parametri ed elenca i campi non rappresentabili (id, nome, qualità non predefinita,
+sorgente, destinazione, note).
+
+**Profili qualità** (valori espliciti):
+
+| | Economy | Balanced (predefinito) | Quality |
+| --- | --- | --- | --- |
+| DPR massimo (WebGL2) | 1 | 1,5 | 2 |
+| Risoluzione interna WebGL2 | 50 % | 75 % | 100 % |
+| Mappa (px per px CSS, SVG e WebGL2) | 0,5 | 1 | 1 |
+| Campioni blur per passata | 5 | 9 | 13 |
+| Budget sorgenti dinamiche | 30 fps | 60 fps | 60 fps |
+| Aberrazione cromatica | spenta | consentita | consentita |
+| Cache mappe | 8 | 32 | 48 |
+
+Balanced mantiene la risoluzione della mappa SVG delle milestone precedenti. La riduzione
+automatica (`adaptive`) è spenta per default; se attivata, abbassa la scala interna WebGL2 quando
+i frame superano il budget e lo mostra nel pannello (scala, numero di riduzioni).
+
+**Supporto per backend** ([`src/model/support.ts`](../src/model/support.ts)): CSS ignora
+`band`, `refraction`, `profile`, `dome`, `chroma`, `pressRefraction`; SVG supporta tutto; WebGL2
+approssima blur, luce, direzione della luce, ombra e luce di contatto. Il laboratorio lo mostra
+per il backend effettivo, il manifest dei pacchetti lo riporta.
 
 ## Modello ottico
 
@@ -99,8 +152,13 @@ non fanno mai parte della chiave della mappa.
 ## Note sui parametri
 
 - **Forma della capsula trascinabile.** `width`, `height`, `shape` e `radius` valgono per la
-  capsula libera. Pulsante, selettore e cursore dello slider prendono dimensioni dal proprio
-  layout e sono sempre capsule; ereditano ottica, materiale, luce, ombra e movimento.
+  capsula libera (nel laboratorio il gruppo si chiama "Geometria"). Navbar, pulsante, selettore
+  e cursore dello slider prendono dimensioni dal proprio layout e sono sempre capsule; ereditano
+  ottica, materiale, luce, ombra e movimento. In modalità Navbar il laboratorio disabilita
+  `width`, `height`, `shape`, `radius` e `stretch` (la barra non si trascina).
+- **Inserimento manuale.** Il campo numerico del laboratorio accetta solo valori finiti,
+  nell'intervallo e sul passo (`parseNumberInput`). L'import JSON resta come nella milestone 1
+  (tipo e intervallo, senza controllo del passo) per non rifiutare file già esportati.
 - **Blur e saturazione** sono applicati dentro il filtro nel percorso rifrangente (prima
   della deviazione) e con `backdrop-filter` nel percorso satinato. In entrambi i casi
   `blur` è una deviazione standard in px CSS.
@@ -116,3 +174,11 @@ non fanno mai parte della chiave della mappa.
 - **Aberrazione cromatica** (`chroma > 0`) sostituisce un solo `feDisplacementMap` con tre
   passaggi a scale `1 ± 0,12·chroma`, uno per canale. Triplica il costo della lente; è a 0
   nel preset iniziale.
+
+## Preset
+
+`jello`, `optics`, `satin`, `deep`, `cable` e `bt` sono invariati dalla milestone 1. `navbar`
+è nuovo: `band` 16, `refraction` 10, `profile` smooth, `blur` 4, `saturation` 160, `tint`
+#ffffff a 0,14, `light` 0,65 a 330°, `shadow` 0,2 / 26 px / 8 px, `damping` 0,8, `stretch` 0,
+`pressScale` 1,02, `pressRefraction` 0,4, `pressLight` 0,45. È una calibrazione a vista sulla
+navbar del laboratorio, non la copia di un altro materiale.

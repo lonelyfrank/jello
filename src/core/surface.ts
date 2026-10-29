@@ -166,6 +166,17 @@ export class GlassSurface {
     };
   }
 
+  /** Geometry of the current lens (for inspection), or null before the host has a size. */
+  lensGeometry(): LensGeometry | null {
+    const rect = this.rect;
+    return rect.width > 0 && rect.height > 0 ? this.geometry(rect) : null;
+  }
+
+  /** Re-sends the lens to the renderer (after a renderer setting changed). */
+  invalidate(): void {
+    this.render();
+  }
+
   /** Clears transient interaction state (gesture cancelled, page hidden). */
   cancelInteraction(): void {
     this.setPressed(false);
@@ -260,7 +271,11 @@ export class GlassSurface {
     }
     if (this.ctx.path !== 'refraction') return;
     const rect = this.rect;
-    if (rect.width <= 0 || rect.height <= 0) return;
+    // A host hidden by layout measures 0×0: its lens must not linger in the filter.
+    if (rect.width <= 0 || rect.height <= 0) {
+      this.ctx.removeLens(this.id);
+      return;
+    }
     const press = this.ctx.motionReduced ? 0 : this.press.value;
     this.ctx.upsertLens(this.id, {
       ...rect,
@@ -290,28 +305,37 @@ export class GlassSurface {
     if (this.sizing === 'params') {
       h.width = `${p.width}px`;
       h.height = `${p.height}px`;
-      s.setProperty('--jello-radius', `${effectiveRadius(p)}px`);
-    } else {
-      s.setProperty('--jello-radius', this.radiusOption === 'capsule' ? '9999px' : `${this.radiusOption}px`);
     }
+    const radius = this.sizing === 'params' ? `${effectiveRadius(p)}px` : this.radiusOption === 'capsule' ? '9999px' : `${this.radiusOption}px`;
+    for (const [k, v] of Object.entries(surfaceVariables(p, radius))) s.setProperty(k, v);
     // Inherited by the host so foreground controls (focus ring, selection pill) can match.
-    h.setProperty('--jello-host-radius', s.getPropertyValue('--jello-radius'));
-    const rgb = hexToRgb(p.tint);
-    s.setProperty('--jello-tint', `${rgb[0]} ${rgb[1]} ${rgb[2]}`);
-    s.setProperty('--jello-tint-a', String(p.tintOpacity));
-    s.setProperty('--jello-blur', `${p.blur}px`);
-    s.setProperty('--jello-saturation', `${p.saturation}%`);
-    s.setProperty('--jello-light', String(p.light));
-    s.setProperty('--jello-light-angle', `${p.lightAngle}deg`);
-    const a = (p.lightAngle * Math.PI) / 180;
-    // Inner highlight offset toward the light (0° = top, clockwise).
-    s.setProperty('--jello-lx', `${r2(Math.sin(a) * 1.5)}px`);
-    s.setProperty('--jello-ly', `${r2(-Math.cos(a) * 1.5)}px`);
-    s.setProperty('--jello-shadow', String(p.shadow));
-    s.setProperty('--jello-shadow-blur', `${p.shadowBlur}px`);
-    s.setProperty('--jello-shadow-y', `${p.shadowOffset}px`);
-    s.setProperty('--jello-press-light', String(p.pressLight));
+    h.setProperty('--jello-host-radius', radius);
   }
+}
+
+/**
+ * CSS custom properties of the material layer (read by glass.css). Pure, so
+ * the CSS-only export writes exactly what the CSS backend writes at runtime.
+ */
+export function surfaceVariables(p: GlassParams, radius: string): Record<string, string> {
+  const rgb = hexToRgb(p.tint);
+  const a = (p.lightAngle * Math.PI) / 180;
+  return {
+    '--jello-radius': radius,
+    '--jello-tint': `${rgb[0]} ${rgb[1]} ${rgb[2]}`,
+    '--jello-tint-a': String(p.tintOpacity),
+    '--jello-blur': `${p.blur}px`,
+    '--jello-saturation': `${p.saturation}%`,
+    '--jello-light': String(p.light),
+    '--jello-light-angle': `${p.lightAngle}deg`,
+    // Inner highlight offset toward the light (0° = top, clockwise).
+    '--jello-lx': `${r2(Math.sin(a) * 1.5)}px`,
+    '--jello-ly': `${r2(-Math.cos(a) * 1.5)}px`,
+    '--jello-shadow': String(p.shadow),
+    '--jello-shadow-blur': `${p.shadowBlur}px`,
+    '--jello-shadow-y': `${p.shadowOffset}px`,
+    '--jello-press-light': String(p.pressLight),
+  };
 }
 
 const r2 = (v: number) => Math.round(v * 100) / 100;

@@ -42,6 +42,10 @@ export interface VerificationRecord {
   mobileEmulated: boolean;
   date: string;
   checks: string[];
+  /** Runtime version the checks ran against. Records without it predate versioned evidence. */
+  runtime?: string;
+  /** Backend whose raster output was checked (e.g. "svg"). */
+  backend?: string;
 }
 
 export interface PathResolution {
@@ -78,11 +82,15 @@ export function parseEngine(ua: string): EngineInfo {
 export function findVerification(
   engine: EngineInfo,
   records: readonly VerificationRecord[],
+  /** When given, only records produced for this runtime version count. */
+  runtimeVersion?: string,
 ): VerificationRecord | null {
   if (engine.major === null) return null;
   // A desktop or emulated record never counts as proof for a real phone.
   if (engine.android || engine.webview) return null;
-  const same = records.filter((r) => r.engine === engine.engine && r.major === engine.major);
+  const same = records.filter(
+    (r) => r.engine === engine.engine && r.major === engine.major && (runtimeVersion === undefined || r.runtime === runtimeVersion),
+  );
   return same.find((r) => r.mobileEmulated === engine.mobile) ?? same[0] ?? null;
 }
 
@@ -90,7 +98,8 @@ export function resolvePath(
   request: PathRequest,
   caps: Capabilities,
   prefs: Preferences,
-  options: { requireVerified: boolean; verified: boolean },
+  /** `fallback: 'opaque'` skips the satin step when the requested path is not usable. */
+  options: { requireVerified: boolean; verified: boolean; fallback?: 'satin' | 'opaque' },
 ): PathResolution {
   const reasons: string[] = [];
   if (prefs.forcedColors) reasons.push('forced-colors attivo');
@@ -104,6 +113,10 @@ export function resolvePath(
     if (!caps.svgFilter) reasons.push('filtro SVG su HTML non rilevato');
     else if (options.requireVerified && !options.verified) reasons.push('motore non verificato visivamente');
     else return { effective: 'refraction', reasons };
+    if (options.fallback === 'opaque' && request === 'refraction') {
+      reasons.push('fallback dichiarato: opaco');
+      return { effective: 'opaque', reasons };
+    }
   }
   if (caps.backdropFilter) return { effective: 'satin', reasons };
   reasons.push('backdrop-filter non rilevato');

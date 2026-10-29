@@ -194,8 +194,10 @@ test('dragging the lens does not block scrolling the content', async ({ page }) 
   await page.mouse.down();
   await page.mouse.move(box.x + box.width / 2 + 30, box.y + box.height / 2);
   await page.mouse.up();
+  // Top-left corner: away from the lens (centred) and from the dock, which wraps
+  // onto several rows when the stage is narrow.
   const stage = (await page.locator('#stageMain').boundingBox())!;
-  await page.mouse.move(stage.x + 40, stage.y + stage.height - 120);
+  await page.mouse.move(stage.x + 40, stage.y + 60);
   await page.mouse.wheel(0, 400);
   await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(100);
 });

@@ -10,6 +10,7 @@
  * Update paths, cheapest first:
  * - position / transient scale → subregion attributes only;
  * - refraction, blur, saturation → primitive attributes only;
+ *   (blur > 0 also renormalizes alpha at the source edge, see saturationMatrix);
  * - chroma on/off → rebuild of that lens' chain (no new map);
  * - geometry (size, radius, band, profile, dome) → new map, cached by key.
  */
@@ -101,7 +102,7 @@ export class SourceFilter {
   private readonly filter: SVGElement;
   private readonly merge: SVGElement;
   private readonly baseId: string;
-  private readonly resolution: number;
+  private resolution: number;
   private readonly refreshId: boolean;
   private readonly encode: (map: LensMap) => string;
   private readonly cacheSize: number;
@@ -159,6 +160,11 @@ export class SourceFilter {
     return this.lenses.size;
   }
 
+  /** Ids of the lenses currently in the filter, for inspection. */
+  get lensIds(): string[] {
+    return [...this.lenses.keys()];
+  }
+
   /** Source border-box size; sets the filter region. */
   resize(width: number, height: number): void {
     if (width === this.size.width && height === this.size.height) return;
@@ -166,6 +172,20 @@ export class SourceFilter {
     this.attr(this.filter, 'width', width);
     this.attr(this.filter, 'height', height);
     this.markDirty();
+  }
+
+  get mapResolution(): number {
+    return this.resolution;
+  }
+
+  /**
+   * Map pixels per CSS px (quality profile). Clears the cache: the next
+   * upsert of each lens regenerates its map at the new resolution.
+   */
+  setResolution(resolution: number): void {
+    if (resolution === this.resolution) return;
+    this.resolution = resolution;
+    this.cache.clear();
   }
 
   setActive(active: boolean): void {
@@ -262,7 +282,7 @@ export class SourceFilter {
       result: `k${n}`,
     });
     const blur = add('feGaussianBlur', { in: 'SourceGraphic', stdDeviation: 0, result: `b${n}` });
-    const saturate = add('feColorMatrix', { in: 'SourceGraphic', type: 'saturate', values: 1, result: `s${n}` });
+    const saturate = add('feColorMatrix', { in: 'SourceGraphic', type: 'matrix', values: saturationMatrix(1, false), result: `s${n}` });
     const displacements: SVGElement[] = [];
     const regionNodes: SVGElement[] = [image, mask];
     if (!chromatic) {
@@ -325,7 +345,7 @@ export class SourceFilter {
     this.attr(nodes.blur, 'stdDeviation', round(input.blur));
     // stdDeviation 0 is not handled consistently across engines: bypass instead.
     this.attr(nodes.saturate, 'in', input.blur > 0 ? `b${record.index}` : 'SourceGraphic');
-    this.attr(nodes.saturate, 'values', round(input.saturation / 100));
+    this.attr(nodes.saturate, 'values', saturationMatrix(input.saturation / 100, input.blur > 0));
     const scale = 2 * input.refraction;
     if (nodes.displacements.length === 1) {
       this.attr(nodes.displacements[0]!, 'scale', round(scale));
@@ -385,3 +405,25 @@ export class SourceFilter {
 }
 
 const round = (v: number) => Math.round(v * 100) / 100;
+const r4 = (v: number) => Math.round(v * 10000) / 10000;
+
+/**
+ * `saturate` as an explicit matrix (same coefficients as the spec's
+ * type="saturate"), so the alpha row can be chosen too.
+ *
+ * With `normalizeAlpha` the alpha row is `0 0 0 0 1`. feColorMatrix works on
+ * non-premultiplied colour, so after the blur this divides each pixel by the
+ * kernel weight that fell inside the filter region: near the source edge the
+ * blur averages only the content that exists instead of fading towards
+ * transparent (which let the sharp source show through under the lens).
+ * Requires an opaque GlassSource; without blur the alpha row is the identity.
+ */
+export function saturationMatrix(s: number, normalizeAlpha: boolean): string {
+  const rows = [
+    [0.213 + 0.787 * s, 0.715 - 0.715 * s, 0.072 - 0.072 * s, 0, 0],
+    [0.213 - 0.213 * s, 0.715 + 0.285 * s, 0.072 - 0.072 * s, 0, 0],
+    [0.213 - 0.213 * s, 0.715 - 0.715 * s, 0.072 + 0.928 * s, 0, 0],
+    normalizeAlpha ? [0, 0, 0, 0, 1] : [0, 0, 0, 1, 0],
+  ];
+  return rows.map((r) => r.map(r4).join(' ')).join('  ');
+}

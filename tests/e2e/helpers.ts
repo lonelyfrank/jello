@@ -30,6 +30,18 @@ export interface LabHook {
   };
   componentRects(): Rect[];
   filterId(): string;
+  options(): Record<string, unknown>;
+  compareStatus(): ContextStatus | null;
+  lenses(): { main: string[]; compare: string[] | null; active: string | null; activeCompare: string | null; components: string[] };
+  map(): { surface: string; object: string; key: string; inUse: boolean } | null;
+  navbar: {
+    rect: Rect | null;
+    frames: number;
+    selected: string;
+    compareSelected: string | null;
+    pressedItem: string | null;
+    pressed: boolean;
+  };
 }
 
 declare global {
@@ -72,10 +84,11 @@ export async function lab<T>(page: Page, body: string): Promise<T> {
   return page.evaluate(`(async (h) => { ${body} })(window.__jello)`) as Promise<T>;
 }
 
-/** On narrow layouts the panel is collapsed behind a toggle. */
+/** On narrow layouts the panel is collapsed behind a toggle; sections may be closed. */
 export async function showPanel(page: Page) {
   const toggle = page.locator('#panelToggle');
   if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+  await page.evaluate(() => document.querySelectorAll<HTMLDetailsElement>('#panel details').forEach((d) => (d.open = true)));
 }
 
 /**
@@ -110,21 +123,24 @@ export async function setPath(page: Page, path: 'auto' | 'refraction' | 'satin' 
 export interface Capture {
   png: PNG;
   dpr: number;
-  /** Capsule rect relative to the captured stage, CSS px. */
+  /** Rect of the glass object (capsule or navbar) relative to the captured stage, CSS px. */
   capsule: Rect;
   stage: Rect;
 }
 
-export async function captureStage(page: Page, selector = '#stageMain'): Promise<Capture> {
-  const info = await page.evaluate((sel) => {
-    const stage = document.querySelector(sel)!.getBoundingClientRect();
-    const capsule = document.querySelector(`${sel} .capsule`)!.getBoundingClientRect();
-    return {
-      dpr: devicePixelRatio,
-      stage: { x: stage.x, y: stage.y, width: stage.width, height: stage.height },
-      capsule: { x: capsule.x - stage.x, y: capsule.y - stage.y, width: capsule.width, height: capsule.height },
-    };
-  }, selector);
+export async function captureStage(page: Page, selector = '#stageMain', target = '.capsule'): Promise<Capture> {
+  const info = await page.evaluate(
+    ([sel, tgt]) => {
+      const stage = document.querySelector(sel!)!.getBoundingClientRect();
+      const capsule = document.querySelector(`${sel} ${tgt}`)!.getBoundingClientRect();
+      return {
+        dpr: devicePixelRatio,
+        stage: { x: stage.x, y: stage.y, width: stage.width, height: stage.height },
+        capsule: { x: capsule.x - stage.x, y: capsule.y - stage.y, width: capsule.width, height: capsule.height },
+      };
+    },
+    [selector, target],
+  );
   const buf = await page.locator(selector).screenshot({ animations: 'disabled', caret: 'hide' });
   return { png: PNG.sync.read(buf), ...info };
 }

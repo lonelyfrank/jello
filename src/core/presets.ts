@@ -89,6 +89,33 @@ export const PRESETS: readonly Preset[] = [
       pressLight: 0.22,
     }),
   },
+  {
+    id: 'navbar',
+    label: 'Jello · navbar',
+    note:
+      'Calibrato sulla navbar del laboratorio (barra larga e bassa sopra contenuti che scorrono): fascia stretta, ' +
+      'rifrazione moderata sul perimetro, centro neutro e leggibile, blur medio. Pressione con poca scala, più luce.',
+    approximation: false,
+    params: make({
+      band: 16,
+      refraction: 10,
+      profile: 'smooth',
+      blur: 4,
+      saturation: 160,
+      tint: '#ffffff',
+      tintOpacity: 0.14,
+      light: 0.65,
+      lightAngle: 330,
+      shadow: 0.2,
+      shadowBlur: 26,
+      shadowOffset: 8,
+      damping: 0.8,
+      stretch: 0,
+      pressScale: 1.02,
+      pressRefraction: 0.4,
+      pressLight: 0.45,
+    }),
+  },
 ];
 
 export function presetById(id: string): Preset | undefined {

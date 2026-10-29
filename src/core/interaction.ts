@@ -59,7 +59,10 @@ export function bindPress(surface: GlassSurface, el: HTMLElement = surface.host)
     on(el, 'keyup', (e) => {
       if (PRESS_KEYS.has(e.key)) release();
     }),
-    on(el, 'focusout', release),
+    // Focus moving between controls inside the host (a tab bar) is not the end of a press.
+    on(el, 'focusout', (e) => {
+      if (!el.contains(e.relatedTarget as Node | null)) release();
+    }),
   ];
   return () => {
     offs.forEach((off) => off());
