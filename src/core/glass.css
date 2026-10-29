@@ -1,0 +1,143 @@
+/* Jello glass material.
+ *
+ * Layers, bottom to top:
+ *   .jello-source   content that may be refracted (filter set by the renderer)
+ *   .jello-surface  material: tint, rim light, press light, shadow
+ *   foreground      host children, never filtered, never scaled
+ *
+ * The surface draws only light and tint; refraction and blur come from the
+ * active path. Setting light, tint and shadow to 0 leaves the bare optics.
+ */
+
+/* Zero specificity: integrators can position hosts and foreground freely. */
+:where(.jello-host) {
+  position: relative;
+  isolation: isolate;
+}
+:where(.jello-host) > :where(:not(.jello-surface)) {
+  position: relative;
+  z-index: 1;
+}
+.jello-host[data-jello-sizing='params'] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform;
+}
+
+.jello-surface {
+  --jello-px: 50%;
+  --jello-py: 50%;
+  --jello-press: 0;
+  --jello-hover: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: var(--jello-radius, 9999px);
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  background: rgb(var(--jello-tint, 255 255 255) / var(--jello-tint-a, 0.08));
+  box-shadow:
+    inset var(--jello-lx, 0) var(--jello-ly, 1px) 1px -0.5px rgb(255 255 255 / calc(var(--jello-light, 0.5) * 0.9)),
+    0 var(--jello-shadow-y, 10px) var(--jello-shadow-blur, 28px) -6px rgb(0 0 0 / var(--jello-shadow, 0.22));
+}
+
+/* Directional rim light: a thin ring brighter on the side facing the light,
+ * with a weaker reflection on the opposite side. */
+.jello-surface::before,
+.jello-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.jello-surface::before {
+  padding: 1.25px;
+  background: linear-gradient(
+    calc(var(--jello-light-angle, 315deg)),
+    rgb(255 255 255 / calc((var(--jello-light, 0.5) + var(--jello-hover) * 0.15 + var(--jello-press) * 0.2) * 0.95)) 0%,
+    rgb(255 255 255 / 0) 32%,
+    rgb(255 255 255 / 0) 64%,
+    rgb(255 255 255 / calc(var(--jello-light, 0.5) * 0.45)) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+/* Local light at the contact point while pressed. */
+.jello-surface::after {
+  background: radial-gradient(
+    circle at var(--jello-px) var(--jello-py),
+    rgb(255 255 255 / calc(var(--jello-press-light, 0.35) * 0.55)),
+    rgb(255 255 255 / 0) 62%
+  );
+  opacity: var(--jello-press);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .jello-host:hover > .jello-surface {
+    --jello-hover: 1;
+  }
+}
+
+/* Paths */
+.jello-surface[data-jello-path='satin'] {
+  -webkit-backdrop-filter: blur(var(--jello-blur, 2px)) saturate(var(--jello-saturation, 130%));
+  backdrop-filter: blur(var(--jello-blur, 2px)) saturate(var(--jello-saturation, 130%));
+}
+.jello-surface[data-jello-path='opaque'] {
+  background: var(--jello-opaque, rgb(246 246 248));
+  box-shadow:
+    0 0 0 1px var(--jello-opaque-edge, rgb(0 0 0 / 0.18)),
+    0 var(--jello-shadow-y, 10px) var(--jello-shadow-blur, 28px) -6px rgb(0 0 0 / var(--jello-shadow, 0.22));
+}
+.jello-surface[data-jello-path='opaque']::before,
+.jello-surface[data-jello-path='opaque']::after {
+  display: none;
+}
+
+/* System preferences. The renderer also switches to the opaque path, the
+ * CSS repeats it so the fallback holds even before scripts run. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .jello-surface {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: var(--jello-opaque, rgb(246 246 248));
+  }
+}
+@media (prefers-contrast: more) {
+  .jello-surface {
+    box-shadow: 0 0 0 1.5px var(--jello-contrast-edge, currentColor);
+  }
+}
+@media (forced-colors: active) {
+  .jello-source {
+    filter: none !important;
+  }
+  .jello-surface {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: Canvas;
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
+  .jello-surface::before,
+  .jello-surface::after {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jello-surface,
+  .jello-surface::before,
+  .jello-surface::after {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "engine": "chromium",
+  "major": 156,
+  "environment": "linux x64, Playwright 1.64.1, headless, progetto \"chromium\", viewport desktop",
+  "mobileEmulated": false,
+  "date": "2026-10-29",
+  "checks": [
+    "refraction visible on grid (blur 0, tint 0)",
+    "refraction on/off differ; refraction 0 equals the source",
+    "neutral centre, all four edges displaced, nothing outside the lens",
+    "explicit dome parameter bends the centre",
+    "aligned after move, inner scroll and viewport resize",
+    "aligned after page scroll",
+    "foreground outside the filter, not displaced",
+    "translation updates attributes only, no map regeneration"
+  ],
+  "metrics": {
+    "rimMeanDifference": 24.42645164486731,
+    "passThroughMeanDifference": 0.00004275438861224284,
+    "centreMeanDifference": 0,
+    "topMeanDifference": 29.436983471074573,
+    "bottomMeanDifference": 9.385704874835314,
+    "leftMeanDifference": 38.07558578987137,
+    "rightMeanDifference": 25.340513983371096,
+    "foregroundRimDifference": 0.00009908838684106222
+  }
+}

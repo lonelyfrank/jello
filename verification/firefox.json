@@ -1,0 +1,27 @@
+{
+  "engine": "firefox",
+  "major": 157,
+  "environment": "linux x64, Playwright 1.64.1, headless, progetto \"firefox\", viewport desktop",
+  "mobileEmulated": false,
+  "date": "2026-10-29",
+  "checks": [
+    "refraction visible on grid (blur 0, tint 0)",
+    "refraction on/off differ; refraction 0 equals the source",
+    "neutral centre, all four edges displaced, nothing outside the lens",
+    "explicit dome parameter bends the centre",
+    "aligned after move, inner scroll and viewport resize",
+    "aligned after page scroll",
+    "foreground outside the filter, not displaced",
+    "translation updates attributes only, no map regeneration"
+  ],
+  "metrics": {
+    "rimMeanDifference": 22.499653190645983,
+    "passThroughMeanDifference": 0.00009808359740455711,
+    "centreMeanDifference": 0,
+    "topMeanDifference": 29.436983471074573,
+    "bottomMeanDifference": 9.385704874835314,
+    "leftMeanDifference": 32.69501133786837,
+    "rightMeanDifference": 20.74508692365837,
+    "foregroundRimDifference": 0.0018579072532699168
+  }
+}
