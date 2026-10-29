@@ -11,6 +11,7 @@ import { COMPONENT_TYPES } from '../../components/registry';
 import { INSPECTOR_SECTIONS, type FieldDescriptor, type InspectorSection } from '../../components/fields';
 import { BN_FIELDS, BN_FIELD_INDEX, OVERRIDE_PATHS, TAB_STYLE_FIELDS, rootField, type BnRoot, type BnTab, type BnTabStyle } from '../../components/bottom-navigation/model';
 import { BUILTIN_ICONS, BUILTIN_ICON_NAMES, iconTree, type IconRef, type SvgNode } from '../../components/icons';
+import { bindingState, type BindingState } from '../../components/document';
 import { FAMILIES, glassParams, SECTION_KEYS, supportReport, type Backend } from '../../model';
 import { applicability } from '../applicability';
 import type { LabSession } from '../session';
@@ -220,7 +221,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
             ))}
           </div>
         ) : (
-          <p className="hint">Nessun preset personale: salvane uno da Materiale nell’inspector.</p>
+          <p className="hint">Nessun materiale personale: crealo nel Material Lab o salvalo da Materiale nell’inspector.</p>
         )}
         <Messages />
       </section>
@@ -611,6 +612,21 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
   );
 }
 
+function linkNote(link: BindingState, name: string | null, personal: boolean): string {
+  switch (link) {
+    case 'linked':
+      return personal ? `Collegato a «${name}»: le modifiche fatte nel Material Lab arrivano anche qui.` : `Preset incluso «${name}».`;
+    case 'modified':
+      return `Basato su «${name}» · modificato in questa componente: non segue più il preset.`;
+    case 'outdated':
+      return `«${name}» è cambiato: aggiorna per riceverne le modifiche.`;
+    case 'diverged':
+      return `«${name}» è cambiato e anche questa componente: «Aggiorna dal preset» sostituisce i valori locali.`;
+    case 'embedded':
+      return name ? 'Materiale incluso nella componente (il preset non esiste più).' : 'Materiale incluso nella componente.';
+  }
+}
+
 const MATERIAL_GROUPS: [string, string][] = [
   ['material', 'Aspetto'],
   ['optics', 'Ottica'],
@@ -628,7 +644,7 @@ function MaterialPanel({ session }: { session: LabSession }) {
   const doc = binding.document;
   const params = useMemo(() => glassParams(doc), [doc]);
   const preset = library.find((i) => i.id === binding.preset);
-  const modified = preset ? JSON.stringify(glassParams(preset.doc)) !== JSON.stringify(params) : false;
+  const link = bindingState(binding, preset?.doc);
   const path = report?.main.effective ?? 'refraction';
   const effective: Backend = path === 'refraction' ? 'svg' : 'css';
   const support = useMemo(() => new Map(supportReport(effective).map((r) => [r.key, r])), [effective]);
@@ -663,9 +679,16 @@ function MaterialPanel({ session }: { session: LabSession }) {
           {!preset && <option value="">{doc.name} (incluso nella componente)</option>}
         </select>
       </label>
-      <p className="hint" id="cmpMaterialNote">
-        {preset ? `Basato su «${preset.name}»${modified ? ' · modificato in questa componente' : ''}.` : 'Materiale incluso nella componente.'} Famiglia {doc.family}: il preset originale non cambia.
+      <p className="hint" id="cmpMaterialNote" data-link={link}>
+        {linkNote(link, preset?.name ?? null, preset?.origin === 'user')}
       </p>
+      {(link === 'modified' || link === 'diverged' || link === 'outdated') && (
+        <div className="button-row">
+          <button type="button" className="button small" id="cmpUpdateFromPreset" onClick={() => session.resetComponentMaterial()}>
+            <Icon name="restore" /> Aggiorna dal preset
+          </button>
+        </div>
+      )}
       {MATERIAL_GROUPS.map(([g, label]) => (
         <div key={g}>
           <h3 className="panel-sub">{label}</h3>
@@ -676,8 +699,8 @@ function MaterialPanel({ session }: { session: LabSession }) {
       {COMPONENT_BEHAVIOR.map((k) => field(PARAM_INDEX[k]))}
       <p className="hint">Dimensioni e forma della superficie vengono dal layout della componente; molla ed elasticità valgono solo per lenti trascinabili.</p>
       <div className="button-row">
-        <button type="button" className="button small" id="cmpResetMaterial" onClick={() => session.resetComponentMaterial()}>
-          Ripristina valori del preset
+        <button type="button" className="button small" id="cmpResetMaterial" disabled={link === 'linked'} onClick={() => session.resetComponentMaterial()}>
+          {preset ? 'Ripristina valori del preset' : 'Ripristina valori iniziali'}
         </button>
       </div>
       <form

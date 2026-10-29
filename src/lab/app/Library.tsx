@@ -37,6 +37,8 @@ export function Library({ session }: { session: LabSession }) {
   const doc = useLab((s) => s.doc);
   const options = useLab((s) => s.options);
   const skipped = useLab((s) => s.librarySkipped);
+  const components = useLab((s) => s.components);
+  const builder = useLab((s) => s.builder);
   const [query, setQuery] = useState('');
   const [renaming, setRenaming] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -47,6 +49,7 @@ export function Library({ session }: { session: LabSession }) {
   const personal = visible.filter((i) => i.origin === 'user');
   const reducedMotion = useLab((s) => s.report?.main.motionReduced ?? false);
   const scene = options.mode === 'scene';
+  const usedBy = useMemo(() => session.componentsUsing(materialId).length, [session, materialId, components, builder]);
 
   const card = (i: LibraryItem) => {
     const active = i.id === materialId;
@@ -107,6 +110,12 @@ export function Library({ session }: { session: LabSession }) {
             <span className="active-name" id="activeOrigin" data-origin={origin}>
               {origin === 'builtin' ? (modified ? 'Preset incluso · modificato, non nella libreria' : 'Preset incluso · sola lettura') : 'Personale · salvataggio automatico'}
             </span>
+            {usedBy > 0 && (
+              <span className="active-name" id="activeUsage">
+                Usato da {usedBy} {usedBy === 1 ? 'componente' : 'componenti'}
+                {origin === 'user' ? ': seguono le modifiche' : ''}
+              </span>
+            )}
           </span>
         </div>
         <div className="library-actions" role="group" aria-label="Azioni sul materiale">
@@ -115,6 +124,15 @@ export function Library({ session }: { session: LabSession }) {
           </button>
           <button type="button" className="button small" id="libDuplicate" onClick={() => void session.duplicate()}>
             <Icon name="copy" /> {origin === 'builtin' && modified ? 'Salva come copia' : 'Duplica'}
+          </button>
+          <button
+            type="button"
+            className="button small"
+            id="libUseInComponent"
+            title={`Applica questo materiale a «${builder.doc.name}» nel Component Builder`}
+            onClick={() => void session.useMaterialInComponent()}
+          >
+            <Icon name="link" /> {origin === 'builtin' && modified ? 'Salva e usa nella componente' : 'Usa nella componente'}
           </button>
           <button
             type="button"

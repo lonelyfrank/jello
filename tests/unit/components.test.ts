@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   addTab,
+  bindingState,
+  bindMaterial,
+  materialRevision,
   BN_FIELDS,
   COMPONENT_TEMPLATES,
   componentTemplate,
@@ -22,7 +25,7 @@ import {
   withRootField,
   type ComponentDocument,
 } from '../../src/components';
-import { BUILTIN_MATERIALS, MATERIALS, materialDefinition } from '../../src/model';
+import { BUILTIN_MATERIALS, createGlassDocument, MATERIALS, materialDefinition, withGlassParams } from '../../src/model';
 import { defaultParams, serializeParams } from '../../src/core/params';
 
 const bt = () => componentTemplate('bt-darts')!.create();
@@ -266,5 +269,45 @@ describe('svg icons', () => {
     const r = parseComponent(d);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors.join()).toMatch(/onload non ammesso/);
+  });
+});
+
+describe('material binding', () => {
+  const personal = (blur: number, name = 'Mio vetro') => withGlassParams(createGlassDocument({ id: 'user-1', name }), { ...defaultParams(), blur });
+
+  it('a component applied from a preset follows it until edited locally', () => {
+    const v1 = personal(4);
+    const b = bindMaterial(v1, 'user-1');
+    expect(b.revision).toBe(materialRevision(v1));
+    expect(bindingState(b, v1)).toBe('linked');
+    // The preset changes in the Material Lab: the untouched component should follow.
+    const v2 = personal(9);
+    expect(bindingState(b, v2)).toBe('outdated');
+    expect(bindingState(bindMaterial(v2, 'user-1'), v2)).toBe('linked');
+    // Edited in the component: it keeps its own values…
+    const local = { ...b, document: withGlassParams(v1, { ...defaultParams(), blur: 12 }) };
+    expect(bindingState(local, v1)).toBe('modified');
+    // …and when both changed, updating would replace them.
+    expect(bindingState(local, v2)).toBe('diverged');
+  });
+
+  it('renaming counts, timestamps and ids do not; a missing preset leaves the material embedded', () => {
+    const v1 = personal(4);
+    const b = bindMaterial(v1, 'user-1');
+    expect(bindingState(b, { ...v1, meta: { ...v1.meta, updatedAt: '2026-10-29T10:00:00Z' } })).toBe('linked');
+    expect(bindingState(b, { ...v1, name: 'Nuovo nome' })).toBe('outdated');
+    expect(bindingState(b, undefined)).toBe('embedded');
+    expect(bindingState(bindMaterial(v1, null), v1)).toBe('embedded');
+  });
+
+  it('the revision survives serialization; documents without it still parse', () => {
+    const d = { ...bt(), material: bindMaterial(personal(4), 'user-1') };
+    const r = parseComponent(JSON.parse(serializeComponent(d)));
+    expect(r.ok && r.doc.material).toEqual(d.material);
+    const raw = clone(d) as unknown as { material: Record<string, unknown> };
+    delete raw.material.revision;
+    const old = parseComponent(raw);
+    expect(old.ok && old.doc.material.revision).toBeNull();
+    expect(old.ok && bindingState(old.doc.material, personal(9))).toBe('modified');
   });
 });

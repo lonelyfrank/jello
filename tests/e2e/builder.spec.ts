@@ -199,3 +199,83 @@ test.describe('component builder', () => {
     for (const t of await previewTabs(page).all()) expect((await t.boundingBox())!.width).toBeGreaterThanOrEqual(43.5);
   });
 });
+
+test.describe('personal materials in components', () => {
+  const surfaceBlur = (page: Page) => preview(page).locator('.jello-surface').evaluate((el) => (el as HTMLElement).style.getPropertyValue('--jello-blur'));
+  const componentBlur = (page: Page) => lab<number>(page, 'return h.builder.doc.material.document.material.blur');
+
+  async function setLabBlur(page: Page, v: number) {
+    await page.locator('#ws-material').click();
+    await controls(page);
+    await page.locator('#num-blur').fill(String(v));
+    await expect.poll(() => lab<number>(page, 'return h.params.blur')).toBe(v);
+    await page.locator('#ws-builder').click();
+    await controls(page);
+  }
+
+  test('a material customised in the Material Lab is used, followed and re-synced by components', async ({ page }) => {
+    await openLab(page, 'scene=app&animate=0');
+    await controls(page);
+    // Customise: a personal copy of the built-in, with its own blur.
+    await page.locator('#libDuplicate').click();
+    await expect(page.locator('#activeOrigin')).toHaveAttribute('data-origin', 'user');
+    const id = await lab<string>(page, 'return h.materialId()');
+    await page.locator('#num-blur').fill('7');
+
+    // Material Lab → component.
+    await page.locator('#libUseInComponent').click();
+    expect(await lab(page, 'return h.workspace()')).toBe('builder');
+    await controls(page);
+    expect(await lab(page, 'return h.builder.doc.material.preset')).toBe(id);
+    await expect.poll(() => surfaceBlur(page)).toBe('7px');
+    await expect(page.locator('#cmpMaterialNote')).toHaveAttribute('data-link', 'linked');
+    await expect(page.locator('#cmpMaterial')).toHaveValue(id);
+
+    // Changing the material in the Material Lab reaches the component.
+    await setLabBlur(page, 11);
+    await expect.poll(() => surfaceBlur(page)).toBe('11px');
+    expect(await componentBlur(page)).toBe(11);
+    await page.locator('#ws-material').click();
+    await controls(page);
+    await expect(page.locator('#activeUsage')).toContainText('Usato da 1 componente');
+    await page.locator('#ws-builder').click();
+    await controls(page);
+
+    // Edited in the component: it keeps its own value…
+    await page.locator('#bl-material-glass').click();
+    await page.locator('#num-blur').fill('3');
+    await expect(page.locator('#cmpMaterialNote')).toHaveAttribute('data-link', 'modified');
+    await setLabBlur(page, 13);
+    expect(await componentBlur(page)).toBe(3);
+    await expect(page.locator('#cmpMaterialNote')).toHaveAttribute('data-link', 'diverged');
+    // …until it is updated from the preset, and it follows again.
+    await page.locator('#cmpUpdateFromPreset').click();
+    await expect.poll(() => surfaceBlur(page)).toBe('13px');
+    await expect(page.locator('#cmpMaterialNote')).toHaveAttribute('data-link', 'linked');
+
+    // A saved component that is closed follows too, and keeps it after a reload.
+    await page.locator('#cmpSave').click();
+    const saved = await lab<string>(page, 'return h.builder.state.componentId');
+    await lab(page, `h.builder.open('bt-darts')`);
+    await setLabBlur(page, 15);
+    await lab(page, 'await h.flush()');
+    await page.goto(`./?workspace=builder&component=${saved}&scene=app&animate=0`);
+    await page.waitForSelector('html[data-ready=true]');
+    await settle(page);
+    expect(await componentBlur(page)).toBe(15);
+    expect(await lab(page, 'return h.builder.state.modified')).toBe(false);
+    await expect.poll(() => surfaceBlur(page)).toBe('15px');
+  });
+
+  test('an edited built-in is saved as a personal copy before a component uses it', async ({ page }) => {
+    await openLab(page, 'scene=app&animate=0');
+    await controls(page);
+    await page.locator('#num-blur').fill('6');
+    await expect(page.locator('#libUseInComponent')).toContainText('Salva e usa');
+    await page.locator('#libUseInComponent').click();
+    const preset = await lab<string>(page, 'return h.builder.doc.material.preset');
+    expect(preset).toMatch(/^user-/);
+    expect(await lab(page, `return h.library().find((i) => i.id === '${preset}')?.origin`)).toBe('user');
+    expect(await componentBlur(page)).toBe(6);
+  });
+});

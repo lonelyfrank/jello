@@ -35,6 +35,7 @@ import { defaultParams, type GlassParams, type ParamKey } from '../core/params';
 import { buildPackage, packageZip, type PackageKind, type RuntimeBundle } from '../export/package';
 import { exportAdapter, type ExportRequest } from '../export/adapters';
 import {
+  bindingState,
   bindMaterial,
   COMPONENT_TEMPLATES,
   componentTemplate,
@@ -239,6 +240,7 @@ export class LabSession {
     });
     if (this.image) this.controller.setLocalImage(this.image.url);
     this.controller.onReport((r) => this.store.set({ report: r }));
+    this.syncBuilderMaterial();
     if (this.state.workspace === 'builder') this.showBuilderPreview();
     this.store.set({ report: this.controller.report() });
     // The address bar always shows the scenario being looked at.
@@ -312,6 +314,7 @@ export class LabSession {
     const report = this.state.workspace === 'material' ? this.controller?.setMaterial(doc) : undefined;
     const modified = opts.dirty === false ? false : this.state.origin === 'builtin' ? true : this.state.modified;
     this.store.set({ doc, modified, library: this.syncLibrary(doc) });
+    if (this.state.origin === 'user') this.followPreset(this.state.materialId);
     this.afterChange();
     return report;
   }
@@ -458,7 +461,8 @@ export class LabSession {
       await this.repo.putMaterial(rec);
       this.userMaterials.set(rec.id, rec);
     }
-    const b = s.builder;
+    if (s.origin === 'user') await this.propagatePreset(s.materialId);
+    const b = this.state.builder;
     if (b.origin === 'user') {
       const prev = this.userComponents.get(b.componentId);
       // The document is stored exactly as edited: reopening it gives the same JSON.
@@ -643,8 +647,10 @@ export class LabSession {
   setWorkspace(ws: Workspace): void {
     if (ws === this.state.workspace) return;
     this.store.set({ workspace: ws });
-    if (ws === 'builder') this.showBuilderPreview();
-    else this.hideBuilderPreview();
+    if (ws === 'builder') {
+      this.syncBuilderMaterial();
+      this.showBuilderPreview();
+    } else this.hideBuilderPreview();
     this.autosaver.schedule();
     this.scheduleUrl();
   }
@@ -666,6 +672,12 @@ export class LabSession {
     this.overlay?.destroy();
     this.overlay = null;
     this.controller?.hideComponent(this.state.doc);
+  }
+
+  /** Brings the open component up to date with a preset that changed while it was closed. */
+  private syncBuilderMaterial() {
+    const id = this.state.builder.doc.material.preset;
+    if (id) this.followPreset(id);
   }
 
   private patchBuilder(patch: Partial<BuilderState>) {
@@ -833,19 +845,71 @@ export class LabSession {
     this.applyComponent({ ...doc, material: { ...doc.material, document: withGlassParams(m, { ...p, [key]: value }) } });
   }
 
-  /** Applies a library material (built-in or personal) to the component. */
+  /** Applies a library material (built-in or personal) to the component, linked to it. */
   applyMaterialPreset(id: string): void {
     const item = this.state.library.find((i) => i.id === id);
     if (!item) return;
     this.applyComponent({ ...this.state.builder.doc, material: bindMaterial(item.doc, id) });
   }
 
-  /** Back to the values of the preset the material came from (or the defaults). */
+  /** Back to the preset's current content (the component follows it again), or to the defaults without a preset. */
   resetComponentMaterial(): void {
     const doc = this.state.builder.doc;
     const preset = doc.material.preset ? this.state.library.find((i) => i.id === doc.material.preset) : undefined;
-    const params = preset ? glassParams(preset.doc) : defaultParams();
-    this.applyComponent({ ...doc, material: { ...doc.material, document: withGlassParams(doc.material.document, params) } });
+    if (preset) return this.applyMaterialPreset(preset.id);
+    this.applyComponent({ ...doc, material: { ...doc.material, document: withGlassParams(doc.material.document, defaultParams()) } });
+  }
+
+  /**
+   * The open component follows a library material it is linked to and has
+   * not edited (state `outdated`). Components with their own values keep
+   * them; the inspector offers «Aggiorna dal preset».
+   */
+  private followPreset(id: string): void {
+    const b = this.state.builder;
+    if (b.doc.material.preset !== id) return;
+    const item = this.state.library.find((i) => i.id === id);
+    if (!item || bindingState(b.doc.material, item.doc) !== 'outdated') return;
+    this.applyComponent({ ...b.doc, material: bindMaterial(item.doc, id) });
+  }
+
+  /** Saved components that are not open follow the material too (autosave, debounced). */
+  private async propagatePreset(id: string): Promise<void> {
+    const item = this.state.library.find((i) => i.id === id);
+    if (!item) return;
+    let components = this.state.components;
+    for (const rec of this.userComponents.values()) {
+      if (rec.id === this.state.builder.componentId || rec.doc.material.preset !== id) continue;
+      if (bindingState(rec.doc.material, item.doc) !== 'outdated') continue;
+      const next: StoredComponent = { ...rec, doc: { ...rec.doc, material: bindMaterial(item.doc, id) }, updatedAt: now() };
+      await this.repo.putComponent(next);
+      this.userComponents.set(next.id, next);
+      components = components.map((c) => (c.id === next.id ? { ...c, doc: next.doc } : c));
+    }
+    if (components !== this.state.components) this.store.set({ components });
+  }
+
+  /** Components (saved, and the one open) whose material comes from library entry `id`. */
+  componentsUsing(id: string): string[] {
+    const names = new Set<string>();
+    for (const c of this.state.components) if (c.origin === 'user' && c.doc.material.preset === id) names.add(c.id);
+    if (this.state.builder.doc.material.preset === id) names.add(this.state.builder.componentId);
+    return [...names];
+  }
+
+  /**
+   * Material Lab → builder: the material being edited goes on the component
+   * open in the builder. An edited built-in is first saved as a personal
+   * copy, so the component links to something that exists in the library.
+   */
+  async useMaterialInComponent(): Promise<void> {
+    if (this.state.origin === 'builtin' && this.state.modified) await this.saveAsCopy();
+    else await this.autosaver.flush();
+    const id = this.state.materialId;
+    this.applyMaterialPreset(id);
+    this.setWorkspace('builder');
+    this.selectElement('material');
+    this.notify(`«${this.state.doc.name}» applicato a «${this.state.builder.doc.name}». La componente segue le modifiche del materiale.`);
   }
 
   /** The component's material becomes a personal preset of the library (Material Lab selection unchanged). */
@@ -879,6 +943,7 @@ export class LabSession {
     if (b.origin === 'template' && b.modified) this.notify(`Modifiche al template «${b.doc.name}» scartate.`);
     const doc = item.origin === 'template' ? componentTemplate(id)!.create() : item.doc;
     this.store.set({ builder: builderState(doc, id, item.origin, false) });
+    this.syncBuilderMaterial();
     if (this.state.workspace === 'builder') {
       this.controller?.updateComponent(doc);
       this.controller?.component?.setActiveTab(doc.root.defaultTab, false);

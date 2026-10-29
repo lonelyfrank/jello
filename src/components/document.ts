@@ -27,7 +27,7 @@
  */
 
 import * as z from 'zod/mini';
-import { formatIssues, ID_PATTERN, type MaterialDocument } from '../model/document';
+import { contentHash, formatIssues, ID_PATTERN, type MaterialDocument } from '../model/document';
 import { parseMaterial } from '../model/migrate';
 import { builtinMaterial } from '../model/builtins';
 import { RUNTIME_VERSION, compareVersions, isVersion } from '../model/version';
@@ -56,7 +56,43 @@ export interface MaterialBinding {
   family: MaterialDocument['family'];
   /** Library entry the material came from (built-in or personal preset), if any. */
   preset: string | null;
+  /**
+   * Revision of the preset when it was applied (materialRevision). While the
+   * embedded document still has this revision the component follows the
+   * preset; once edited here it keeps its own values. null: unknown.
+   */
+  revision: string | null;
   document: MaterialDocument;
+}
+
+/** Content revision of a material: what it looks like and how it behaves (id and timestamps excluded). */
+export function materialRevision(doc: MaterialDocument): string {
+  const { name, family, familyVersion, material, geometry, behavior, quality, source, target } = doc;
+  return contentHash(JSON.stringify({ name, family, familyVersion, material, geometry, behavior, quality, source, target }));
+}
+
+export type BindingState =
+  /** Same content as the preset: follows it. */
+  | 'linked'
+  /** Edited in the component; the preset has not changed since. */
+  | 'modified'
+  /** The preset changed after it was applied and the component is untouched: it should follow. */
+  | 'outdated'
+  /** Both changed: updating would drop the component's own values. */
+  | 'diverged'
+  /** No preset, or the preset no longer exists. */
+  | 'embedded';
+
+/** How a component's material relates to its preset right now. */
+export function bindingState(binding: MaterialBinding, preset: MaterialDocument | undefined): BindingState {
+  if (!binding.preset || !preset) return 'embedded';
+  const own = materialRevision(binding.document);
+  const current = materialRevision(preset);
+  if (own === current) return 'linked';
+  if (binding.revision === null) return 'modified';
+  const edited = own !== binding.revision;
+  const moved = current !== binding.revision;
+  return edited ? (moved ? 'diverged' : 'modified') : 'outdated';
 }
 
 export interface ComponentMeta {
@@ -104,7 +140,12 @@ const envelopeSchema = z.object({
   id: z.string().check(z.regex(ID_PATTERN)),
   name: z.string().check(z.minLength(1), z.maxLength(80)),
   runtime: z.object({ min: z.string() }),
-  material: z.object({ family: z.string(), preset: z.optional(z.nullable(z.string().check(z.regex(ID_PATTERN)))), document: z.unknown() }),
+  material: z.object({
+    family: z.string(),
+    preset: z.optional(z.nullable(z.string().check(z.regex(ID_PATTERN)))),
+    revision: z.optional(z.nullable(z.string().check(z.regex(/^[0-9a-f]{8}$/)))),
+    document: z.unknown(),
+  }),
   root: z.unknown(),
   meta: z.optional(
     z.object({
@@ -336,7 +377,7 @@ export function parseComponent(input: unknown): ComponentImport {
       id: e.id,
       name: e.name,
       runtime: { min: e.runtime.min },
-      material: { family: material.family, preset: e.material.preset ?? null, document: material },
+      material: { family: material.family, preset: e.material.preset ?? null, revision: e.material.revision ?? null, document: material },
       root,
       meta: { createdAt: e.meta?.createdAt ?? null, updatedAt: e.meta?.updatedAt ?? null, basedOn: e.meta?.basedOn ?? null, notes: e.meta?.notes ?? '' },
     },
@@ -356,7 +397,7 @@ export function parseComponentText(text: string): ComponentImport {
 /** Stable key order (the material document keeps its own order). */
 export function serializeComponent(doc: ComponentDocument): string {
   const { format, schemaVersion, type, typeVersion, id, name, runtime, material, root, meta } = doc;
-  return JSON.stringify({ format, schemaVersion, type, typeVersion, id, name, runtime, material: { family: material.family, preset: material.preset, document: orderMaterial(material.document) }, root, meta }, null, 2);
+  return JSON.stringify({ format, schemaVersion, type, typeVersion, id, name, runtime, material: { family: material.family, preset: material.preset, revision: material.revision, document: orderMaterial(material.document) }, root, meta }, null, 2);
 }
 
 function orderMaterial(m: MaterialDocument) {
@@ -364,8 +405,9 @@ function orderMaterial(m: MaterialDocument) {
   return { format, schemaVersion, id, name, family, familyVersion, runtime, material, geometry, behavior, quality, source, target, meta };
 }
 
+/** Applies `doc` (the current content of library entry `preset`) to a component. */
 export function bindMaterial(doc: MaterialDocument, preset: string | null): MaterialBinding {
-  return { family: doc.family, preset, document: doc };
+  return { family: doc.family, preset, revision: preset ? materialRevision(doc) : null, document: doc };
 }
 
 export interface CreateComponentOptions {

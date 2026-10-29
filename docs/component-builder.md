@@ -41,6 +41,31 @@ I template sono di sola lettura come i preset inclusi: le modifiche restano una 
 (sopravvive al ricaricamento) finché non si salva. Le componenti personali si rinominano,
 duplicano, eliminano, importano ed esportano in JSON dalla *Mia libreria*.
 
+## Materiali personalizzati nelle componenti
+
+Ogni materiale della libreria — preset inclusi e materiali personali creati o modificati nel
+Material Lab — si applica a una componente:
+
+- dal **Material Lab**: *Usa nella componente* applica il materiale aperto alla componente aperta
+  nel builder e passa al builder. Un preset incluso modificato ma non salvato diventa prima una
+  copia personale («Salva e usa nella componente»), così la componente è legata a qualcosa che
+  esiste nella libreria. Sotto il nome compare «Usato da N componenti».
+- dal **builder**: menu *Materiale* nell’inspector, o *La mia libreria → Preset materiali salvati*.
+
+Il materiale è **collegato** al preset (`material.preset` + `material.revision`, la revisione del
+contenuto quando è stato applicato) e resta incluso nella componente:
+
+| Stato | Quando | Cosa succede |
+| --- | --- | --- |
+| collegato | stesso contenuto del preset | le modifiche fatte nel Material Lab arrivano subito alla componente aperta; quelle salvate e chiuse si aggiornano al salvataggio automatico (o alla riapertura) |
+| modificato | parametri cambiati nella componente | la componente tiene i suoi valori e non segue più il preset |
+| preset cambiato | il preset è cambiato, la componente no | si allinea da sola |
+| entrambi cambiati | modifiche in tutti e due | «Aggiorna dal preset» sostituisce i valori locali (scelta esplicita) |
+| incluso | nessun preset, o preset eliminato | la componente usa la sua copia; export e riapertura non cambiano |
+
+Nomi, parametri, qualità e backend contano per la revisione; id e date no. Eliminare un materiale
+personale non rompe le componenti che lo usano: tengono la propria copia.
+
 ## BottomNavigation
 
 Componente generica estratta dalla navbar dimostrativa. La navbar del Material Lab **è** ora il
@@ -89,7 +114,7 @@ Lo stesso formato per builder, libreria, export e — in futuro — CLI, server 
   "format": "jello-component", "schemaVersion": 1,
   "type": "bottom-navigation", "typeVersion": 1,
   "id": "bt-darts", "name": "BT Darts", "runtime": { "min": "0.2.0" },
-  "material": { "family": "glass", "preset": "navbar", "document": { /* jello-material v2 completo */ } },
+  "material": { "family": "glass", "preset": "navbar", "revision": "1a2b3c4d", "document": { /* jello-material v2 completo */ } },
   "root": {
     "kind": "bottom-navigation", "id": "root", "label": "Navigazione principale",
     "semantics": "navigation", "defaultTab": "home",
@@ -109,8 +134,9 @@ Lo stesso formato per builder, libreria, export e — in futuro — CLI, server 
 - **Una tabella di descrittori** (`BN_FIELDS`, `src/components/bottom-navigation/model.ts`) dà
   per ogni proprietà percorso, sezione dell’inspector, etichetta, unità, intervallo, passo e default:
   validazione, controlli dell’editor e README dell’export sono generati da lì.
-- **Il materiale viaggia dentro la componente**: riaprire o esportare dà lo stesso risultato anche
-  se il preset di origine cambia o viene eliminato; `material.preset` conserva il legame.
+- **Il materiale viaggia dentro la componente**: riaprire o esportare non dipende dalla libreria;
+  `material.preset` e `material.revision` conservano il legame (sezione precedente). `revision` è
+  facoltativo: un documento senza è considerato «modificato» e non segue il preset da solo.
 - **Nessuna funzione nel JSON**: le interazioni sono nomi di eventi e valori delle tab.
 - **Validazione** (Zod per involucro, tab e breakpoint; descrittori per le proprietà): atomica,
   con tutti i motivi. Valore mancante → default + avviso; sconosciuto → ignorato + avviso; non valido
