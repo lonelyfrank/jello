@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="it" data-theme="system">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Jello Glass Lab</title>
+    <meta name="description" content="Laboratorio per valutare il materiale glass di Jello: blur, rifrazione, luce e movimento separati." />
+  </head>
+  <body>
+    <a class="skip" href="#panel">Vai alle regolazioni</a>
+    <header class="lab-header">
+      <div class="brand">
+        <h1>Jello Glass Lab</h1>
+        <p class="brand-sub">Materiale glass · milestone 1</p>
+      </div>
+      <p class="status-chips" id="statusChips" aria-live="polite"></p>
+      <button class="header-button" id="panelToggle" type="button" aria-expanded="false" aria-controls="panel">
+        Regolazioni
+      </button>
+    </header>
+
+    <main class="lab" id="lab">
+      <section class="preview" aria-label="Anteprima del materiale">
+        <div class="stages" id="stages" data-compare="off">
+          <figure class="stage" id="stageMain" data-role="main">
+            <figcaption class="stage-label" id="stageMainLabel">Percorso selezionato</figcaption>
+            <div class="source" id="sourceMain">
+              <div class="scroller" tabindex="0" aria-label="Contenuto dietro la lente, scorrevole"></div>
+            </div>
+            <div class="overlay">
+              <div class="capsule" id="capsuleMain" tabindex="0" role="group"
+                aria-label="Capsula glass trascinabile. Usa le frecce per spostarla.">
+                <span class="capsule-content">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12 3.2c3.4 4 6 7.4 6 10.4a6 6 0 0 1-12 0c0-3 2.6-6.4 6-10.4Z" />
+                    <path d="M9.4 14.6a2.8 2.8 0 0 0 2.6 2.3" />
+                  </svg>
+                  <span class="capsule-label">Trascinami</span>
+                </span>
+              </div>
+              <div class="dock" id="dock">
+                <button class="glass-button" id="centerButton" type="button">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="12" r="3" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+                  </svg>
+                  <span>Centra</span>
+                </button>
+                <fieldset class="glass-segmented" id="sceneSegmented">
+                  <legend class="visually-hidden">Sfondo</legend>
+                  <label><input type="radio" name="segScene" value="grid" /><span>Griglia</span></label>
+                  <label><input type="radio" name="segScene" value="blocks" /><span>Blocchi</span></label>
+                  <label><input type="radio" name="segScene" value="photo" /><span>Foto</span></label>
+                  <span class="seg-indicator" aria-hidden="true"></span>
+                </fieldset>
+                <div class="glass-slider" id="refractionSlider">
+                  <label for="refractionRange" class="slider-label">Rifrazione</label>
+                  <div class="slider-track">
+                    <input id="refractionRange" type="range" min="-40" max="80" step="0.5" />
+                    <span class="slider-fill" aria-hidden="true"></span>
+                    <span class="glass-thumb" aria-hidden="true"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </figure>
+
+          <figure class="stage" id="stageCompare" data-role="compare" hidden>
+            <figcaption class="stage-label">Satinato (stessa scena)</figcaption>
+            <div class="source" id="sourceCompare">
+              <div class="scroller" tabindex="0" aria-label="Contenuto di confronto, scorrevole"></div>
+            </div>
+            <div class="overlay">
+              <div class="capsule" id="capsuleCompare" tabindex="0" role="group"
+                aria-label="Capsula di confronto, percorso satinato">
+                <span class="capsule-content">
+                  <span class="capsule-label">Satinato</span>
+                </span>
+              </div>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <aside class="panel" id="panel" aria-label="Regolazioni del materiale" tabindex="-1">
+        <div class="panel-inner" id="panelInner"></div>
+      </aside>
+    </main>
+    <script type="module" src="/src/lab/main.ts"></script>
+  </body>
+</html>
