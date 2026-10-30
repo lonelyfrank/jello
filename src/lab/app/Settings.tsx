@@ -26,7 +26,7 @@ export function SettingsPage({ session }: { session: LabSession }) {
   const edit = session.projects;
 
   return (
-    <div className="home" id="settingsPage">
+    <div className="home settings-page" id="settingsPage">
       <SideNav session={session} current="settings" />
       <main className="home-main settings" aria-label="Impostazioni">
         <h1>Impostazioni</h1>
@@ -118,99 +118,108 @@ function StatesReference() {
       <h2 id="s-states">Stati dell’interfaccia</h2>
       <p className="muted">Riferimento per costruire ogni schermata con gli stessi segnali.</p>
 
-      <h3 className="detail-sub">Pulsanti</h3>
-      <div className="state-row">
-        <button type="button" className="button primary">
-          Primario
-        </button>
-        <button type="button" className="button primary" disabled>
-          Disattivato
-        </button>
-        <button type="button" className="button">
-          Secondario
-        </button>
-        <button type="button" className="button" aria-busy="true" disabled>
-          <Ic name="loader" size={14} />
-          Esportazione…
-        </button>
-        <button type="button" className="button danger">
-          Elimina
-        </button>
-      </div>
-
-      <h3 className="detail-sub">Campi</h3>
-      <div className="state-row">
-        <label className="field">
-          <span>Normale</span>
-          <input defaultValue="8" aria-label="Campo normale" />
-        </label>
-        <label className="field">
-          <span>Errore</span>
-          <input defaultValue="7C4DZ" aria-invalid="true" aria-describedby="demo-err" />
-          <span id="demo-err" className="field-error">
-            Atteso un colore #rrggbb
-          </span>
-        </label>
-        <label className="field">
-          <span>Fuori intervallo · corretto da solo</span>
-          <input defaultValue="40" aria-label="Campo corretto" />
-          <span className="muted small">Hai scritto 64: il massimo per Sfocatura è 40.</span>
-        </label>
-      </div>
-
-      <h3 className="detail-sub">Salvataggio</h3>
-      <div className="state-row">
-        <StateChip kind="ok" icon="check">
-          Salvato
-        </StateChip>
-        <StateChip kind="neutral" icon="loader">
-          Salvataggio…
-        </StateChip>
-        <StateChip kind="danger" icon="alert">
-          Non salvato
-        </StateChip>
-        <StateChip kind="warn" icon="alert">
-          Spazio del browser esaurito · esporta il progetto
-        </StateChip>
-      </div>
-
-      <h3 className="detail-sub">Etichette di stato</h3>
-      <div className="state-row">
-        {CHIPS.map((c) => (
-          <StateChip key={c.label} kind={c.kind}>
-            {c.label}
-          </StateChip>
-        ))}
-      </div>
-
-      <h3 className="detail-sub">Interruttori</h3>
-      <div className="state-row">
-        <Switch id="demo-sw" checked={on} onChange={setOn} label="Riduci trasparenza" hint="Forza il percorso opaco" />
-      </div>
-
-      <h3 className="detail-sub">Vuoti e conferme</h3>
-      <div className="state-row">
-        <div className="empty small-empty">
-          <Ic name="heart" size={20} />
-          <strong>Nessun preferito</strong>
-          <span className="muted small">Usa ♡ su un materiale per aggiungerlo qui.</span>
-        </div>
-        <div className="empty small-empty">
-          <Ic name="search" size={20} />
-          <strong>Nessun risultato per “metallo”</strong>
-          <span className="muted small">Metal è in sviluppo: per ora prova “Vetro fumé”.</span>
-        </div>
-        <div className="confirm-sample" role="group" aria-label="Esempio di conferma">
-          <strong>Eliminare “Satinato chiaro”?</strong>
-          <span className="muted small">È usato da 1 componente. La componente passerà a una copia locale con gli stessi valori.</span>
-          <span className="row-actions">
-            <button type="button" className="button small">
-              Annulla
+      <div className="states-grid">
+        <div className="state-sample">
+          <h3 className="detail-sub">Pulsanti</h3>
+          <div className="state-row">
+            <button type="button" className="button primary">
+              Primario
             </button>
-            <button type="button" className="button small danger">
+            <button type="button" className="button primary" disabled>
+              Disattivato
+            </button>
+            <button type="button" className="button">
+              Secondario
+            </button>
+            <button type="button" className="button" aria-busy="true" disabled>
+              <Ic name="loader" size={14} />
+              Esportazione…
+            </button>
+            <button type="button" className="button danger">
               Elimina
             </button>
-          </span>
+          </div>
+        </div>
+        <div className="state-sample">
+          <h3 className="detail-sub">Campi</h3>
+          <div className="state-row">
+            <label className="field">
+              <span>Normale</span>
+              <input defaultValue="8" aria-label="Campo normale" />
+            </label>
+            <label className="field">
+              <span>Errore</span>
+              <input defaultValue="7C4DZ" aria-invalid="true" aria-describedby="demo-err" />
+              <span id="demo-err" className="field-error">
+                Atteso un colore #rrggbb
+              </span>
+            </label>
+            <label className="field">
+              <span>Fuori intervallo · corretto da solo</span>
+              <input defaultValue="40" aria-label="Campo corretto" />
+              <span className="muted small">Hai scritto 64: il massimo per Sfocatura è 40.</span>
+            </label>
+          </div>
+        </div>
+        <div className="state-sample">
+          <h3 className="detail-sub">Salvataggio</h3>
+          <div className="state-row">
+            <StateChip kind="ok" icon="check">
+              Salvato
+            </StateChip>
+            <StateChip kind="neutral" icon="loader">
+              Salvataggio…
+            </StateChip>
+            <StateChip kind="danger" icon="alert">
+              Non salvato
+            </StateChip>
+            <StateChip kind="warn" icon="alert">
+              Spazio del browser esaurito · esporta il progetto
+            </StateChip>
+          </div>
+        </div>
+        <div className="state-sample">
+          <h3 className="detail-sub">Etichette di stato</h3>
+          <div className="state-row">
+            {CHIPS.map((c) => (
+              <StateChip key={c.label} kind={c.kind}>
+                {c.label}
+              </StateChip>
+            ))}
+          </div>
+        </div>
+        <div className="state-sample">
+          <h3 className="detail-sub">Interruttori</h3>
+          <div className="state-row">
+            <Switch id="demo-sw" checked={on} onChange={setOn} label="Riduci trasparenza" hint="Forza il percorso opaco" />
+          </div>
+        </div>
+        <div className="state-sample">
+          <h3 className="detail-sub">Vuoti e conferme</h3>
+          <div className="state-row">
+            <div className="empty small-empty">
+              <Ic name="heart" size={20} />
+              <strong>Nessun preferito</strong>
+              <span className="muted small">Usa ♡ su un materiale per aggiungerlo qui.</span>
+            </div>
+            <div className="empty small-empty">
+              <Ic name="search" size={20} />
+              <strong>Nessun risultato per “metallo”</strong>
+              <span className="muted small">Metal è in sviluppo: per ora prova “Vetro fumé”.</span>
+            </div>
+            <div className="confirm-sample" role="group" aria-label="Esempio di conferma">
+              <strong>Eliminare “Satinato chiaro”?</strong>
+              <span className="muted small">È usato da 1 componente. La componente passerà a una copia locale con gli stessi valori.</span>
+              <span className="row-actions">
+                <button type="button" className="button small">
+                  Annulla
+                </button>
+                <button type="button" className="button small danger">
+                  Elimina
+                </button>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </section>

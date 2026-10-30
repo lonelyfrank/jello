@@ -14,12 +14,23 @@ export function sphereStyle(item: LibraryItem['doc']): React.CSSProperties {
   const [r, g, b] = hexToRgbSafe(p.tint);
   const a = (v: number) => Math.max(0, Math.min(1, v)).toFixed(2);
   return {
+    ['--sample-tint' as string]: `rgb(${r} ${g} ${b} / ${a(0.14 + p.tintOpacity * 0.75)})`,
+    ['--sample-blur' as string]: `${Math.min(8, p.blur / 2)}px`,
     ['--sphere' as string]:
       `radial-gradient(circle at 32% 28%, rgb(255 255 255 / ${a(0.55 + p.light * 0.45)}) 0 6%, ` +
       `rgb(255 255 255 / ${a(0.12 + p.light * 0.3)}) 18%, rgb(${r} ${g} ${b} / ${a(0.18 + p.tintOpacity * 0.9)}) 55%, ` +
       `rgb(12 15 18 / ${a(0.95 - p.blur / 80)}) 100%)`,
     ['--rim' as string]: `${(1 + Math.abs(p.refraction) / 16).toFixed(1)}px`,
   };
+}
+
+/** A glass sample over a shared test background, as in the design references. */
+export function MaterialThumbnail({ doc }: { doc: LibraryItem['doc'] }) {
+  return (
+    <span className="material-thumb" aria-hidden="true" style={sphereStyle(doc)}>
+      <span className="material-sample" />
+    </span>
+  );
 }
 
 const OBJECT_ICONS: Record<ObjectKind, string> = {
@@ -73,7 +84,7 @@ export function Library({ session }: { session: LabSession }) {
         data-origin={i.origin}
         onClick={() => session.openMaterial(i.id)}
       >
-        <span className="sphere" aria-hidden="true" style={sphereStyle(active ? doc : i.doc)} />
+        <MaterialThumbnail doc={active ? doc : i.doc} />
         <span className="preset-name" aria-hidden="true">
           {active && i.origin === 'user' ? doc.name : name}
         </span>
@@ -102,8 +113,41 @@ export function Library({ session }: { session: LabSession }) {
           <span className="visually-hidden">Cerca materiale</span>
           <input type="search" id="librarySearch" placeholder="Cerca materiale…" value={query} onChange={(e) => setQuery(e.target.value)} />
         </label>
+        <div className="lib-tabs" role="tablist" aria-label="Raccolte">
+          {(
+            [
+              ['jello', 'Jello', builtins.length],
+              ['mine', 'I miei', personal.length],
+              ['favorites', 'Preferiti', favs.length],
+            ] as const
+          ).map(([id, label, n]) => (
+            <button key={id} type="button" role="tab" className="lib-tab" id={`libTab-${id}`} aria-selected={tab === id} aria-controls="libPanel" onClick={() => session.setLibraryTab(id)}>
+              {label}
+              <span className="count-badge">{n}</span>
+            </button>
+          ))}
+        </div>
+        <div id="libPanel" role="tabpanel" aria-labelledby={`libTab-${tab}`}>
+          {shown.length ? (
+            <div className="preset-grid" role="group" aria-label={tab === 'jello' ? 'Preset ufficiali Jello · Glass' : tab === 'mine' ? 'Materiali personali' : 'Materiali preferiti'} id={tab === 'mine' ? 'personalGrid' : undefined}>
+              {shown.map(card)}
+            </div>
+          ) : q ? (
+            <EmptyState icon="search" title={`Nessun risultato per “${query}”`}>
+              Prova un altro nome o cambia raccolta.
+            </EmptyState>
+          ) : tab === 'favorites' ? (
+            <EmptyState icon="heart" title="Nessun preferito">
+              Usa il cuore su un materiale per aggiungerlo qui.
+            </EmptyState>
+          ) : tab === 'mine' ? (
+            <EmptyState icon="drop" title="Nessun materiale personale" action={<button type="button" className="button small" onClick={() => void session.newMaterial()}>Nuovo materiale</button>}>
+              Duplica un preset Jello o creane uno nuovo.
+            </EmptyState>
+          ) : null}
+        </div>
         <div className="active-material">
-          <span className="sphere sphere-lg" aria-hidden="true" style={sphereStyle(doc)} />
+          <MaterialThumbnail doc={doc} />
           <span className="active-text">
             {renaming !== null ? (
               <form
@@ -167,39 +211,6 @@ export function Library({ session }: { session: LabSession }) {
               <Icon name="trash" /> Elimina
             </button>
           )}
-        </div>
-        <div className="lib-tabs" role="tablist" aria-label="Raccolte">
-          {(
-            [
-              ['jello', 'Jello', builtins.length],
-              ['mine', 'I miei', personal.length],
-              ['favorites', 'Preferiti', favs.length],
-            ] as const
-          ).map(([id, label, n]) => (
-            <button key={id} type="button" role="tab" className="lib-tab" id={`libTab-${id}`} aria-selected={tab === id} aria-controls="libPanel" onClick={() => session.setLibraryTab(id)}>
-              {label}
-              <span className="count-badge">{n}</span>
-            </button>
-          ))}
-        </div>
-        <div id="libPanel" role="tabpanel" aria-labelledby={`libTab-${tab}`}>
-          {shown.length ? (
-            <div className="preset-grid" role="group" aria-label={tab === 'jello' ? 'Preset ufficiali Jello · Glass' : tab === 'mine' ? 'Materiali personali' : 'Materiali preferiti'} id={tab === 'mine' ? 'personalGrid' : undefined}>
-              {shown.map(card)}
-            </div>
-          ) : q ? (
-            <EmptyState icon="search" title={`Nessun risultato per “${query}”`}>
-              Prova un altro nome o cambia raccolta.
-            </EmptyState>
-          ) : tab === 'favorites' ? (
-            <EmptyState icon="heart" title="Nessun preferito">
-              Usa il cuore su un materiale per aggiungerlo qui.
-            </EmptyState>
-          ) : tab === 'mine' ? (
-            <EmptyState icon="drop" title="Nessun materiale personale" action={<button type="button" className="button small" onClick={() => void session.newMaterial()}>Nuovo materiale</button>}>
-              Duplica un preset Jello o creane uno nuovo.
-            </EmptyState>
-          ) : null}
         </div>
         {skipped.length > 0 && <p className="param-note">Non leggibili: {skipped.join('; ')}</p>}
         <p className="side-caption">Altre famiglie · in sviluppo, non utilizzabili</p>

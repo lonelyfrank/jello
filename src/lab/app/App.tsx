@@ -137,20 +137,13 @@ export function App({ session }: { session: LabSession }) {
               {projects.length > 1 ? <ProjectSwitch session={session} /> : null}
               {isBuilder ? (
                 <>
-                  <span>Componenti</span>
-                  <span aria-hidden="true">/</span>
-                  <span id="crumbType">{COMPONENTS.get(builder.doc.type)?.name ?? builder.doc.type}</span>
-                  <span aria-hidden="true">/</span>
+                  <span className="visually-hidden" id="crumbType">{COMPONENTS.get(builder.doc.type)?.name ?? builder.doc.type}</span>
                   <span className="crumb-current" id="crumbComponent" aria-current="page">
                     {builder.doc.name}
                   </span>
                 </>
               ) : (
                 <>
-                  <span>Materiali</span>
-                  <span aria-hidden="true">/</span>
-                  <span>Glass</span>
-                  <span aria-hidden="true">/</span>
                   <span className="crumb-current" id="crumbPreset" aria-current="page">
                     {doc.name}
                   </span>
@@ -193,6 +186,7 @@ export function App({ session }: { session: LabSession }) {
                 className="header-button"
                 id="exportJson"
                 type="button"
+                title="Esporta JSON"
                 onClick={() => {
                   if (toggle.current && toggle.current.offsetParent !== null && !layout.drawer) session.setDrawer(true);
                   session.exportJson();
@@ -214,8 +208,9 @@ export function App({ session }: { session: LabSession }) {
                 <Icon name="download" />
                 Esporta JSON
               </button>
-              <button className="header-button panel-toggle" id="panelToggle" type="button" ref={toggle} aria-expanded={layout.drawer} aria-controls="controls" onClick={() => session.setDrawer(!layout.drawer)}>
-                Regolazioni
+              <button className="header-button panel-toggle" id="panelToggle" type="button" ref={toggle} aria-label="Regolazioni" aria-expanded={layout.drawer} aria-controls="controls" onClick={() => session.setDrawer(!layout.drawer)}>
+                <Ic name="gear" />
+                <span className="panel-toggle-label">Regolazioni</span>
               </button>
             </div>
           </>
@@ -305,6 +300,7 @@ export function App({ session }: { session: LabSession }) {
       <DropOverlay session={session} />
       {notice && (
         <div className="notice" id="notice" role="status">
+          <Ic name="info" />
           <span>{notice.text}</span>
           {notice.undo && (
             <button type="button" className="button small" id="noticeUndo" onClick={() => session.undoDiscard()}>

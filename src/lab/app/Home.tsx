@@ -3,7 +3,7 @@ import { VERIFICATION } from '../../stage/verification';
 import { countColors, countIcons, PLATFORM_LABEL, type ProjectDoc } from '../../project/types';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
-import { sphereStyle } from './Library';
+import { MaterialThumbnail } from './Library';
 import { Ic, StateChip, type IcName } from './ui';
 
 const BASE = import.meta.env.BASE_URL;
@@ -192,9 +192,7 @@ export function Home({ session }: { session: LabSession }) {
                   session.setPage('lab', 'material');
                 }}
               >
-                <span className="mat-thumb">
-                  <span className="sphere" style={sphereStyle(m.doc)} />
-                </span>
+                <MaterialThumbnail doc={m.doc} />
                 <span className="mat-tile-meta">
                   <span className="mat-tile-name">{m.name}</span>
                   <span className="muted small">{m.origin === 'user' ? 'I miei' : 'Jello'}</span>

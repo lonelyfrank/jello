@@ -87,7 +87,7 @@ export function Properties({ session }: { session: LabSession }) {
     <div className="panel-inner" id="panelInner">
       <div className="panel-head">
         <div className="panel-heading">
-          <h2>Materiale</h2>
+          <h2>{doc.name}</h2>
           <span className="chip chip-accent">Glass</span>
         </div>
         <div className="preset-field">
@@ -122,11 +122,13 @@ export function Properties({ session }: { session: LabSession }) {
         ))}
       </div>
       <div className="panel-body" role="tabpanel" id="panelTabs-params" aria-labelledby="panelTab-params" hidden={tab !== 'params'}>
-        <Section id="material" title="Materiale · Glass">
-          <h3 className="panel-sub">Aspetto</h3>
+        <Section id="material" title="Aspetto">
           {byGroup('material')}
-          <h3 className="panel-sub">Ottica</h3>
+        </Section>
+        <Section id="optics" title="Ottica">
           {byGroup('optics')}
+        </Section>
+        <Section id="lighting" title="Luce e profondità">
           <h3 className="panel-sub">Luce</h3>
           {byGroup('light')}
           <h3 className="panel-sub">Ombra</h3>

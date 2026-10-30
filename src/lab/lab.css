@@ -1025,7 +1025,7 @@ textarea {
 
 /* ---------- Material Lab additions ---------- */
 .brand-name {
-  /* Fredoka only when installed: nothing is fetched. */
+  /* Bundled Fredoka keeps the supplied wordmark available offline. */
   color: var(--text);
   font-family: Fredoka, 'Nunito', 'Varela Round', system-ui, sans-serif;
   font-size: 24px;

@@ -1,6 +1,7 @@
 import '../stage/theme.css';
 import '../core/glass.css';
 import '../stage/stage.css';
+import './fonts.css';
 import './lab.css';
 import './design.css';
 import { createRoot } from 'react-dom/client';

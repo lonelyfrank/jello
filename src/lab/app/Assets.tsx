@@ -16,11 +16,11 @@ import { useLab, type AssetTab } from '../store';
 import { ColorField } from './ColorPicker';
 import { copyText, EmptyState, Ic, StateChip } from './ui';
 
-const TABS: { id: AssetTab; label: string }[] = [
-  { id: 'colors', label: 'Colori' },
-  { id: 'icons', label: 'Icone' },
-  { id: 'fonts', label: 'Font' },
-];
+const TABS = [
+  { id: 'colors', label: 'Colori', icon: 'palette' },
+  { id: 'icons', label: 'Icone', icon: 'star' },
+  { id: 'fonts', label: 'Font', icon: 'type' },
+] as const;
 
 export function AssetsPage({ session }: { session: LabSession }) {
   const project = useLab((s) => s.projects.find((p) => p.id === s.projectId) ?? null);
@@ -38,11 +38,12 @@ export function AssetsPage({ session }: { session: LabSession }) {
   const counts: Record<AssetTab, number> = { colors: a.palettes.reduce((n, p) => n + p.colors.length, 0), icons: a.iconSets.reduce((n, s) => n + s.icons.length, 0), fonts: a.fonts.length };
   return (
     <div className="assets-page" id="assetsPage">
-      <aside className="as-left" aria-label="Asset del progetto">
+      <aside className="as-left as-navigation" aria-label="Asset del progetto">
         <span className="eyebrow">Asset del progetto</span>
         <nav className="as-kinds" aria-label="Tipo di asset">
           {TABS.map((t) => (
             <button key={t.id} type="button" className="nav-i" id={`asset-tab-${t.id}`} aria-current={tab === t.id ? 'page' : undefined} onClick={() => session.setAssetTab(t.id)}>
+              <Ic name={t.icon} />
               {t.label}
               <span className="count">{counts[t.id]}</span>
             </button>
@@ -194,8 +195,10 @@ function Colors({ session, assets }: { session: LabSession; assets: ProjectAsset
                     <span className="swatch-big" style={{ background: cssColor(c.hex, c.alpha), color: contrast(c.hex, '#ffffff') >= contrast(c.hex, '#000000') ? '#fff' : '#000' }}>
                       Aa
                     </span>
-                    <span className="swatch-name">{c.name}</span>
-                    <span className="muted small mono">{c.hex.toUpperCase()}</span>
+                    <span className="swatch-meta">
+                      <span className="swatch-name">{c.name}</span>
+                      <span className="muted small mono">{c.hex.toUpperCase()}</span>
+                    </span>
                   </button>
                 ))}
               </div>
@@ -223,7 +226,11 @@ function ColorDetail({ color, assets, session, onDelete }: { color: ColorAsset; 
   const rgb = hexToRgb(color.hex);
   const css = `${color.token}: ${cssColor(color.hex, color.alpha)};`;
   return (
-    <div className="detail">
+    <div className="detail color-detail">
+      <div className="color-detail-sample" style={{ background: cssColor(color.hex, color.alpha), color: contrast(color.hex, '#ffffff') >= contrast(color.hex, '#000000') ? '#ffffff' : '#121218' }} aria-hidden="true">
+        <span>Aa</span>
+        <span>{color.name} · {Math.round(color.alpha * 100)} %</span>
+      </div>
       <h2 className="detail-title">{color.name}</h2>
       <label className="field">
         <span>Nome</span>
