@@ -1,11 +1,12 @@
-# Jello Material Lab
+# Jello Studio
 
 ![Jello](public/brand/jello-logo-480.png)
 
-![Laboratorio, modalità componenti reali](docs/screenshots/material-lab-desktop.png)
+![Jello Studio — Workspace](docs/screenshots/studio/workspace-desktop.png)
 
-Jello è un laboratorio di materiali e componenti UI, riutilizzabili su web desktop, browser
-mobile e app Android basate su WebView. Due modalità condividono lo stesso motore di anteprima:
+Jello Studio è un ambiente visuale di materiali e componenti UI, riutilizzabili su web desktop, browser
+mobile e app Android basate su WebView. Workspace, Component Builder, Material Lab, Library, Preview & Test ed Export condividono
+lo stesso Stage e gli stessi documenti. **Shape the Interface.**
 
 Il flusso principale è **Scegli componente → Scegli materiale → Personalizza → Prova → Esporta**.
 
@@ -45,10 +46,20 @@ npm run dev          # laboratorio: http://localhost:5173 · anteprima leggera: 
 ## Il laboratorio
 
 Il lavoro è organizzato in **progetti** ([Progetti, asset e flussi guidati](docs/projects.md)):
-**Home**, **Materiali**, **Componenti**, **Asset** e **Impostazioni**, con flussi guidati per
-nuovo progetto, importazione ed esportazione del progetto (`.jello`, JSON, variabili CSS).
-Nell’intestazione della pagina Materiali o Componenti: **Esporta…** (solo materiale,
-componente + materiale, configurazione JSON, con l’elenco di file e dipendenze).
+**Workspace** mostra progetti reali, azioni rapide, Material Gallery e componenti salvati;
+**Component Builder** e **Material Lab** conservano gli editor e il controller condivisi.
+**Library** aggiunge ricerca, categorie supportate, preferiti, duplicazione e anteprime CSS
+prodotte dal runtime. **Preview & Test** riunisce viewport, stati, accessibilità, diagnostica e
+relay. **Export** presenta un percorso in cinque passi e un riepilogo completo, mantenendo
+separato il backup `.jello` dai pacchetti React, Vanilla e dalle configurazioni JSON.
+Asset e Impostazioni sono sempre accessibili dalla topbar. Preferenze di pannelli, larghezze,
+zoom e schede sono locali all'editor e non entrano nei documenti esportati.
+
+Il brand originale rimane in `public/brand/`. Jelly Macro e Spectrum, basati sull'asset fornito,
+affiancano gli sfondi Jello Dark/Light e le scene diagnostiche; **Jelly non è un materiale
+implementato**. Primo avvio senza progetti inventati: il kit viene creato solo su scelta esplicita.
+
+Vedi [audit, consegna e screenshot del redesign](docs/studio-redesign.md).
 
 Materiali (Material Lab): dashboard React a tre colonne (pannelli laterali richiudibili, scorrimento indipendente; sotto
 900 px l’anteprima resta in alto e libreria e proprietà si aprono in un pannello inferiore).
@@ -164,6 +175,6 @@ nei browser headless. Dati in `docs/perf/`.
 
 Il codice di Jello è scritto per questo progetto; non contiene codice copiato dai riferimenti
 (vedi [docs/references.md](docs/references.md)). La fotografia di prova è CC0
-([public/assets/ATTRIBUTION.md](public/assets/ATTRIBUTION.md)). Il logo in `public/brand/` è
-quello fornito per il progetto. La repository non dichiara ancora una licenza: `package.json` usa
+([public/assets/ATTRIBUTION.md](public/assets/ATTRIBUTION.md)). Il logo in `public/brand/` e il raster Jelly in `public/assets/backgrounds/` sono
+quelli forniti per il progetto (nessuna licenza pubblica dichiarata). La repository non dichiara ancora una licenza: `package.json` usa
 `UNLICENSED`.

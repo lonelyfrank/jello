@@ -1,0 +1,77 @@
+{
+  "date": "2026-10-31",
+  "typecheck": "passed",
+  "unit": {
+    "passed": 402,
+    "files": 24
+  },
+  "build": "passed",
+  "e2e": {
+    "method": "Full local suite, followed by targeted regressions and final Studio tests. Latest outcome per browser/file/title. Initial failed cases were fixed and rerun.",
+    "runs": [
+      {
+        "name": "e2e",
+        "observedOutcomes": {
+          "✓": 601,
+          "✘": 10,
+          "-": 10
+        }
+      },
+      {
+        "name": "e2e-targeted",
+        "observedOutcomes": {
+          "✓": 130,
+          "-": 2
+        }
+      },
+      {
+        "name": "e2e-final-studio",
+        "observedOutcomes": {
+          "✓": 23,
+          "-": 1
+        }
+      }
+    ],
+    "finalByProject": {
+      "chromium": {
+        "passed": 209,
+        "failed": 0,
+        "skipped": 0
+      },
+      "firefox": {
+        "passed": 208,
+        "failed": 0,
+        "skipped": 1
+      },
+      "mobile-emulated": {
+        "passed": 207,
+        "failed": 0,
+        "skipped": 2
+      }
+    },
+    "skipped": [
+      {
+        "project": "firefox",
+        "file": "tests/e2e/fallback.spec.ts",
+        "test": "prefers-reduced-transparency uses the opaque path"
+      },
+      {
+        "project": "mobile-emulated",
+        "file": "tests/e2e/projects.spec.ts",
+        "test": "projects › the wizard creates a named project whose materials stay apart from other projects"
+      },
+      {
+        "project": "mobile-emulated",
+        "file": "tests/e2e/studio-redesign.spec.ts",
+        "test": "preview preferences restore from the URL and keyboard panel resizing does not alter documents"
+      }
+    ]
+  },
+  "visualReport": "screenshots/studio/verification.json",
+  "limitations": [
+    "Headless desktop browsers and mobile viewport emulation; no physical device.",
+    "WebKit/Safari not run: existing system-library limitation.",
+    "Contrast check covers semantic primary/secondary text on panel and raised surfaces, not every image/material.",
+    "Vite reports the editor chunk above 500 kB. No new dependency introduced."
+  ]
+}

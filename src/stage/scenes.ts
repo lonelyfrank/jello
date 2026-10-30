@@ -1,10 +1,18 @@
+import { JELLO_DEMO } from './demo-content';
 /** Local test scenes for the GlassSource. Everything is generated or bundled; nothing is fetched. */
 
-export type SceneId = 'app' | 'grid' | 'text' | 'blocks' | 'photo' | 'solid' | 'coords';
+export type SceneId = 'app' | 'grid' | 'text' | 'blocks' | 'photo' | 'solid' | 'coords' | 'jelly-macro' | 'jelly-spectrum' | 'jello-dark' | 'jello-light' | 'gradient' | 'checkerboard' | 'contrast';
 
 /** `short` names the scene under its thumbnail; `label` is the full description. */
 export const SCENES: readonly { id: SceneId; label: string; short: string; diagnostic: boolean }[] = [
-  { id: 'app', label: 'Dashboard (dati di esempio)', short: 'App', diagnostic: false },
+  { id: 'jelly-macro', label: 'Jelly Macro · asset Jello', short: 'Jelly Macro', diagnostic: false },
+  { id: 'jelly-spectrum', label: 'Jelly Spectrum · asset Jello', short: 'Spectrum', diagnostic: false },
+  { id: 'jello-dark', label: 'Jello Dark', short: 'Dark', diagnostic: false },
+  { id: 'jello-light', label: 'Jello Light', short: 'Light', diagnostic: false },
+  { id: 'gradient', label: 'Gradiente Jello', short: 'Gradient', diagnostic: true },
+  { id: 'checkerboard', label: 'Checkerboard', short: 'Checker', diagnostic: true },
+  { id: 'contrast', label: 'Contrasto elevato', short: 'Contrast', diagnostic: true },
+  { id: 'app', label: 'Jello Creative Space (dati di esempio)', short: 'Jello UI', diagnostic: false },
   { id: 'grid', label: 'Griglia', short: 'Griglia', diagnostic: true },
   { id: 'text', label: 'Testo', short: 'Testo', diagnostic: true },
   { id: 'blocks', label: 'Blocchi colorati', short: 'Blocchi', diagnostic: true },
@@ -88,6 +96,30 @@ export function renderScene(scroller: HTMLElement, id: SceneId, photoSrc: string
       motion.appendChild(credit);
       break;
     }
+    case 'jelly-macro':
+    case 'jelly-spectrum': {
+      for (let i = 0; i < (id === 'jelly-macro' ? 2 : 6); i++) {
+        const img = doc.createElement('img');
+        img.src = `${import.meta.env.BASE_URL}assets/backgrounds/jelly-macro.png`;
+        img.alt = i === 0 ? 'Gelatina luminosa viola e magenta, asset Jello' : '';
+        img.draggable = false;
+        motion.appendChild(img);
+      }
+      break;
+    }
+    case 'jello-dark':
+    case 'jello-light': {
+      const title = doc.createElement('h2');
+      title.textContent = JELLO_DEMO.tagline;
+      const text = doc.createElement('p');
+      text.textContent = JELLO_DEMO.description;
+      motion.append(title, text);
+      break;
+    }
+    case 'gradient':
+    case 'checkerboard':
+    case 'contrast':
+      break;
     case 'app':
       renderDashboard(motion);
       break;
@@ -102,30 +134,10 @@ export function renderScene(scroller: HTMLElement, id: SceneId, photoSrc: string
  * A plausible application screen to judge the material in context: coloured
  * cards, big numbers, hard edges, text. All values are invented and fixed.
  */
-const KPIS = [
-  { label: 'Partite giocate', value: '128', delta: '+12 questa settimana', color: '#0a84ff' },
-  { label: 'Punti medi', value: '74,6', delta: '+3,1 rispetto a ottobre', color: '#ff453a' },
-  { label: 'Squadre attive', value: '24', delta: '2 nuove iscritte', color: '#30d158' },
-  { label: 'Tempo medio', value: '41′', delta: '−2′ per partita', color: '#ff9f0a' },
-];
+const KPIS = JELLO_DEMO.dashboard.kpis;
 const BARS = [38, 62, 47, 80, 55, 91, 70, 66, 84, 52, 73, 95];
-const TEAMS = [
-  ['Aironi', 18, 14, 4, '+96'],
-  ['Basilischi', 18, 12, 6, '+51'],
-  ['Cometa', 18, 11, 7, '+22'],
-  ['Delfini', 18, 9, 9, '−4'],
-  ['Estuario', 18, 7, 11, '−37'],
-  ['Falchi', 18, 5, 13, '−68'],
-  ['Gelsomini', 18, 4, 14, '−81'],
-] as const;
-const TILES = [
-  ['Campo A', 'Libero', '#5e5ce6'],
-  ['Campo B', 'In uso', '#bf5af2'],
-  ['Campo C', 'In uso', '#ff375f'],
-  ['Campo D', 'Libero', '#64d2ff'],
-  ['Campo E', 'Chiuso', '#1c1c1e'],
-  ['Campo F', 'Libero', '#ffd60a'],
-] as const;
+const COLLECTIONS = JELLO_DEMO.dashboard.rows;
+const TILES = JELLO_DEMO.dashboard.tiles;
 
 function renderDashboard(root: HTMLElement) {
   const doc = root.ownerDocument;
@@ -138,8 +150,8 @@ function renderDashboard(root: HTMLElement) {
   const head = el('header', 'app-head');
   head.append(
     el('span', 'app-badge', 'Dati di esempio · non reali'),
-    el('h2', 'app-title', 'Torneo d’autunno'),
-    el('p', 'app-sub', 'Schermata dimostrativa per valutare il materiale su una UI plausibile. Nessun dato proviene da un servizio.'),
+    el('h2', 'app-title', JELLO_DEMO.dashboard.title),
+    el('p', 'app-sub', JELLO_DEMO.dashboard.subtitle),
   );
   const kpis = el('div', 'app-kpis');
   for (const k of KPIS) {
@@ -156,21 +168,21 @@ function renderDashboard(root: HTMLElement) {
     b.style.background = i % 4 === 3 ? '#ff453a' : 'var(--scene-ink)';
     bars.append(b);
   });
-  chart.append(el('h3', 'app-card-title', 'Punti per giornata'), bars, el('p', 'app-note', 'Giornate 1–12. Barre a spigoli vivi: utili per vedere la rifrazione sul bordo.'));
+  chart.append(el('h3', 'app-card-title', 'Idee in movimento'), bars, el('p', 'app-note', 'Studio 01–12 · dati Jello dimostrativi. I bordi netti permettono di valutare la rifrazione.'));
   const table = el('section', 'app-card');
   const t = el('table', 'app-table');
   const thead = el('thead', '');
   const hr = el('tr', '');
-  for (const hcell of ['Squadra', 'G', 'V', 'P', 'Diff.']) hr.append(el('th', '', hcell));
+  for (const hcell of ['Collezione', 'Forme', 'Colori', 'Stati', 'Materiale']) hr.append(el('th', '', hcell));
   thead.append(hr);
   const tbody = el('tbody', '');
-  for (const row of TEAMS) {
+  for (const row of COLLECTIONS) {
     const tr = el('tr', '');
     for (const c of row) tr.append(el('td', '', String(c)));
     tbody.append(tr);
   }
   t.append(thead, tbody);
-  table.append(el('h3', 'app-card-title', 'Classifica (esempio)'), t);
+  table.append(el('h3', 'app-card-title', 'Collezioni Jello (esempio)'), t);
   const tiles = el('div', 'app-tiles');
   for (const [name, state, color] of TILES) {
     const tile = el('article', 'app-tile');
@@ -180,7 +192,7 @@ function renderDashboard(root: HTMLElement) {
   }
   const text = el('section', 'app-card');
   text.append(
-    el('h3', 'app-card-title', 'Note di giornata'),
+    el('h3', 'app-card-title', 'Note dallo Studio'),
     el('p', '', 'Il testo sotto la navbar deve restare riconoscibile: il centro della lente è neutro, solo il perimetro piega il contenuto.'),
     el('p', '', 'Scorri fino in fondo: l’ultima riga deve restare leggibile sopra la navbar, grazie al margine inferiore del contenuto.'),
   );

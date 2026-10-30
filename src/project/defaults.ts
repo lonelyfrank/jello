@@ -67,7 +67,7 @@ export function defaultFonts(): FontFamilyAsset[] {
 
 export function defaultTypeStyles(): TypeStyle[] {
   return [
-    { id: 't-display', token: '--jello-display', label: 'Display', sample: 'Jello Material Lab', family: 'f-fredoka', weight: 700, size: 40, lineHeight: 44 },
+    { id: 't-display', token: '--jello-display', label: 'Display', sample: 'Jello Studio', family: 'f-fredoka', weight: 700, size: 40, lineHeight: 44 },
     { id: 't-titolo', token: '--jello-titolo', label: 'Titolo', sample: 'Glass personale', family: 'f-inter', weight: 600, size: 24, lineHeight: 30 },
     { id: 't-sezione', token: '--jello-sezione', label: 'Sezione', sample: 'Luce e profondità', family: 'f-inter', weight: 600, size: 16, lineHeight: 22 },
     { id: 't-corpo', token: '--jello-corpo', label: 'Corpo', sample: 'Spostamento massimo del campionamento sul bordo.', family: 'f-inter', weight: 400, size: 14, lineHeight: 20 },

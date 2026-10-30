@@ -36,8 +36,9 @@ test('optional wizard creates a generic Solid button; Base/Advanced and zoom pre
   await page.getByRole('button', { name: 'Avanzato', exact: true }).click();
   await page.getByRole('button', { name: 'Base', exact: true }).click();
   expect(await lab(page, 'return h.builder.json()')).toBe(before);
-  // Exactly six contextual top-level sections on the root.
-  expect(await page.locator('#inspector .panel-body > details').count()).toBe(6);
+  // Six editing sections remain; Studio adds a separate canonical JSON section.
+  expect(await page.locator('#inspector .panel-body > details:not([data-section=b-definition])').count()).toBe(6);
+  await expect(page.locator('[data-section=b-definition]')).toBeAttached();
   if (await page.locator('#panelClose').isVisible()) await page.locator('#panelClose').click();
   await page.locator('#previewZoom').selectOption('0.75');
   await page.locator('#tb-restore').click();

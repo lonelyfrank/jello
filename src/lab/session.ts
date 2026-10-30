@@ -1,3 +1,4 @@
+import { studioPreferences, setStudioPreferences } from './studio-preferences';
 /**
  * LabSession: the editor's actions. It owns the store (read by React), the
  * preview controller (driven directly, never by React renders), the local
@@ -306,7 +307,7 @@ export class LabSession {
       exportText: '',
       notice: null,
       sync: { kind: 'off' },
-      layout: { left: true, right: true, drawer: false },
+      layout: { left: studioPreferences().left, right: studioPreferences().right, drawer: false },
       workspace,
       builder,
       components: [...templateItems(), ...scopedComponents.map(componentItem)],
@@ -769,6 +770,7 @@ export class LabSession {
   toggleColumn(which: 'left' | 'right'): void {
     const layout = { ...this.state.layout, [which]: !this.state.layout[which] };
     this.store.set({ layout });
+    setStudioPreferences({ left: layout.left, right: layout.right });
     requestAnimationFrame(() => this.controller?.main.ctx.measureAll());
   }
 
@@ -798,6 +800,7 @@ export class LabSession {
     }
     if (s.projectId) q.set('project', s.projectId);
     if (s.page !== 'lab') q.set('page', s.page);
+    if (s.page === 'lab' && studioPreferences().area !== 'editor') q.set('studio', studioPreferences().area);
     return `${location.origin}${location.pathname}?${q}`;
   }
 
@@ -811,8 +814,8 @@ export class LabSession {
 
   /** Home, Asset or Impostazioni; `lab` shows the preview workspace chosen by `ws`. */
   setPage(page: Page, ws?: Workspace): void {
-    if (ws) this.setWorkspace(ws);
-    if (page === this.state.page && !this.state.flow) return;
+    if (ws) { setStudioPreferences({ area: 'editor' }); this.setWorkspace(ws); }
+    if (page === this.state.page && !this.state.flow) { this.scheduleUrl(); return; }
     this.store.set({ page, flow: null });
     // The preview was laid out while hidden (first load on another page): centre once it has a size.
     if (page === 'lab' && this.centreOnShow) {

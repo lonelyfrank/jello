@@ -1,3 +1,5 @@
+import { COMPONENTS } from '../../components';
+import { setStudioPreferences, useStudioPreferences } from '../studio-preferences';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { SCENES } from '../../stage/scenes';
 import { CUSTOM_LIMITS } from '../../stage/view';
@@ -15,7 +17,9 @@ export function Preview({ session }: { session: LabSession }) {
   const builder = useLab((s) => s.workspace === 'builder');
   const solid = useLab((s) => (s.workspace === 'builder' ? s.builder.doc.material.family : s.doc.family) === 'solid');
   const solidLab = useLab((s) => s.workspace === 'material' && s.doc.family === 'solid');
-  const [zoom, setZoom] = useState(1);
+  const { zoom, area } = useStudioPreferences();
+  const setZoom = (zoom: number) => setStudioPreferences({ zoom });
+  const b = useLab((s) => s.builder);
   const pick = useLab((s) => s.builder.pick);
 
   // The controller owns everything inside this element; React never renders into it.
@@ -47,7 +51,7 @@ export function Preview({ session }: { session: LabSession }) {
       )}
       <div className="preview-head">
         <h2 className="preview-title" id="previewTitle">
-          {builder ? 'Anteprima della componente' : 'Anteprima'}
+          {area === 'preview' ? 'Preview & Test' : builder ? 'Component Canvas' : 'Material Canvas'}
         </h2>
         <div className="toolbar" id="toolbar" role="toolbar" aria-label="Inquadratura dell’anteprima">
           {builder && (
@@ -152,7 +156,10 @@ export function Preview({ session }: { session: LabSession }) {
           </button>
         </div>
       </div>
+      {area === 'preview' && <div className="studio-test-note"><Ic name="shield" /><span>Stesso Stage, stesso runtime. Prova viewport, sfondi e stati; diagnostica e relay sono nei pannelli laterali.</span></div>}
+      <div className="canvas-caption"><span>{builder ? b.doc.name : solid ? 'Solid / CSS' : scene ? 'Glass / Scena controllata' : 'Glass / Componenti reali'}</span><span>{options.device === 'custom' ? `${options.width} × ${options.height} px` : options.device === 'phone' ? '390 px · Mobile' : options.device === 'tablet' ? '768 px · Tablet' : 'Desktop · adattivo'}</span></div>
       <div className="preview-host" ref={host} style={{ zoom }} />
+      {builder && <div className="canvas-states" role="group" aria-label="Stati della componente"><span>Stato</span>{(COMPONENTS.get(b.doc.type)?.states ?? []).map((state) => <button key={state} type="button" aria-pressed={(b.previewState ?? 'default') === state} onClick={() => session.setPreviewState(state === 'default' ? null : state as typeof b.previewState)}>{state === 'default' ? 'Default' : state[0]!.toUpperCase() + state.slice(1)}</button>)}</div>}
       <dl className="metrics" id="metrics" aria-label="Misure disponibili">
         <div>
           <dt>Loop JavaScript</dt>

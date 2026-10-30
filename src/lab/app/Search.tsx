@@ -67,7 +67,7 @@ export function GlobalSearch({ session }: { session: LabSession }) {
           aria-controls={listId}
           aria-autocomplete="list"
           aria-activedescendant={hits[active] ? `${listId}-${active}` : undefined}
-          placeholder="Cerca progetti, materiali, asset…"
+          placeholder="Cerca progetti, materiali, componenti…"
           value={q}
           autoComplete="off"
           onChange={(e) => (setQ(e.target.value), setOpen(true), setActive(0))}

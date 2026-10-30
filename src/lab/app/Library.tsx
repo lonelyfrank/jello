@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { createMaterialGroup } from '../../runtime/materials';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FAMILIES, glassParams, hexToRgbSafe } from './model-ui';
 import { SCENES } from '../../stage/scenes';
 import { NAV_ITEMS, OBJECTS, type ObjectKind } from '../../stage/view';
@@ -26,9 +27,30 @@ export function sphereStyle(item: LibraryItem['doc']): React.CSSProperties {
 }
 
 /** A glass sample over a shared test background, as in the design references. */
-export function MaterialThumbnail({ doc }: { doc: LibraryItem['doc'] }) {
+export function MaterialThumbnail({ doc, runtime = false }: { doc: LibraryItem['doc']; runtime?: boolean }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!runtime) return;
+    const root = ref.current!;
+    let cleanup: (() => void) | undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting || cleanup) return;
+      const host = root.querySelector<HTMLElement>('.material-sample')!;
+      if (doc.family === 'solid') {
+        const group = createMaterialGroup({ material: doc });
+        group.attach(host, { radius: 'capsule' });
+        cleanup = () => group.destroy();
+      } else {
+        const group = createMaterialGroup({ material: doc, source: root, backend: 'css' });
+        group.attach(host, { sizing: 'element', radius: 'capsule' });
+        cleanup = () => group.destroy();
+      }
+    });
+    observer.observe(root);
+    return () => { observer.disconnect(); cleanup?.(); };
+  }, [doc, runtime]);
   return (
-    <span className="material-thumb" aria-hidden="true" style={sphereStyle(doc)}>
+    <span ref={ref} data-runtime={runtime} className="material-thumb" aria-hidden="true" style={sphereStyle(doc)}>
       <span className="material-sample" />
     </span>
   );

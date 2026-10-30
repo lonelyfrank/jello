@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react';
+import { JELLO_DEMO } from '../../stage/demo-content';
+import { RuntimeThumbnail } from './RuntimeThumbnail';
+import { openStudio } from './StudioNav';
 import { VERIFICATION } from '../../stage/verification';
 import { countColors, countIcons, PLATFORM_LABEL, type ProjectDoc } from '../../project/types';
 import type { LabSession } from '../session';
@@ -8,15 +11,16 @@ import { Ic, StateChip, type IcName } from './ui';
 
 const BASE = import.meta.env.BASE_URL;
 
-type NavTarget = 'home' | 'projects' | 'materials' | 'components' | 'assets' | 'export' | 'compat' | 'settings';
+type NavTarget = 'home' | 'projects' | 'materials' | 'components' | 'assets' | 'export' | 'compat' | 'settings' | 'library' | 'preview';
 
 /** Left rail of the start pages (Home and Impostazioni). */
 export function SideNav({ session, current }: { session: LabSession; current: NavTarget }) {
   const hasProject = useLab((s) => s.projectId !== null);
   const go = (t: NavTarget) => {
-    if (t === 'home' || t === 'projects') session.setPage('home');
-    else if (t === 'materials') session.setPage('lab', 'material');
-    else if (t === 'components') session.setPage('lab', 'builder');
+    if (t === 'home' || t === 'projects') openStudio(session, 'workspace');
+    else if (t === 'library' || t === 'preview') openStudio(session, t);
+    else if (t === 'materials') openStudio(session, 'material');
+    else if (t === 'components') openStudio(session, 'builder');
     else if (t === 'assets') session.setPage('assets');
     else if (t === 'export') session.openFlow('export');
     else if (t === 'compat') {
@@ -32,10 +36,14 @@ export function SideNav({ session, current }: { session: LabSession; current: Na
   );
   return (
     <aside className="home-left" aria-label="Navigazione">
-      {item('home', 'home', 'Home')}
-      {item('projects', 'folder', 'Progetti')}
+      <button type="button" className="button primary workspace-new" onClick={() => session.openFlow('wizard')}><Ic name="plus" />Nuovo progetto</button>
+      <p className="eyebrow nav-group-label">Workspace</p>
+      {item('home', 'folder', 'Tutti i progetti')}
+      <p className="eyebrow nav-group-label">Crea ed esplora</p>
       {item('materials', 'drop', 'Materiali', true)}
       {item('components', 'box', 'Componenti', true)}
+      {item('library', 'grid', 'Library', true)}
+      {item('preview', 'eye', 'Preview & Test', true)}
       {item('assets', 'palette', 'Asset', true)}
       {item('export', 'upload', 'Esportazioni', true)}
       <span className="grow" />
@@ -65,13 +73,14 @@ function ProjectCard({ p, i, session, active }: { p: ProjectDoc; i: number; sess
     <article className="card project-card" data-active={active} aria-label={p.name}>
       <button type="button" className="project-open" onClick={open} aria-label={`Apri ${p.name}`}>
         <span className="project-thumb" style={{ background: gradientOf(p, i) }}>
-          <span className="glass-pill" aria-hidden="true" />
+          <span className="project-cover-label"><Ic name="palette" size={24} /><span>Palette del progetto</span></span>
         </span>
         <span className="project-meta">
           <span className="project-name">{p.name}</span>
           <span className="muted small">
             {counts.components} {counts.components === 1 ? 'componente' : 'componenti'} · {counts.materials} {counts.materials === 1 ? 'materiale' : 'materiali'}
           </span>
+          <time className="project-date small muted" dateTime={p.updatedAt}>Modificato il {new Date(p.updatedAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}</time>
         </span>
       </button>
       <div className="project-more">
@@ -124,6 +133,8 @@ export function Home({ session }: { session: LabSession }) {
   const projects = useLab((s) => s.projects);
   const projectId = useLab((s) => s.projectId);
   const library = useLab((s) => s.library);
+  const components = useLab((s) => s.components);
+  const [projectFilter, setProjectFilter] = useState<'all' | 'recent'>('all');
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const active = projects.find((p) => p.id === projectId) ?? null;
 
@@ -139,9 +150,11 @@ export function Home({ session }: { session: LabSession }) {
     <div className="home" id="homePage">
       <SideNav session={session} current="home" />
       <main className="home-main" aria-label="Progetti">
+        <StudioWelcome name={active.name} />
         <section className="home-section" aria-labelledby="h-projects">
           <div className="section-head">
-            <h1 id="h-projects">Progetti recenti</h1>
+            <h1 id="h-projects">I tuoi progetti</h1>
+            <div className="seg" role="group" aria-label="Filtra progetti"><button type="button" className="seg-b" aria-pressed={projectFilter === 'all'} onClick={() => setProjectFilter('all')}>Tutti</button><button type="button" className="seg-b" aria-pressed={projectFilter === 'recent'} onClick={() => setProjectFilter('recent')}>Recenti</button></div>
             <button type="button" className="button primary" onClick={() => session.openFlow('component')}>Crea componente</button>
             <div className="seg" role="group" aria-label="Vista">
               <button type="button" className="seg-b icon" aria-label="Griglia" aria-pressed={view === 'grid'} onClick={() => setView('grid')}>
@@ -156,6 +169,7 @@ export function Home({ session }: { session: LabSession }) {
             <div className="project-grid">
               {[...projects]
                 .sort((x, y) => y.updatedAt.localeCompare(x.updatedAt))
+                .slice(0, projectFilter === 'recent' ? 6 : projects.length)
                 .map((p, i) => (
                   <ProjectCard key={p.id} p={p} i={i} session={session} active={p.id === projectId} />
                 ))}
@@ -168,17 +182,18 @@ export function Home({ session }: { session: LabSession }) {
             </div>
           ) : (
             <div className="project-list">
-              {projects.map((p) => (
+              {[...projects].sort((x, y) => y.updatedAt.localeCompare(x.updatedAt)).slice(0, projectFilter === 'recent' ? 6 : projects.length).map((p) => (
                 <ProjectRow key={p.id} p={p} session={session} active={p.id === projectId} />
               ))}
             </div>
           )}
         </section>
 
+        <QuickStart session={session} />
         <section className="home-section" aria-labelledby="h-mat">
           <div className="section-head">
-            <h2 id="h-mat">Materiali · {active.name}</h2>
-            <button type="button" className="link" onClick={() => session.setPage('lab', 'material')}>
+            <h2 id="h-mat">Material Gallery <span className="section-meta">· anteprime runtime CSS</span></h2>
+            <button type="button" className="link" onClick={() => openStudio(session, 'library')}>
               Apri libreria →
             </button>
           </div>
@@ -193,7 +208,7 @@ export function Home({ session }: { session: LabSession }) {
                   session.setPage('lab', 'material');
                 }}
               >
-                <MaterialThumbnail doc={m.doc} />
+                <MaterialThumbnail runtime doc={m.doc} />
                 <span className="mat-tile-meta">
                   <span className="mat-tile-name">{m.name}</span>
                   <span className="muted small">{m.origin === 'user' ? 'I miei' : 'Jello'}</span>
@@ -203,6 +218,7 @@ export function Home({ session }: { session: LabSession }) {
           </div>
         </section>
 
+        {components.some((c) => c.origin === 'user') && <section className="home-section"><div className="section-head"><h2>Componenti recenti</h2><span className="muted small">Creazioni salvate nel progetto</span></div><div className="recent-component-grid">{components.filter((c) => c.origin === 'user').sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? '')).slice(0, 3).map((c) => <article key={c.id} className="card recent-component"><RuntimeThumbnail doc={c.doc} /><button type="button" className="link" onClick={() => { session.openComponent(c.id); openStudio(session, 'builder'); }}>{c.name} →</button></article>)}</div></section>}
         <section className="home-section" aria-labelledby="h-assets">
           <div className="section-head">
             <h2 id="h-assets">Asset del progetto</h2>
@@ -250,39 +266,7 @@ export function Home({ session }: { session: LabSession }) {
         </section>
       </main>
 
-      <aside className="home-right" aria-label="Riepilogo">
-        <CompatCard session={session} />
-        <section className="card quick">
-          <h2>Azioni rapide</h2>
-          <button type="button" className="nav-i filled" onClick={() => session.openFlow('wizard')}>
-            <Ic name="plus" />
-            Nuovo progetto
-          </button>
-          <button
-            type="button"
-            className="nav-i filled"
-            onClick={() => {
-              void session.newMaterial();
-              session.setPage('lab', 'material');
-            }}
-          >
-            <Ic name="drop" />
-            Nuovo materiale
-          </button>
-          <button type="button" className="nav-i filled" onClick={() => session.setPage('lab', 'builder')}>
-            <Ic name="box" />
-            Nuova componente
-          </button>
-          <button type="button" className="nav-i filled" onClick={() => session.openFlow('import')}>
-            <Ic name="download" />
-            Importa file
-          </button>
-          <button type="button" className="nav-i filled" onClick={() => session.openFlow('export')}>
-            <Ic name="upload" />
-            Esporta progetto
-          </button>
-        </section>
-      </aside>
+
     </div>
   );
 }
@@ -335,16 +319,17 @@ export function HomeEmpty({ session }: { session: LabSession }) {
   const [over, setOver] = useState(false);
   const start = async () => {
     await session.projects.create({ name: 'Il mio progetto', platform: 'web', previewTheme: 'system', start: 'kit' });
+    session.setOption('scene', 'jelly-macro');
     session.setPage('lab', 'material');
   };
   return (
     <div className="home" id="homePage" data-empty="true">
       <SideNav session={session} current="home" />
       <main className="home-main empty-main" aria-label="Primo avvio">
-        <img className="empty-mark" src={`${BASE}brand/jello-mark-192.png`} alt="" width="96" height="80" />
+        <StudioWelcome />
         <h1>Crea la tua prima componente</h1>
         <button type="button" className="button primary" id="homeComponentWizard" onClick={() => session.openFlow('component')}>Crea componente guidata</button>
-        <p className="muted lead">In Jello costruisci materiali, li applichi alle componenti e poi esporti componenti React o Vanilla per i tuoi progetti web e app.</p>
+        <p className="muted lead">Il tuo Workspace è vuoto. Crea un progetto o esplora il kit Jello: nessun progetto dimostrativo viene aggiunto senza la tua scelta.</p>
         <div className="start-grid">
           <button type="button" className="card start-card" onClick={() => session.openFlow('wizard')} id="startEmpty">
             <span className="plus-disc">
@@ -383,6 +368,7 @@ export function HomeEmpty({ session }: { session: LabSession }) {
           <span>Oppure trascina qui un file .json o .jello</span>
           <span className="muted small">Formati accettati: jello-material v2 (Glass/Solid), jello-glass v1, jello-component-definition, jello-project</span>
         </div>
+        <DemoGallery session={session} />
         <ol className="how-steps">
           <li>
             <span className="step-n">1</span>Crea un materiale
@@ -397,4 +383,33 @@ export function HomeEmpty({ session }: { session: LabSession }) {
       </main>
     </div>
   );
+}
+
+
+function StudioWelcome({ name }: { name?: string }) {
+  return <section className="studio-welcome" aria-label="Jello Studio">
+    <div className="welcome-copy"><p className="eyebrow">JELLO STUDIO <span> / </span> {name ? 'IL TUO SPAZIO CREATIVO' : 'BENVENUTO NEL TUO SPAZIO CREATIVO'}</p><h2>Shape the<br /><span>Interface.</span></h2><p>{JELLO_DEMO.description}</p><span className="welcome-detail">Materiali da esplorare. Componenti da immaginare.</span></div>
+    <img src={`${BASE}brand/jello-mark-192.png`} srcSet={`${BASE}brand/jello-mark-192.png 1x, ${BASE}assets/backgrounds/jelly-macro.png 3x`} alt="Gelatina viola luminosa, marchio originale Jello" className="welcome-jelly" />
+    <span className="welcome-orbit" aria-hidden="true" />
+  </section>;
+}
+
+function QuickStart({ session }: { session: LabSession }) {
+  const actions: { label: string; hint: string; icon: IcName; run(): void }[] = [
+    { label: 'Nuovo progetto', hint: 'Dai spazio a una nuova idea', icon: 'folder', run: () => session.openFlow('wizard') },
+    { label: 'Crea materiale', hint: 'Scegli Glass o Solid', icon: 'drop', run: () => { void session.newMaterial(); openStudio(session, 'material'); } },
+    { label: 'Crea componente', hint: 'Una forma, il tuo stile', icon: 'layers', run: () => session.openFlow('component') },
+    { label: 'Importa progetto', hint: 'Riprendi da un file .jello', icon: 'download', run: () => session.openFlow('import') },
+  ];
+  return <section className="home-section"><div className="section-head"><h2>Quick Start</h2><span className="muted small">Da un’idea alla prima forma</span></div><div className="quick-start-grid">{actions.map((a) => <button key={a.label} type="button" className="card quick-start-card" onClick={a.run}><Ic name={a.icon} size={24} /><strong>{a.label}</strong><span className="muted small">{a.hint}</span><Ic name="arrowRight" size={16} /></button>)}</div></section>;
+}
+
+function DemoGallery({ session }: { session: LabSession }) {
+  const materials = useLab((s) => s.library);
+  const create = async (id: string) => {
+    await session.projects.create({ name: 'Il mio progetto', platform: 'web', previewTheme: 'system', start: 'kit' });
+    session.openMaterial(id);
+    openStudio(session, 'material');
+  };
+  return <section className="home-section demo-gallery"><div className="section-head"><h2>Material Gallery</h2><span className="state-chip" data-kind="accent">Demo Jello · runtime CSS</span></div><p className="muted small">Preset inclusi. Selezionane uno per iniziare un progetto con il kit Jello. Jelly è un’ispirazione visiva del brand, il suo renderer è in sviluppo.</p><div className="tile-grid">{materials.filter((m) => m.origin === 'builtin').slice(0, 6).map((m) => <button key={m.id} type="button" className="card mat-tile" onClick={() => void create(m.id)}><MaterialThumbnail runtime doc={m.doc} /><span className="mat-tile-meta"><strong>{m.name}</strong><span className="muted small">{m.doc.family} · preset Jello</span></span></button>)}</div></section>;
 }

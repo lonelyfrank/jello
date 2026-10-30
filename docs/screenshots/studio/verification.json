@@ -1,0 +1,164 @@
+{
+  "browser": "156.0.8078.4",
+  "layouts": [
+    {
+      "name": "workspace-first-launch-desktop",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1000
+    },
+    {
+      "name": "material-lab-desktop",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1000
+    },
+    {
+      "name": "workspace-desktop",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1000
+    },
+    {
+      "name": "component-builder-desktop",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1000
+    },
+    {
+      "name": "library-desktop",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1000
+    },
+    {
+      "name": "preview-test-desktop",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1000
+    },
+    {
+      "name": "export-desktop",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1000
+    },
+    {
+      "name": "workspace-mobile",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 844
+    },
+    {
+      "name": "component-builder-mobile",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 844
+    },
+    {
+      "name": "inspector-mobile",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 844
+    },
+    {
+      "name": "material-lab-mobile",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 844
+    },
+    {
+      "name": "library-mobile",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 844
+    },
+    {
+      "name": "builder-320x800",
+      "width": 320,
+      "scrollWidth": 320,
+      "height": 800
+    },
+    {
+      "name": "builder-768x1024",
+      "width": 768,
+      "scrollWidth": 768,
+      "height": 1024
+    },
+    {
+      "name": "builder-844x390",
+      "width": 844,
+      "scrollWidth": 844,
+      "height": 390
+    },
+    {
+      "name": "builder-1024x768",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "height": 768
+    },
+    {
+      "name": "workspace-light-desktop",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1000
+    },
+    {
+      "name": "builder-light-desktop",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1000
+    }
+  ],
+  "contrast": [
+    {
+      "theme": "dark",
+      "foreground": "--text",
+      "background": "--surface",
+      "ratio": 16.4
+    },
+    {
+      "theme": "dark",
+      "foreground": "--text",
+      "background": "--surface-raised",
+      "ratio": 13.65
+    },
+    {
+      "theme": "dark",
+      "foreground": "--muted",
+      "background": "--surface",
+      "ratio": 7.63
+    },
+    {
+      "theme": "dark",
+      "foreground": "--muted",
+      "background": "--surface-raised",
+      "ratio": 6.35
+    },
+    {
+      "theme": "light",
+      "foreground": "--text",
+      "background": "--surface",
+      "ratio": 16.15
+    },
+    {
+      "theme": "light",
+      "foreground": "--text",
+      "background": "--surface-raised",
+      "ratio": 13.47
+    },
+    {
+      "theme": "light",
+      "foreground": "--muted",
+      "background": "--surface",
+      "ratio": 6.12
+    },
+    {
+      "theme": "light",
+      "foreground": "--muted",
+      "background": "--surface-raised",
+      "ratio": 5.1
+    }
+  ],
+  "errors": []
+}

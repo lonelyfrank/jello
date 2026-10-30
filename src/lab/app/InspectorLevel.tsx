@@ -4,14 +4,14 @@ const Level = createContext(false);
 export const useAdvanced = () => useContext(Level);
 
 /** Presentation only: switching level never changes the canonical definition. */
-export function InspectorLevel({ children }: { children: React.ReactNode }) {
+export function InspectorLevel({ children, expanded = false }: { children: React.ReactNode; expanded?: boolean }) {
   const [advanced, setAdvanced] = useState(false);
-  return <Level.Provider value={advanced}>
-    <div className="inspector-level" role="group" aria-label="Livello dei controlli">
+  return <Level.Provider value={advanced || expanded}>
+    {!expanded && <div className="inspector-level" role="group" aria-label="Livello dei controlli">
       <button type="button" className="button small" aria-pressed={!advanced} onClick={() => setAdvanced(false)}>Base</button>
       <button type="button" className="button small" aria-pressed={advanced} onClick={() => setAdvanced(true)}>Avanzato</button>
       <p className="hint">{advanced ? 'Tutte le proprietà supportate, con unità, intervalli e ripristino.' : 'Controlli essenziali. Avanzato mostra stati, eventi e dettagli senza cambiare i dati.'}</p>
-    </div>
+    </div>}
     {children}
   </Level.Provider>;
 }

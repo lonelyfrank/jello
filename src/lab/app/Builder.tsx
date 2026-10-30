@@ -1,3 +1,6 @@
+import { setStudioPreferences, useStudioPreferences } from '../studio-preferences';
+import { Ic } from './ui';
+import { MaterialThumbnail } from './Library';
 /**
  * Component Builder panels: the left column (library and structure) and the
  * contextual inspector on the right. Everything here edits the builder's
@@ -57,6 +60,8 @@ const LEVEL_LABEL = { supported: 'supportato', approximated: 'approssimato', ign
 // ---------- left column ----------
 
 export function BuilderSidebar({ session }: { session: LabSession }) {
+  const { builderPane } = useStudioPreferences();
+  const assets = useLab((s) => s.projects.find((p) => p.id === s.projectId)?.assets);
   const b = useLab((s) => s.builder);
   const components = useLab((s) => s.components);
   const library = useLab((s) => s.library);
@@ -74,7 +79,9 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
 
   return (
     <>
-      <section className="side-section" aria-labelledby="bl-components">
+      <div className="studio-pane-tabs" role="group" aria-label="Pannelli del Builder">{([['all', 'Tutto'], ['layers', 'Layers'], ['components', 'Components'], ['assets', 'Assets']] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={builderPane === id} onClick={() => setStudioPreferences({ builderPane: id })}>{label}</button>)}</div>
+      {builderPane === 'assets' && <section className="side-section"><h2 className="side-title">Asset del progetto</h2><p className="hint">Risorse locali riutilizzabili nel tuo progetto.</p>{(['colors', 'icons', 'fonts'] as const).map((tab) => <button key={tab} type="button" className="nav-i" onClick={() => session.setAssetTab(tab)}><Ic name={tab === 'colors' ? 'palette' : tab === 'icons' ? 'grid' : 'type'} />{tab === 'colors' ? 'Colori' : tab === 'icons' ? 'Icone' : 'Font'}<span className="count">{tab === 'colors' ? assets?.palettes.flatMap((p) => p.colors).length ?? 0 : tab === 'icons' ? assets?.iconSets.flatMap((s) => s.icons).length ?? 0 : assets?.fonts.length ?? 0}</span></button>)}</section>}
+      <section className="side-section" hidden={builderPane !== 'all' && builderPane !== 'components'} aria-labelledby="bl-components">
         <h2 className="side-title" id="bl-components">
           Componenti
         </h2>
@@ -104,7 +111,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
         </ul>
       </section>
 
-      <section className="side-section" aria-labelledby="bl-materials">
+      <section className="side-section" hidden={builderPane !== 'all' && builderPane !== 'components'} aria-labelledby="bl-materials">
         <h2 className="side-title" id="bl-materials">
           Materiali
         </h2>
@@ -128,7 +135,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
                       session.selectElement('material');
                     }}
                   >
-                    <span className="sphere" aria-hidden="true" />
+                    <MaterialThumbnail doc={current ? material : MATERIALS.get(f.id)!.presets[0]!.doc} />
                     <span>
                       <strong>{f.label}</strong>
                       <span className="bl-sub">{current ? `In uso: ${material.name}` : f.description}</span>
@@ -149,7 +156,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
         </ul>
       </section>
 
-      <section className="side-section" aria-labelledby="bl-structure">
+      <section className="side-section" hidden={builderPane !== 'all' && builderPane !== 'layers'} aria-labelledby="bl-structure">
         <h2 className="side-title" id="bl-structure">
           Struttura
         </h2>
@@ -217,7 +224,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
         ) : (
           <p className="hint">{b.doc.type === 'desktop-navbar' ? 'Anteprima tecnica Desktop: regioni Start / Main / End. Editor strutturale completo previsto per M5.3.' : 'Un pulsante ha un’etichetta e, se vuoi, un’icona: si modificano dal pannello a destra.'}</p>
         )}
-      </section>      <section className="side-section" aria-labelledby="bl-library">
+      </section>      <section className="side-section" hidden={builderPane !== 'all' && builderPane !== 'components'} aria-labelledby="bl-library">
         <h2 className="side-title" id="bl-library">
           La mia libreria
         </h2>
@@ -385,6 +392,9 @@ export function TabIcon({ icon }: { icon: IconRef }) {
 
 function Section({ id, title, open = true, children }: { id: InspectorSection | string; title: string; open?: boolean; children: React.ReactNode }) {
   const advanced = useAdvanced();
+  const { inspectorTab } = useStudioPreferences();
+  const category = ['states', 'interactions'].includes(id) ? 'interactions' : ['responsive', 'accessibility', 'definition', 'desktop-preview'].includes(id) ? 'advanced' : 'design';
+  if (inspectorTab !== 'all' && inspectorTab !== category && id !== 'desktop-preview') return null;
   if (!advanced && ['typography', 'interactions'].includes(id)) return null;
   return (
     <details className="panel-section" data-section={`b-${id}`} open={open}>
@@ -442,6 +452,7 @@ function PropertyField({ f, path, value, unsupported, onChange }: { f: FieldDesc
 const unsupportedMap = (def: ComponentDefinition): ReadonlyMap<string, string> => new Map(unsupportedProperties(def).map((u) => [u.path, u.reason]));
 
 export function Inspector({ session }: { session: LabSession }) {
+  const { inspectorTab } = useStudioPreferences();
   const b = useLab((s) => s.builder);
   const spec = COMPONENTS.get(b.doc.type)!;
   const root = b.doc.type === 'mobile-navbar' ? navbarView(b.doc) : null;
@@ -457,7 +468,8 @@ export function Inspector({ session }: { session: LabSession }) {
           {tab ? `Tab «${tab.label}» · id ${tab.id}` : b.selection === 'material' ? 'Materiale applicato alla componente' : root ? `${b.doc.name} · ${root.children.length} tab` : `${b.doc.name} · ${summary(b.doc)}`}
         </p>
       </div>
-      <div className="panel-body"><InspectorLevel>
+      <div className="studio-inspector-tabs" role="group" aria-label="Sezioni inspector">{([['all', 'Tutto'], ['design', 'Design'], ['interactions', 'Interactions'], ['advanced', 'Advanced']] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={inspectorTab === id} onClick={() => setStudioPreferences({ inspectorTab: id })}>{label}</button>)}</div>
+      <div className="panel-body"><InspectorLevel expanded={inspectorTab !== 'all'}>
         {b.selection === 'material' ? <MaterialPanel session={session} /> : b.doc.type === 'desktop-navbar' ? <Section id="desktop-preview" title="Anteprima tecnica Desktop">
           <p className="hint">Renderer M5.2 · Glass / Solid · Start / Main / End. Struttura, layout e breakpoint si aggiornano importando la definizione JSON. Editor completo e pacchetti React/Vanilla previsti per M5.3.</p>
           <label htmlFor="desktop-preview-item">Elemento da verificare</label>
@@ -471,6 +483,7 @@ export function Inspector({ session }: { session: LabSession }) {
             {(['hover', 'pressed', 'focus', 'active', 'disabled'] as const).map((state) => <option key={state} value={state}>{state}</option>)}
           </select>
         </Section> : tab && root ? <TabInspector key={tab.id} session={session} tab={tab} root={root} /> : root ? <RootInspector session={session} root={root} /> : <ButtonInspector session={session} />}
+        {(inspectorTab === 'all' || inspectorTab === 'advanced') && <Section id="definition" title="Definizione e compatibilità" open={false}><p className="hint">jello-component-definition v1 · {b.doc.material.family} · runtime {b.doc.runtime.min}</p><p className="hint">{spec.export.notes.join(' ')}</p><label htmlFor="studioDefinition" className="field">Definizione JSON canonica</label><textarea id="studioDefinition" className="code-area" readOnly rows={14} value={session.componentJson()} /><button type="button" className="button small" onClick={() => session.download(`${b.doc.id}.jello-component.json`, session.componentJson(), 'application/json')}>Scarica JSON</button></Section>}
       </InspectorLevel></div>
     </div>
   );

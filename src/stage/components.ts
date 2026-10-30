@@ -1,3 +1,4 @@
+import { JELLO_DEMO } from './demo-content';
 /**
  * Demo components for the preview: a button, a card and a panel (dialog).
  * Each one is a real HTML component with one glass surface attached to its
@@ -96,7 +97,7 @@ export class ButtonDemo extends Demo {
     host.type = 'button';
     host.className = 'demo-button';
     host.id = 'demoButton';
-    host.innerHTML = `${icon(ICON_CHECK)}<span>Conferma</span>`;
+    host.innerHTML = `${icon(ICON_CHECK)}<span>${JELLO_DEMO.button}</span>`;
     const box = doc.createElement('div');
     box.className = 'demo-center';
     super(root, host);
@@ -143,10 +144,10 @@ export class CardDemo extends Demo {
     host.id = 'demoCard';
     host.setAttribute('aria-labelledby', 'demoCardTitle');
     host.innerHTML =
-      '<p class="demo-kicker">Partita in corso</p>' +
-      '<h3 class="demo-title" id="demoCardTitle">Aironi – Basilischi</h3>' +
-      '<p class="demo-text">Il testo della card resta nel foreground: il materiale lo separa dallo sfondo senza filtrarlo.</p>' +
-      '<p class="demo-score" aria-label="Punteggio 62 a 58"><strong>62</strong><span aria-hidden="true">–</span><strong>58</strong></p>' +
+      '<p class="demo-kicker">Jello Collection · demo</p>' +
+      `<h3 class="demo-title" id="demoCardTitle">${JELLO_DEMO.tagline}</h3>` +
+      `<p class="demo-text">${JELLO_DEMO.card}</p>` +
+      '<p class="demo-score" aria-label="Collezione 01 di 24"><strong>01</strong><span aria-hidden="true">/</span><strong>24</strong></p>' +
       '<button type="button" class="demo-link">Dettagli</button>';
     const box = doc.createElement('div');
     box.className = 'demo-center';
@@ -189,11 +190,11 @@ export class DialogDemo extends Demo {
     host.setAttribute('aria-labelledby', 'demoDialogTitle');
     host.innerHTML =
       '<header class="demo-dialog-head">' +
-      '<h3 class="demo-title" id="demoDialogTitle">Impostazioni partita</h3>' +
+      '<h3 class="demo-title" id="demoDialogTitle">Impostazioni dello Studio</h3>' +
       `<button type="button" class="demo-icon-button" data-close aria-label="Chiudi il pannello">${icon(ICON_CLOSE)}</button>` +
       '</header>' +
       '<p class="demo-text">Un pannello sopra contenuti che scorrono: testi e controlli devono restare leggibili su ogni sfondo.</p>' +
-      '<label class="demo-check"><input type="checkbox" checked /> <span>Notifiche dei punti</span></label>' +
+      '<label class="demo-check"><input type="checkbox" checked /> <span>Notifiche delle creazioni</span></label>' +
       '<div class="demo-actions"><button type="button" class="demo-link" data-close>Annulla</button><button type="button" class="demo-primary" data-close>Salva</button></div>';
     const box = doc.createElement('div');
     box.className = 'demo-center';

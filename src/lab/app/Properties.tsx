@@ -1,3 +1,4 @@
+import { resolveDefinitionMaterial } from '../../components';
 import { useMemo, useState } from 'react';
 import { PARAM_INDEX, PARAMS, type ParamDescriptor, type ParamGroup } from '../../core/params';
 import type { ContextStatus } from '../../core/context';
@@ -185,7 +186,7 @@ function GlassProperties({ session, doc }: { session: LabSession; doc: GlassDocu
 }
 
 /** Reduced motion and transparency: what the material does when the person (or the system) asks for less. */
-function AccessibilitySection({ session }: { session: LabSession }) {
+export function AccessibilitySection({ session }: { session: LabSession }) {
   const options = useLab((s) => s.options);
   return (
     <Section id="accessibility" title="Accessibilità">
@@ -330,10 +331,13 @@ function RendererSection({ session, effective }: { session: LabSession; effectiv
   );
 }
 
-function Diagnostics({ session }: { session: LabSession }) {
+export function Diagnostics({ session }: { session: LabSession }) {
   const report = useLab((s) => s.report);
   const options = useLab((s) => s.options);
-  const doc = useLab((s) => s.doc);
+  const material = useLab((s) => s.doc);
+  const component = useLab((s) => s.builder.doc);
+  const workspace = useLab((s) => s.workspace);
+  const doc = useMemo(() => workspace === 'builder' ? resolveDefinitionMaterial(component) : material, [workspace, component, material]);
   const [measure, setMeasure] = useState<string>('');
   const [busy, setBusy] = useState(false);
   if (!report || doc.family !== 'glass') return null;
@@ -542,7 +546,7 @@ function ImportExport({ session }: { session: LabSession }) {
   );
 }
 
-function PhoneSection({ session }: { session: LabSession }) {
+export function PhoneSection({ session }: { session: LabSession }) {
   const sync = useLab((s) => s.sync);
   const [relay, setRelay] = useState(() => `${location.protocol}//${location.hostname}:5174`);
   const previewUrl =

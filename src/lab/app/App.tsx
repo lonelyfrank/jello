@@ -17,6 +17,11 @@ import { Ic } from './ui';
 import { Library } from './Library';
 import { Preview } from './Preview';
 import { Properties } from './Properties';
+import { TestInspector } from './TestInspector';
+import { StudioNav, openStudio } from './StudioNav';
+import { StudioLibrary } from './StudioLibrary';
+import { PanelResize } from './PanelResize';
+import { useStudioPreferences } from '../studio-preferences';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -38,6 +43,7 @@ function saveLabel(s: SaveState, origin: 'builtin' | 'user', modified: boolean):
 }
 
 export function App({ session }: { session: LabSession }) {
+  const studio = useStudioPreferences();
   const doc = useLab((s) => s.doc);
   const save = useLab((s) => s.save);
   const origin = useLab((s) => s.origin);
@@ -69,7 +75,8 @@ export function App({ session }: { session: LabSession }) {
   const e = report?.main.engine;
   const scene = report?.options.mode === 'scene';
   const isBuilder = workspace === 'builder';
-  const inLab = page === 'lab' && !flow;
+  const inLab = page === 'lab' && !flow && studio.area !== 'library';
+  const inLibrary = page === 'lab' && !flow && studio.area === 'library';
   const hasProject = projectId !== null;
   const project = projects.find((p) => p.id === projectId) ?? null;
   const pageSave = saveLabel(save, 'user', false);
@@ -79,24 +86,20 @@ export function App({ session }: { session: LabSession }) {
         {inLab ? (isBuilder ? 'Vai all’inspector' : 'Vai alle proprietà') : 'Vai al contenuto'}
       </a>
       <header className="lab-header" data-page={flow ? 'flow' : page}>
-        <button type="button" className="brand" id="brandHome" aria-label="Jello: vai alla Home" onClick={() => session.setPage('home')}>
+        <button type="button" className="brand" id="brandHome" aria-label="Jello: vai alla Home" onClick={() => openStudio(session, 'workspace')}>
           <img className="brand-mark" src={`${BASE}brand/jello-mark-96.png`} srcSet={`${BASE}brand/jello-mark-96.png 1x, ${BASE}brand/jello-mark-192.png 2x`} alt="" width="40" height="33" />
           <h1>
-            <span className="brand-name">Jello</span> <span className="brand-sub">Material Lab</span>
+            <span className="brand-name">Jello</span> <span className="brand-sub">Studio</span>
           </h1>
         </button>
-        <div className="tb-segmented workspace-switch" role="group" aria-label="Sezioni">
-          <button type="button" className="tb-seg" id="ws-material" aria-pressed={inLab && !isBuilder} aria-current={inLab && !isBuilder ? 'page' : undefined} aria-label="Materiali" disabled={!hasProject} onClick={() => session.setPage('lab', 'material')}>
-            Materiali
-          </button>
-          <button type="button" className="tb-seg" id="ws-builder" aria-pressed={inLab && isBuilder} aria-current={inLab && isBuilder ? 'page' : undefined} aria-label="Componenti" disabled={!hasProject} onClick={() => session.setPage('lab', 'builder')}>
-            Componenti
-          </button>
-          <button type="button" className="tb-seg" id="nav-assets" aria-pressed={page === 'assets' && !flow} aria-current={page === 'assets' && !flow ? 'page' : undefined} aria-label="Asset" disabled={!hasProject} onClick={() => session.setPage('assets')}>
-            Asset
-          </button>
+        <StudioNav session={session} />
+        <div className="studio-utilities">
+          {hasProject && <span className="studio-mobile-status" role="status" aria-label={pageSave} title={pageSave} data-kind={save.kind}>{save.kind === 'saved' ? 'Salvato' : save.kind === 'error' ? 'Non salvato' : save.kind === 'memory' ? 'Solo scheda' : save.kind === 'saving' || save.kind === 'pending' ? 'In attesa' : 'Locale'}</span>}
+          <button className="tb-icon-button" id="nav-assets" type="button" aria-label="Asset" title="Asset del progetto" disabled={!hasProject} onClick={() => session.setPage('assets')}><Ic name="palette" /></button>
+          <button className="tb-icon-button" id="studioSettings" type="button" aria-label="Impostazioni" title="Impostazioni" onClick={() => session.setPage('settings')}><Ic name="gear" /></button>
         </div>
-
+        <div className="studio-contextbar">
+          <ProjectSwitch session={session} />
         {page === 'home' && !flow && (
           <>
             <GlobalSearch session={session} />
@@ -113,10 +116,11 @@ export function App({ session }: { session: LabSession }) {
           </>
         )}
 
+        {inLibrary && <><span className="crumb-current">Library</span><p className="save-status" id="saveStatus" role="status" data-kind={save.kind}>{pageSave}</p><button type="button" className="header-button primary" onClick={() => session.setExportOpen(true)}><Ic name="download" />Esporta…</button></>}
         {(page === 'assets' || page === 'settings' || flow) && (
           <>
             <div className="page-title">
-              {projects.length > 1 || flow ? <ProjectSwitch session={session} /> : <span>{project?.name ?? 'Jello'}</span>}
+              <span>{project?.name ?? 'Jello Studio'}</span>
               <span aria-hidden="true">·</span>
               <span className="crumb-current">{flow === 'component' ? 'Nuova componente' : flow === 'wizard' ? 'Nuovo progetto' : flow === 'import' ? 'Importazione' : flow === 'export' ? 'Esportazione' : page === 'assets' ? 'Asset' : 'Impostazioni'}</span>
             </div>
@@ -135,7 +139,7 @@ export function App({ session }: { session: LabSession }) {
         {inLab && (
           <>
             <nav className="crumbs" aria-label="Percorso">
-              {projects.length > 1 ? <ProjectSwitch session={session} /> : null}
+
               {isBuilder ? (
                 <>
                   <span className="visually-hidden" id="crumbType">{COMPONENTS.get(builder.doc.type)?.name ?? builder.doc.type}</span>
@@ -216,6 +220,7 @@ export function App({ session }: { session: LabSession }) {
             </div>
           </>
         )}
+        </div>
       </header>
 
       {flow && (
@@ -228,6 +233,7 @@ export function App({ session }: { session: LabSession }) {
           <Home session={session} />
         </div>
       )}
+      {inLibrary && <div className="page-scroll" id="main" tabIndex={-1}><StudioLibrary session={session} /></div>}
       {!flow && page === 'assets' && (
         <div className="page-scroll" id="main" tabIndex={-1}>
           <AssetsPage session={session} />
@@ -239,8 +245,9 @@ export function App({ session }: { session: LabSession }) {
         </div>
       )}
 
-      <main className="lab" id="lab" hidden={!inLab} data-left={layout.left ? 'open' : 'closed'} data-right={layout.right ? 'open' : 'closed'}>
+      <main className="lab" id="lab" hidden={!inLab} data-studio-area={studio.area} style={{ ['--side-w' as string]: `${layout.left ? studio.leftWidth : 0}px`, ['--panel-w' as string]: `${layout.right ? studio.rightWidth : 0}px` }} data-left={layout.left ? 'open' : 'closed'} data-right={layout.right ? 'open' : 'closed'}>
         <Preview session={session} />
+        <PanelResize side="left" visible={layout.left} /><PanelResize side="right" visible={layout.right} />
         <div
           className={`controls${layout.drawer ? ' is-open' : ''}`}
           id="controls"
@@ -264,7 +271,7 @@ export function App({ session }: { session: LabSession }) {
             {isBuilder ? <BuilderSidebar session={session} /> : <Library session={session} />}
           </aside>
           <aside className="panel" id="panel" aria-label={isBuilder ? 'Inspector della componente' : 'Proprietà del materiale'} tabIndex={-1} hidden={!layout.right}>
-            {isBuilder ? <Inspector session={session} /> : <Properties session={session} />}
+            {studio.area === 'preview' ? <TestInspector session={session} /> : isBuilder ? <Inspector session={session} /> : <Properties session={session} />}
           </aside>
         </div>
       </main>

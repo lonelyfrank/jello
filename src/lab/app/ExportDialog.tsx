@@ -27,6 +27,7 @@ export function ExportDialog({ session }: { session: LabSession }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [target, setTarget] = useState<ExportTarget>(workspace === 'builder' ? 'component' : 'material');
   const [adapterId, setAdapterId] = useState<string>('');
+  const [step, setStep] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; messages: string[] } | null>(null);
 
@@ -36,6 +37,7 @@ export function ExportDialog({ session }: { session: LabSession }) {
     if (open && !d.open) {
       setTarget(workspace === 'builder' ? 'component' : 'material');
       setResult(null);
+      setStep(null);
       d.showModal();
     } else if (!open && d.open) d.close();
   }, [open, workspace]);
@@ -54,7 +56,9 @@ export function ExportDialog({ session }: { session: LabSession }) {
             ×
           </button>
         </header>
-        <fieldset className="export-targets">
+        <ol className="export-steps" aria-label="Passi dell’esportazione">{['Elemento', 'Formato', 'Dipendenze', 'Contenuto', 'Export'].map((label, i) => <li key={label}><button type="button" aria-current={step === i ? 'step' : undefined} onClick={() => setStep(i)}><span className="export-step-number">{i + 1}</span>{label}</button></li>)}</ol>
+        {step !== null && <p className="export-handoff" role="status">Passo {step + 1} di 5 · <button type="button" className="link export-overview" onClick={() => setStep(null)}>Mostra riepilogo completo</button></p>}
+        <fieldset className="export-targets" hidden={step !== null && step !== 0}>
           <legend className="field-legend">Cosa esportare</legend>
           {TARGETS.map((t) => {
             const disabled = t.id === 'component' && !component;
@@ -81,7 +85,7 @@ export function ExportDialog({ session }: { session: LabSession }) {
           })}
         </fieldset>
         {adapters.length > 1 && (
-          <fieldset className="export-formats">
+          <fieldset className="export-formats" hidden={step !== null && step !== 1}>
             <legend className="field-legend">Formato</legend>
             {adapters.map((a) => (
               <label key={a.id} className="check" htmlFor={`export-adapter-${a.id}`}>
@@ -91,25 +95,26 @@ export function ExportDialog({ session }: { session: LabSession }) {
             ))}
           </fieldset>
         )}
+        {step === 1 && adapters.length === 1 && <p className="hint">Formato disponibile: {adapter?.label}.</p>}
         {!adapter && (
           <p className="hint" id="exportNone">
             Nessun formato disponibile per questa selezione.
           </p>
         )}
         {plan && adapter && (
-          <section className="export-plan" id="exportPlan" aria-label="Contenuto dell’export">
+          <section className="export-plan" id="exportPlan" aria-label="Contenuto dell’export" hidden={step !== null && step < 2}>
             <p>
               <strong>{adapter.label}</strong> → <code id="exportName">{plan.name}</code>
             </p>
-            <h3 className="panel-sub">Verrà esportato</h3>
-            <ul className="export-files">
+            <h3 className="panel-sub" hidden={step === 2}>Verrà esportato</h3>
+            <ul className="export-files" hidden={step === 2}>
               {plan.files.map((f) => (
                 <li key={f.path}>
                   <code>{f.path}</code> — {f.description}
                 </li>
               ))}
             </ul>
-            <h3 className="panel-sub">Dipendenze</h3>
+            <div hidden={step === 3}><h3 className="panel-sub">Dipendenze</h3>
             {plan.dependencies.length ? (
               <ul className="export-files" id="exportDeps">
                 {plan.dependencies.map((d) => (
@@ -126,6 +131,7 @@ export function ExportDialog({ session }: { session: LabSession }) {
                 Nessuna.
               </p>
             )}
+            </div>
             {plan.notes.map((n) => (
               <p key={n} className="hint">
                 {n}
@@ -150,10 +156,13 @@ export function ExportDialog({ session }: { session: LabSession }) {
               session.openFlow('export');
             }}
           >
-            Esportazione guidata del progetto →
+            Backup progetto (.jello) e asset →
           </button>
         </p>
+        <p className="export-handoff">Il backup .jello recupera il lavoro nello Studio. I pacchetti React e Vanilla integrano il runtime nel tuo progetto.</p>
         <div className="button-row export-actions">
+          {step !== null && <button type="button" className="button" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, (s ?? 0) - 1))}>Indietro</button>}
+          {step !== null && step < 4 && <button type="button" className="button primary" disabled={!adapter} onClick={() => setStep((s) => Math.min(4, (s ?? 0) + 1))}>Continua</button>}
           <button type="button" className="button" onClick={() => session.setExportOpen(false)}>
             Chiudi
           </button>
@@ -161,6 +170,7 @@ export function ExportDialog({ session }: { session: LabSession }) {
             type="button"
             className="button primary"
             id="exportGo"
+            hidden={step !== null && step !== 4}
             disabled={!adapter || busy}
             onClick={async () => {
               if (!adapter) return;

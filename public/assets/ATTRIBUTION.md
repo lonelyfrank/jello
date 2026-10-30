@@ -1,5 +1,13 @@
 # Asset di prova
 
+## Sfondi Jello
+
+- `backgrounds/jelly-macro.png`: immagine originale fornita dall'utente per Jello,
+  integrata su sua richiesta. Nessuna licenza pubblica dichiarata.
+- Jelly Spectrum riutilizza lo stesso raster. Scene Jello Dark, Light e Gradient:
+  composizioni native originali del progetto.
+- Questi asset del brand sono distinti dai materiali implementati: Jelly resta in sviluppo.
+
 ## tulips-kuznietsov-cc0.jpg
 
 - Soggetto: mazzi di tulipani colorati, Lviv (Ucraina), 7 marzo 2016.

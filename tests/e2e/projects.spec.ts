@@ -311,11 +311,11 @@ test.describe('shell', () => {
   test('global search finds a material and opens it; Settings shows where the data lives', async ({ page }) => {
     await startKit(page);
     await page.locator('#brandHome').click();
-    await page.getByRole('combobox').fill('lente');
+    await page.getByRole('combobox', { name: 'Cerca', exact: true }).fill('lente');
     await page.getByRole('option', { name: 'Lente marcata Materiale', exact: true }).click();
     await expect(page.locator('#crumbPreset')).toHaveText('Lente marcata');
     await page.locator('#brandHome').click();
-    await page.getByRole('button', { name: 'Impostazioni' }).click();
+    await page.locator('.lab-header').getByRole('button', { name: 'Impostazioni', exact: true }).click();
     await expect(page.locator('#settingsPage')).toContainText('salvati in questo browser');
     await expect(page.getByRole('heading', { name: 'Stati dell’interfaccia' })).toBeVisible();
   });
