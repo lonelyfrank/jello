@@ -8,6 +8,71 @@ il laboratorio solo se è stato prodotto per la stessa versione del runtime (`fi
 `runtimeVersion`): i risultati precedenti non certificano il codice modificato. L’emulazione
 mobile non certifica un telefono.
 
+## M5.1 · Navbar Structure Engine (runtime 0.3.0) — 30 ottobre 2026
+
+Ambiente Linux x64, browser headless: Chromium, Firefox e Pixel 7 emulato.
+Contratti e limiti: [Navbar Architecture](navbar-architecture.md).
+Audit, API e file modificati: [consegna](navbar-m51-delivery.md).
+
+| Controllo | Esito |
+| --- | --- |
+| `npm run typecheck` | **superato** |
+| `npm test` | **superato** — 388 test in 22 file, inclusi 40 test nuovi del modello navbar |
+| `npm run build` | **superato** — libreria, dichiarazioni TypeScript e Studio; resta l'avviso Vite per il chunk Studio oltre 500 kB |
+| Suite E2E di regressione su nove file, tre progetti browser | **329 superati, 1 saltato**, nessun fallimento |
+| Verifica finale delle ultime modifiche su cinque file E2E | **140 superati, 4 falliti** per il contesto del test URL, risolti come indicato sotto |
+| `navbar-structure.spec.ts`, dopo isolamento del contesto URL | **9/9 superati**, tre browser, nessun fallimento |
+
+La suite di regressione comprende `builder`, `components`, `navbar`, `solid`,
+`projects`, `component-export`, `react-consumer`, `vanilla-consumer` e
+`navbar-structure`. Il test saltato è il selettore progetti sul viewport mobile,
+dove quel controllo è nascosto. Non è l'intera suite E2E della repository.
+
+```sh
+npm run test:e2e:local -- tests/e2e/navbar-structure.spec.ts \
+  tests/e2e/builder.spec.ts tests/e2e/react-consumer.spec.ts \
+  tests/e2e/vanilla-consumer.spec.ts tests/e2e/navbar.spec.ts \
+  tests/e2e/components.spec.ts tests/e2e/projects.spec.ts \
+  tests/e2e/solid.spec.ts tests/e2e/component-export.spec.ts
+```
+
+Dopo gli ultimi ritocchi a riordino nei gruppi e selezione delle route è stata
+rieseguita la selezione `navbar-structure`, `builder`, `components`,
+`react-consumer`, `vanilla-consumer` (144 test): 140 superati, quattro fallimenti
+nel test di navigazione nativa su Chromium/mobile. La prova montava una navbar
+indipendente dentro il laboratorio e il sincronizzatore URL dello Studio
+sovrascriveva l'ancora appena aperta. Il test ora usa un host HTML vuoto sulla
+stessa origine e importa lo stesso runtime. Nessuna modifica al prodotto per
+correggere questa interferenza, nessun aumento dei timeout.
+
+È stata quindi rieseguita **l'intera** `navbar-structure.spec.ts`, inclusi i
+quattro casi falliti e i flussi Builder, su tutti e tre i progetti: **9/9
+superati**. Gli altri quattro file avevano già superato la verifica e non sono
+stati rieseguiti dopo la sola modifica della fixture di test. Il consumer React
+è stato ricostruito con il suo typecheck e verifica realmente `onAction`.
+
+```sh
+npm run test:e2e:local -- tests/e2e/navbar-structure.spec.ts \
+  tests/e2e/builder.spec.ts tests/e2e/react-consumer.spec.ts \
+  tests/e2e/vanilla-consumer.spec.ts tests/e2e/components.spec.ts
+npm run test:e2e:local -- tests/e2e/navbar-structure.spec.ts
+```
+
+Prove coperte: operazioni immutabili e ID globali, valori applicativi ripetuti,
+SVG e metadati, gruppi e regioni, visibilità/disabled, fallback della selezione,
+azioni/URL, rifiuto di riparazioni implicite, confronto Glass/Solid, migrazioni
+reali, JSON/IndexedDB/ZIP `.jello`, creazione e riapertura nel Builder,
+export React/Vanilla, wrapper React con `onAction`, runtime byte-identico nei
+consumer e confronti visivi anteprima/export. Nessuna attesa temporale aggiunta.
+
+La baseline unitaria nella sandbox aveva fallito per `listen EPERM` del relay;
+con accesso alle porte locali tutti i 348 test originali sono passati.
+Le verifiche finali del relay e dei browser sono state eseguite con tale accesso.
+
+WebKit/Safari, dispositivi fisici, Android WebView e prestazioni non verificati
+in M5.1. Desktop è un contratto validato senza renderer/editor/export disponibile;
+nessuna dichiarazione di funzionamento visuale Desktop.
+
 ## M2 · Component Engine (runtime 0.3.0) — 30 ottobre 2026
 
 Ambiente: lo stesso delle sezioni seguenti (Linux x64, Playwright 1.64.1, browser headless). Esecuzione completa

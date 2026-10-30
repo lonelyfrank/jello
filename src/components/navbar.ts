@@ -5,9 +5,9 @@
  * file holds what is specific to navigation bars: the described properties
  * (ranges, units, defaults), the checks, and a derived, read-only **view**
  * (`navbarView`, the `BnRoot` shape) that the DOM renderer and the exporters
- * read. The view is never stored and never exchanged; editing goes through
- * the definition (`applyNavbarView` after an operation on the view, or
- * `setNavbarField` for one described property).
+ * read. The view is never stored or exchanged. Structural editing uses the
+ * shared operations in navbar-structure.ts; `applyNavbarView` and the view
+ * operations remain compatibility APIs, `setNavbarField` edits described properties.
  *
  *   root (view)  layout · appearance · typography · icon · states · interactions · motion · responsive
  *   children     tab × n   stable ids, independent of the visible labels
@@ -21,6 +21,7 @@
 
 import type { IconRef } from './icons';
 import type { ComponentDefinition, NodeContent, StructureNode } from './definition';
+import { navbarItemNodes, type NavbarAction, type NavbarIconPosition } from './navbar-contract';
 import { EVENT_NAME_PATTERN, checkField, checkFields, choices, defaultsOf, getPath, numberField, setPath, type FieldDescriptor, type NumberField } from './fields';
 
 export type Color = string;
@@ -41,6 +42,9 @@ export interface BnLayout {
   offset: number;
   itemLayout: 'stacked' | 'inline';
   labels: 'show' | 'hide' | 'active';
+  icons?: 'show' | 'hide';
+  distribution?: 'start' | 'center' | 'end' | 'between' | 'evenly';
+  compact?: boolean;
 }
 
 export interface BnAppearance {
@@ -77,7 +81,7 @@ export interface BnInteractions {
   /** Pressing the active tab again: emit `reselect` or nothing. */
   reselect: 'event' | 'none';
   /** DOM event names dispatched on the root element (CustomEvent, bubbles). */
-  events: { change: string; press: string; reselect: string };
+  events: { change: string; press: string; reselect: string; action?: string };
 }
 
 export interface BnMotion {
@@ -86,7 +90,7 @@ export interface BnMotion {
 }
 
 export type BnOverrideKey = (typeof OVERRIDE_PATHS)[number];
-export type BnOverrides = Partial<Record<BnOverrideKey, number | string>>;
+export type BnOverrides = Partial<Record<BnOverrideKey, number | string | boolean>>;
 
 export interface BnBreakpoint {
   id: string;
@@ -117,6 +121,12 @@ export interface BnTab {
   /** Free payload for the host (a route, a key…), sent with every event. */
   value: string | null;
   disabled: boolean;
+  visible?: boolean;
+  action?: NavbarAction;
+  iconPosition?: NavbarIconPosition;
+  accessibleLabel?: string;
+  description?: string;
+  groupId?: string;
   /** Per-tab overrides; null inherits from the root. */
   style: BnTabStyle;
 }
@@ -159,6 +169,9 @@ export const BN_FIELDS: readonly FieldDescriptor[] = [
   num('layout.offset', 'layout', 'Distanza dal bordo', 'px', 0, 64, 1, 12, 'Distanza dal bordo inferiore e dai lati (posizionamento flottante).'),
   { type: 'enum', path: 'layout.itemLayout', section: 'layout', label: 'Disposizione tab', options: opts(['stacked', 'Icona sopra'], ['inline', 'Icona accanto']), default: 'stacked', description: 'Posizione dell’icona rispetto all’etichetta.' },
   { type: 'enum', path: 'layout.labels', section: 'layout', label: 'Etichette', options: opts(['show', 'Sempre'], ['active', 'Solo tab attiva'], ['hide', 'Nascoste']), default: 'show', description: 'Le etichette nascoste restano il nome accessibile della tab.' },
+  { type: 'enum', path: 'layout.icons', section: 'layout', label: 'Icone', options: opts(['show', 'Visibili'], ['hide', 'Nascoste']), default: 'show', optional: true, description: 'Visibilità delle icone, indipendente dalle etichette.' },
+  { type: 'enum', path: 'layout.distribution', section: 'layout', label: 'Distribuzione', options: opts(['evenly', 'Uniforme'], ['start', 'Inizio'], ['center', 'Centro'], ['end', 'Fine'], ['between', 'Spazio tra elementi']), default: 'evenly', optional: true, description: 'Distribuzione delle voci nello spazio disponibile.' },
+  { type: 'boolean', path: 'layout.compact', section: 'layout', label: 'Compatta', default: false, optional: true, description: 'Riduce gli spazi interni senza cambiare il tipo di navigazione.' },
 
   { type: 'color', path: 'appearance.foreground', section: 'appearance', label: 'Colore testo e icone', default: '#0c0c10', description: 'Colore delle tab non attive.' },
   { type: 'boolean', path: 'appearance.textShadow', section: 'appearance', label: 'Alone di leggibilità', default: true, description: 'Leggero alone chiaro dietro testo e icone, per sfondi variabili.' },
@@ -199,7 +212,7 @@ export const BN_FIELDS: readonly FieldDescriptor[] = [
 export const BN_FIELD_INDEX: Readonly<Record<string, FieldDescriptor>> = Object.fromEntries(BN_FIELDS.map((f) => [f.path, f]));
 
 /** Root properties a breakpoint may override. */
-export const OVERRIDE_PATHS = ['layout.placement', 'layout.height', 'layout.padding', 'layout.gap', 'layout.offset', 'layout.itemLayout', 'layout.labels', 'typography.fontSize', 'icon.size'] as const;
+export const OVERRIDE_PATHS = ['layout.placement', 'layout.height', 'layout.padding', 'layout.gap', 'layout.offset', 'layout.itemLayout', 'layout.labels', 'typography.fontSize', 'icon.size', 'layout.icons', 'layout.align', 'layout.width', 'layout.maxWidth', 'layout.distribution', 'layout.compact'] as const;
 
 /** Per-tab overrides and their descriptors (same ranges as the root). */
 export const TAB_STYLE_FIELDS: Readonly<Record<keyof BnTabStyle, NumberField>> = {
@@ -323,7 +336,7 @@ export function addBreakpoint(root: BnRoot, maxWidth = 480): { root: BnRoot; id:
   return { root: { ...root, responsive: { ...root.responsive, breakpoints: [...root.responsive.breakpoints, bp] } }, id };
 }
 
-export function updateBreakpoint(root: BnRoot, id: string, patch: { maxWidth?: number; set?: [BnOverrideKey, number | string | null] }): BnRoot {
+export function updateBreakpoint(root: BnRoot, id: string, patch: { maxWidth?: number; set?: [BnOverrideKey, number | string | boolean | null] }): BnRoot {
   const breakpoints = root.responsive.breakpoints.map((b) => {
     if (b.id !== id) return b;
     let overrides = b.overrides;
@@ -416,7 +429,10 @@ export function fromCanonicalPath(path: string): string {
 }
 
 /** The described properties of a navbar, addressed by canonical path (what an inspector for the definition lists). */
-export const NAVBAR_FIELDS: readonly FieldDescriptor[] = BN_FIELDS.map((f) => ({ ...f, path: toCanonicalPath(f.path) }));
+export const NAVBAR_FIELDS: readonly FieldDescriptor[] = BN_FIELDS.map((f) => ({ ...f, path: toCanonicalPath(f.path),
+  scope: ['layout.anchor', 'layout.placement', 'layout.offset'].includes(f.path) ? 'mobile-navbar' : 'common',
+  level: ['layout.widthMode', 'layout.width', 'layout.maxWidth', 'layout.radius', 'layout.gap', 'layout.labels', 'layout.placement', 'appearance.indicator.style', 'appearance.indicator.color'].includes(f.path) ? 'base' : 'advanced',
+}));
 
 /**
  * Described properties that have no effect on a material family, with the
@@ -464,6 +480,9 @@ export function navbarPresentation(r: BnRoot, family: string, o: { anchor?: BnLa
     'data-motion': r.motion.indicator,
     'data-semantics': r.semantics,
   };
+  if (L.icons !== undefined) attrs['data-icons'] = L.icons;
+  if (L.distribution !== undefined) attrs['data-distribution'] = L.distribution;
+  if (L.compact !== undefined) attrs['data-compact'] = String(L.compact);
   if (!off.has('style.appearance.textShadow')) attrs['data-text-shadow'] = String(r.appearance.textShadow);
   if (o.breakpoint) attrs['data-breakpoint'] = o.breakpoint;
   const vars: Record<string, string> = {
@@ -501,7 +520,7 @@ export function navbarPresentation(r: BnRoot, family: string, o: { anchor?: BnLa
 /** States a navbar can be in (focus is a ring drawn by the component, not a material state). */
 export const NAVBAR_STATES = ['default', 'hover', 'pressed', 'active', 'focus', 'disabled'] as const;
 /** Events a navbar reports. */
-export const NAVBAR_TRIGGERS = ['press', 'hover', 'focus', 'change', 'reselect'] as const;
+export const NAVBAR_TRIGGERS = ['press', 'hover', 'focus', 'change', 'reselect', 'action'] as const;
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const obj = (v: unknown): Record<string, unknown> => (isObj(v) ? v : {});
@@ -532,7 +551,7 @@ function viewSections(s: { layout?: unknown; responsive?: unknown; style?: unkno
     icon: style.icon,
     motion: style.motion,
     states: Object.fromEntries((['active', 'hover', 'pressed', 'focus', 'disabled'] as const).map((k) => [k, obj(states[k]).style])),
-    interactions: { pressFeedback: beh.pressFeedback, wheelForward: beh.wheelForward, reselect: beh.reselect, events: inter.events },
+    interactions: { pressFeedback: beh.pressFeedback, wheelForward: beh.wheelForward, reselect: beh.reselect, events: isObj(inter.events) ? Object.fromEntries(Object.entries(inter.events).filter(([k]) => !['action', 'hover', 'focus'].includes(k))) : inter.events },
     responsive,
   };
 }
@@ -540,8 +559,6 @@ function viewSections(s: { layout?: unknown; responsive?: unknown; style?: unkno
 const mapMessage = (m: string) => m.replace(/^([A-Za-z0-9_.]+): /, (_, p: string) => `${toCanonicalPath(p)}: `);
 
 /** Canonical override key (as stored in a breakpoint) for each view key. */
-const OVERRIDE_CANONICAL = OVERRIDE_PATHS.map((p) => toCanonicalPath(p));
-
 export interface ItemRef {
   id: string;
 }
@@ -563,6 +580,8 @@ export function checkNavbarSections(
   items: readonly ItemRef[],
   errors: string[],
   warnings: string[],
+  fields: readonly FieldDescriptor[] = BN_FIELDS,
+  overridePaths: readonly string[] = OVERRIDE_PATHS,
 ): NavbarCheck | null {
   const before = errors.length;
   for (const k of ['layout', 'responsive', 'style', 'states', 'interactions'] as const) {
@@ -571,7 +590,9 @@ export function checkNavbarSections(
   const style = obj(raw.style);
   const inter = obj(raw.interactions);
   const behavior = obj(inter.behavior);
-  const f = checkFields(viewSections(raw), BN_FIELDS, '');
+  const f = checkFields(viewSections(raw), fields, '');
+  const fieldIndex = Object.fromEntries(fields.map((f) => [f.path, f]));
+  const overrideCanonical = overridePaths.map(toCanonicalPath);
   errors.push(...f.errors.map(mapMessage));
   warnings.push(...f.warnings.map(mapMessage));
   for (const k of Object.keys(behavior)) if (!['semantics', 'defaultItem', 'pressFeedback', 'wheelForward', 'reselect'].includes(k)) warnings.push(`interactions.behavior.${k}: proprietà sconosciuta, ignorata`);
@@ -597,20 +618,20 @@ export function checkNavbarSections(
       if (typeof b.id !== 'string' || !BREAKPOINT_ID.test(b.id)) errors.push(`${at}.id: identificatore non valido`);
       else if (seen.has(b.id)) errors.push(`${at}.id: "${b.id}" duplicato`);
       else seen.add(b.id);
-      if (typeof b.maxWidth !== 'number' || !(b.maxWidth >= 200 && b.maxWidth <= 2000)) errors.push(`${at}.maxWidth: atteso un numero tra 200 e 2000`);
+      if (typeof b.maxWidth !== 'number' || !Number.isFinite(b.maxWidth) || !(b.maxWidth >= 200 && b.maxWidth <= 2000)) errors.push(`${at}.maxWidth: atteso un numero tra 200 e 2000`);
       const overrides: BnOverrides = {};
       if (!isObj(b.overrides)) errors.push(`${at}.overrides: atteso un oggetto`);
       else {
         for (const [k, v] of Object.entries(b.overrides)) {
-          const i2 = OVERRIDE_CANONICAL.indexOf(k);
+          const i2 = overrideCanonical.indexOf(k);
           if (i2 < 0) {
             warnings.push(`${at}.overrides.${k}: non sovrascrivibile da un breakpoint, ignorato`);
             continue;
           }
-          const viewKey = OVERRIDE_PATHS[i2]!;
-          const e = checkField(BN_FIELD_INDEX[viewKey]!, v);
+          const viewKey = overridePaths[i2]! as BnOverrideKey;
+          const e = checkField(fieldIndex[viewKey]!, v);
           if (e) errors.push(`${at}.overrides.${k}: ${e.split(': ').slice(1).join(': ')}`);
-          else overrides[viewKey] = v as number | string;
+          else overrides[viewKey] = v as number | string | boolean;
         }
       }
       if (typeof b.id === 'string' && typeof b.maxWidth === 'number') breakpoints.push({ id: b.id, maxWidth: b.maxWidth, overrides });
@@ -677,7 +698,7 @@ interface ItemNodes {
 
 /** The items of a definition with the ids of their icon and label slots. */
 export function itemNodes(def: Pick<ComponentDefinition, 'structure'>): ItemNodes[] {
-  return (def.structure.children ?? [])
+  return navbarItemNodes(def).map(({ node }) => node)
     .filter((n) => n.role === 'item')
     .map((n) => ({
       id: n.id,
@@ -699,6 +720,7 @@ export function navbarView(def: ComponentDefinition): BnRoot {
   const sec = viewSections(def) as Record<string, any>;
   const beh = obj(def.interactions.behavior);
   const itemStyles = obj(obj(def.style).items) as Record<string, Partial<BnTabStyle>>;
+  const membership = new Map(navbarItemNodes(def).map(({ node, groupId }) => [node.id, groupId]));
   const children: BnTab[] = itemNodes(def).map((n) => {
     const c = def.content[n.id] ?? {};
     return {
@@ -708,6 +730,12 @@ export function navbarView(def: ComponentDefinition): BnRoot {
       icon: n.iconId ? (def.content[n.iconId]?.icon ?? { kind: 'none' }) : { kind: 'none' },
       value: c.value ?? null,
       disabled: c.disabled ?? false,
+      ...(c.visible !== undefined ? { visible: c.visible } : {}),
+      ...(c.action ? { action: c.action } : {}),
+      ...(c.iconPosition ? { iconPosition: c.iconPosition } : {}),
+      ...(c.accessibleLabel ? { accessibleLabel: c.accessibleLabel } : {}),
+      ...(c.description ? { description: c.description } : {}),
+      ...(membership.get(n.id) ? { groupId: membership.get(n.id)! } : {}),
       style: { ...NO_TAB_STYLE, ...itemStyles[n.id] },
     };
   });
@@ -723,7 +751,7 @@ export function navbarView(def: ComponentDefinition): BnRoot {
     typography: sec.typography,
     icon: sec.icon,
     states: sec.states,
-    interactions: sec.interactions,
+    interactions: { ...sec.interactions, events: { ...sec.interactions.events, ...def.interactions.events } },
     motion: sec.motion,
     responsive: {
       overflow: resp.overflow,
@@ -750,35 +778,56 @@ export function resolveNavbar(def: ComponentDefinition, containerWidth: number):
 export function applyNavbarView(def: ComponentDefinition, view: BnRoot): ComponentDefinition {
   const known = new Map(itemNodes(def).map((n) => [n.id, n]));
   const itemIds = new Set(view.children.map((t) => t.id));
-  const taken = new Set<string>(['root', ...itemIds]);
+  const groups = (def.structure.children ?? []).filter((n) => n.role === 'group');
+  const taken = new Set<string>(['root', ...itemIds, ...groups.map((g) => g.id)]);
   const slot = (itemId: string, suffix: 'icon' | 'label', existing: string | null) => {
     // A slot id is kept across edits, unless an item has since taken that id.
     if (existing && !itemIds.has(existing) && !taken.has(existing)) {
       taken.add(existing);
       return existing;
     }
-    let id = `${itemId}-${suffix}`;
-    for (let n = 2; taken.has(id); n++) id = `${itemId}-${suffix}-${n}`;
+    const id = uniqueId(`${itemId}-${suffix}`, taken);
     taken.add(id);
     return id;
   };
-  const content: Record<string, NodeContent> = { root: { text: view.label } };
-  const children = view.children.map((t) => {
+  const content: Record<string, NodeContent> = { ...def.content, root: { ...def.content.root, text: view.label } };
+  for (const n of itemNodes(def)) {
+    if (!itemIds.has(n.id)) delete content[n.id];
+    if (n.iconId) delete content[n.iconId];
+    if (n.labelId) delete content[n.labelId];
+  }
+  const itemChildren = view.children.map((t) => {
     const prev = known.get(t.id);
     const kids: StructureNode[] = [];
-    content[t.id] = { ...(t.value !== null ? { value: t.value } : {}), ...(t.disabled ? { disabled: true } : {}) };
+    const { value: _value, disabled: _disabled, ...rest } = content[t.id] ?? {};
+    content[t.id] = { ...rest, ...(t.value !== null ? { value: t.value } : {}), ...(t.disabled ? { disabled: true } : {}),
+      ...(t.visible !== undefined ? { visible: t.visible } : {}), ...(t.action ? { action: t.action } : {}),
+      ...(t.iconPosition ? { iconPosition: t.iconPosition } : {}), ...(t.accessibleLabel ? { accessibleLabel: t.accessibleLabel } : {}), ...(t.description ? { description: t.description } : {}),
+    };
     if (t.icon.kind !== 'none') {
       const id = slot(t.id, 'icon', prev?.iconId ?? null);
       kids.push({ id, role: 'icon' });
-      content[id] = { icon: t.icon };
+      content[id] = { ...def.content[id], icon: t.icon };
     }
     if (t.label !== '') {
       const id = slot(t.id, 'label', prev?.labelId ?? null);
       kids.push({ id, role: 'label' });
-      content[id] = { text: t.label };
+      content[id] = { ...def.content[id], text: t.label };
     }
     return kids.length ? ({ id: t.id, role: 'item', children: kids } as StructureNode) : ({ id: t.id, role: 'item' } as StructureNode);
   });
+  const children: StructureNode[] = [];
+  const placed = new Set<string>();
+  for (const [i, t] of view.children.entries()) {
+    if (!t.groupId) children.push(itemChildren[i]!);
+    else if (!placed.has(t.groupId)) {
+      const group = groups.find((g) => g.id === t.groupId);
+      if (!group) throw new Error(`Gruppo inesistente: ${t.groupId}`);
+      children.push({ ...group, children: itemChildren.filter((_, j) => view.children[j]?.groupId === t.groupId) });
+      placed.add(t.groupId);
+    }
+  }
+  for (const g of groups) if (!placed.has(g.id)) children.splice(Math.min(def.structure.children!.indexOf(g), children.length), 0, { ...g, children: [] });
   const items: Record<string, Partial<BnTabStyle>> = {};
   for (const t of view.children) {
     const own = Object.fromEntries(Object.entries(t.style).filter(([, v]) => v !== null));
@@ -789,18 +838,20 @@ export function applyNavbarView(def: ComponentDefinition, view: BnRoot): Compone
     ...def,
     structure: { id: 'root', role: 'navbar', children },
     content,
-    layout: { ...view.layout },
+    layout: { ...def.layout, ...view.layout },
     responsive: {
+      ...def.responsive,
       overflow: view.responsive.overflow,
       minTabWidth: view.responsive.minTabWidth,
       breakpoints: view.responsive.breakpoints.map((b) => ({ id: b.id, maxWidth: b.maxWidth, overrides: Object.fromEntries(Object.entries(b.overrides).map(([k, v]) => [toCanonicalPath(k), v])) })),
     },
-    style: { appearance: view.appearance, typography: view.typography, icon: view.icon, motion: view.motion, items },
+    style: { ...def.style, appearance: view.appearance, typography: view.typography, icon: view.icon, motion: view.motion, items },
     // Canonical order (NAVBAR_STATES), so a document reads the same however it was produced.
     states: { ...def.states, hover: styleOf('hover'), pressed: styleOf('pressed'), active: styleOf('active'), focus: styleOf('focus'), disabled: styleOf('disabled') },
     interactions: {
-      behavior: { semantics: view.semantics, defaultItem: view.defaultTab, pressFeedback: view.interactions.pressFeedback, wheelForward: view.interactions.wheelForward, reselect: view.interactions.reselect },
-      events: { ...view.interactions.events },
+      ...def.interactions,
+      behavior: { ...def.interactions.behavior, semantics: view.semantics, defaultItem: view.defaultTab, pressFeedback: view.interactions.pressFeedback, wheelForward: view.interactions.wheelForward, reselect: view.interactions.reselect },
+      events: { ...def.interactions.events, ...view.interactions.events },
     },
   };
 }

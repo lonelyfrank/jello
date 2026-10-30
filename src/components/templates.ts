@@ -103,7 +103,7 @@ export interface MaterialBinding {
 export function bindComponentMaterial(def: ComponentDefinition, binding: DefinitionMaterial): MaterialBinding {
   const next = MATERIALS.get(binding.family);
   if (!next) throw new Error(`Materiale non registrato: ${binding.family}`);
-  if (!COMPONENTS.supports(def.type, binding.family)) throw new Error(`«${def.type}» non si disegna con il materiale ${binding.family}`);
+  if (!COMPONENTS.supports(def.type, binding.family) && def.type !== 'desktop-navbar') throw new Error(`«${def.type}» non si disegna con il materiale ${binding.family}`);
   const dropped: string[] = [];
   if (def.material.family !== binding.family && Object.keys(def.material.params).length) dropped.push('material.params');
   const states: ComponentDefinition['states'] = {};
@@ -126,8 +126,8 @@ export function bindComponentMaterial(def: ComponentDefinition, binding: Definit
 /** The component with its material replaced by the family's initial one (`ComponentSpec.materials`). */
 export function switchMaterialFamily(def: ComponentDefinition, family: string): MaterialBinding {
   const start = COMPONENTS.get(def.type)?.materials[family];
-  const preset = start ? MATERIALS.get(family)?.presets.find((p) => p.doc.id === start.preset) : undefined;
-  if (!start || !preset) throw new Error(`«${def.type}» non si disegna con il materiale ${family}`);
+  const preset = start ? MATERIALS.get(family)?.presets.find((p) => p.doc.id === start.preset) : def.type === 'desktop-navbar' ? MATERIALS.get(family)?.presets[0] : undefined;
+  if (!preset) throw new Error(`«${def.type}» non si disegna con il materiale ${family}`);
   return bindComponentMaterial(def, bindMaterial(preset.doc, preset.doc.id));
 }
 

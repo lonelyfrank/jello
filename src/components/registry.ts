@@ -15,8 +15,8 @@
  * (they already exist), a property table and checks, a renderer, and one
  * entry here that passes `validateComponentSpec`. Until then the type is
  * *planned*: listed with the reason it is not available, not registered, not
- * editable, not exportable and not renderable — `parseDefinition` still reads
- * its schema, but says that its layout, style and behavior are ignored.
+ * editable, not exportable and not renderable. Desktop's full data contract
+ * is validated in M5.1; Input still warns that undescribed properties are ignored.
  */
 
 import { MATERIALS } from '../model/registry';
@@ -117,6 +117,7 @@ const NAVBAR: ComponentSpec = {
     { trigger: 'press', event: 'jello-press' },
     { trigger: 'change', event: 'jello-change' },
     { trigger: 'reselect', event: 'jello-reselect' },
+    { trigger: 'action', event: 'jello-action' },
   ],
   materials: { glass: { preset: 'navbar' }, solid: { preset: 'solid-neutral' } },
   unsupported: (family) => NAVBAR_UNSUPPORTED[family] ?? [],
@@ -124,7 +125,7 @@ const NAVBAR: ComponentSpec = {
   export: {
     formats: ['component-json', 'component-react', 'component-vanilla'],
     families: ['glass', 'solid'],
-    events: ['jello-change', 'jello-press', 'jello-reselect'],
+    events: ['jello-change', 'jello-press', 'jello-reselect', 'jello-action'],
     notes: ['Le tab non sono pagine: l’applicazione decide che cosa significano. Nessun router richiesto.'],
   },
 };
@@ -217,7 +218,7 @@ export class ComponentRegistry {
       id: t.type,
       name: t.label,
       description: t.description,
-      reason: 'Lo schema esiste (struttura, contenuti, stati) ma non ci sono ancora renderer, editor ed export: layout, stile e comportamento vengono ignorati con un avviso.',
+      reason: t.profile === 'desktop-navbar' ? 'Contratto strutturale, layout, stati e responsive validati; non ci sono ancora renderer, editor ed export (M5.2).' : 'Lo schema esiste (struttura, contenuti, stati) ma non ci sono ancora renderer, editor ed export: layout, stile e comportamento vengono ignorati con un avviso.',
     }));
   }
 

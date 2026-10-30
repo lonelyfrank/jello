@@ -83,8 +83,8 @@ registrati in `COMPONENTS`, [Component Engine](component-engine.md)); `desktop-n
 | Tipo | Radice | Slot | Stati | Trigger |
 | --- | --- | --- | --- | --- |
 | `button` | `button` (ammette `value`, `href`, `disabled`) | `label` 1, `icon` 0–1 | default, hover, pressed, focus, disabled | press, hover, focus |
-| `mobile-navbar` | `navbar` | `item` 1–200 (`icon`, `label` facoltativi) | + active | press, hover, focus, change, reselect |
-| `desktop-navbar` | `navbar` | `brand` 0–1, `item` 1–12 (con `label`), `action` 0–4 | + active | press, hover, focus |
+| `mobile-navbar` | `navbar` | `item` 1–200 totali, anche dentro `group` a un livello (`icon`, `label` facoltativi) | + active | press, hover, focus, change, reselect, action |
+| `desktop-navbar` | `navbar` | `brand` 0–1, `item` 1–200 totali anche raggruppati (etichetta o nome accessibile), `action` 0–4 | + active | press, hover, focus, change, reselect, action |
 | `input` | `field` | `label` 0–1, `icon` 0–2, `control` 1, `helper` 0–1 | default, hover, focus, disabled | change, focus, submit |
 
 `mobile-navbar` ammette da 1 a 200 voci (come `bottom-navigation`, che non aveva un massimo
@@ -98,9 +98,9 @@ pratico): un file valido prima non deve diventare non valido. Il nome accessibil
 | `navbar` | `text` (nome accessibile) | |
 | `label`, `helper` | `text` | |
 | `icon` | `icon` | |
-| `item` | | `value`, `href`, `disabled` |
-| `brand` | | `href` |
-| `action` | `value` | `value`, `href`, `disabled` |
+| `group` | | `text` (etichetta opzionale) |
+| `item`, `brand` | | `value`, `href`, `disabled`, `visible`, `action`, `iconPosition`, `accessibleLabel`, `description` |
+| `action` | `value` | come `item` |
 | `control` | `value` (nome del campo) | `inputType`, `placeholder`, `disabled` |
 
 `value` è testo libero fino a 200 caratteri (una rotta, una chiave): l'identità di una voce è il suo
@@ -125,6 +125,20 @@ Le proprietà descritte (`NAVBAR_FIELDS`, intervalli e default) hanno percorsi c
 
 `definitionFields('mobile-navbar')` restituisce i descrittori con questi percorsi; è la tabella da cui
 un Inspector del componente genera i controlli.
+
+### Navbar Architecture (M5.1)
+
+[Contratto e API completi](navbar-architecture.md). Il formato resta v1; struttura,
+contenuti e materiali restano nelle stesse sezioni. I gruppi estendono l'albero con
+un solo livello; le azioni sono `select`, `navigate` o `consumer`, senza callback
+serializzati. Assenza di azione = selezione storica, anche nei documenti con `href`.
+Visibilità/disabled e default sono persistenti; hover, focus e pressed appartengono
+solo al runtime. `layout.icons`, `layout.distribution`, `layout.compact` sono
+estensioni opzionali nei vecchi file. Il profilo Desktop ora valida layout,
+regioni iniziali/finali, stile e responsive, pur restando privo di renderer.
+
+`definitionFields(type, role)` prepara i controlli dei nodi nello stesso Inspector,
+con `section`, `level` (Base/Avanzato) e `scope` (comune/Mobile/Desktop).
 
 ### Proprietà del Button
 
@@ -281,12 +295,14 @@ stage, anteprima e libreria costruita non lo raggiungono né contengono quelle s
 
 ## Problemi aperti
 
-- **Desktop Navbar e Input** hanno lo schema ma non una tabella di proprietà né un renderer: `layout`, `style`,
+- **Desktop Navbar** ha contratto strutturale e profilo di proprietà validati, ma non renderer/editor/export (M5.2).
+- **Input** ha lo schema ma non una tabella di proprietà né un renderer: `layout`, `style`,
   `responsive`, `states.<s>.style` e `interactions.behavior` vengono ignorati **con un avviso** (non più in
   silenzio). Per aggiungerli: una tabella di descrittori e un `profile` in `DEFINITION_TYPES`, il renderer in
   `runtime/components.ts` e una voce in `COMPONENTS`.
-- **`BnRoot` come vista.** Il renderer, l'export React e le operazioni sulle voci della navbar passano ancora dalla
-  vista `BnRoot` (derivata, in sola lettura, mai salvata). Resta come forma interna del solo renderer navbar. Il
+- **`BnRoot` come vista.** Il renderer e l'export React mantengono la vista Mobile
+  derivata, mai salvata. Il Builder usa le operazioni canoniche condivise; le API
+  precedenti della vista restano compatibili con gruppi e contenuti estesi. Il
   Button non ha una vista: legge i percorsi del documento.
 - **Icone:** una definizione accetta icone incluse o SVG personalizzati; l'ordine tra icona ed etichetta nella
   struttura non determina la posizione (la decidono `layout.itemLayout` nella navbar e `layout.iconPosition` nel Button).

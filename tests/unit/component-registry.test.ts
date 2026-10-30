@@ -77,7 +77,7 @@ describe('registration', () => {
       for (const f of c.fields) expect(getPath(fresh, f.path), `${c.id} ${f.path}`).toEqual(f.default);
     }
     expect(spec('button').interactions.map((i) => i.trigger)).toEqual(['press', 'hover', 'focus']);
-    expect(spec('mobile-navbar').interactions.map((i) => i.trigger)).toEqual(['press', 'change', 'reselect']);
+    expect(spec('mobile-navbar').interactions.map((i) => i.trigger)).toEqual(['press', 'change', 'reselect', 'action']);
   });
 
   it('every property is addressed by one path and set through the spec, which refuses invalid values', () => {

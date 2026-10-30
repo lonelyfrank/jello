@@ -58,6 +58,7 @@ test('controlled mode: the app owns the selection; events carry stable ids and v
   const events = await page.evaluate(() => window.__consumer.events);
   expect(events).toContain('press:tab:/settings');
   expect(events).toContain('change:tab:/settings');
+  expect(events).toContain('action:tab:select');
   // Same tab again: reselect, no change.
   await page.locator('#content').evaluate((el) => (el.scrollTop = 400));
   await tabs(page).filter({ hasText: 'Settings' }).click();

@@ -8,10 +8,11 @@
  * Paths are dotted (`layout.height`, `states.focus.color`).
  */
 
-export type InspectorSection = 'structure' | 'layout' | 'appearance' | 'typography' | 'material' | 'states' | 'interactions' | 'responsive';
+export type InspectorSection = 'structure' | 'content' | 'layout' | 'appearance' | 'typography' | 'material' | 'states' | 'interactions' | 'responsive' | 'accessibility';
 
 export const INSPECTOR_SECTIONS: readonly { id: InspectorSection; label: string }[] = [
   { id: 'structure', label: 'Struttura' },
+  { id: 'content', label: 'Contenuto' },
   { id: 'layout', label: 'Layout' },
   { id: 'appearance', label: 'Aspetto' },
   { id: 'typography', label: 'Tipografia' },
@@ -19,6 +20,7 @@ export const INSPECTOR_SECTIONS: readonly { id: InspectorSection; label: string 
   { id: 'states', label: 'Stati' },
   { id: 'interactions', label: 'Interazioni' },
   { id: 'responsive', label: 'Responsive' },
+  { id: 'accessibility', label: 'Accessibilità' },
 ];
 
 interface Base {
@@ -26,6 +28,10 @@ interface Base {
   section: InspectorSection;
   label: string;
   description: string;
+  /** Missing additive properties stay absent when importing existing documents. */
+  optional?: boolean;
+  level?: 'base' | 'advanced';
+  scope?: 'common' | 'mobile-navbar' | 'desktop-navbar';
 }
 
 export interface NumberField extends Base {
@@ -153,6 +159,7 @@ export function checkFields(input: unknown, fields: readonly FieldDescriptor[], 
   for (const f of fields) {
     const v = getPath(input, f.path);
     if (v === undefined) {
+      if (f.optional) continue;
       warnings.push(`${prefix}${f.path}: assente, uso il valore iniziale`);
       value = setPath(value, f.path, f.default);
       continue;

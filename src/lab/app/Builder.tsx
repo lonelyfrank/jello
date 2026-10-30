@@ -16,8 +16,12 @@ import {
   BUTTON_OVERRIDE_PATHS,
   BUTTON_STATES,
   COMPONENTS,
+  NAVBAR_FIELDS,
+  definitionFields,
+  navbarGroups,
   OVERRIDE_PATHS,
   TAB_STYLE_FIELDS,
+  MAX_TABS,
   bindingState,
   buttonBreakpoints,
   buttonNodes,
@@ -34,6 +38,8 @@ import {
   type BnTabStyle,
   type BindingState,
   type ComponentDefinition,
+  type NavbarAction,
+  type NavbarIconPosition,
 } from '../../components';
 import { BUILTIN_ICONS, BUILTIN_ICON_NAMES, iconTree, type IconRef, type SvgNode } from '../../components/icons';
 import { FAMILIES, MATERIALS, glassParams, inspectorModel, supportReport, type Backend, type InspectorControl } from '../../model';
@@ -61,7 +67,8 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
   const navbar = b.doc.type === 'mobile-navbar';
   const root = navbar ? navbarView(b.doc) : null;
   const selectedTab = root?.children.find((t) => t.id === b.selection);
-  const index = root && selectedTab ? root.children.indexOf(selectedTab) : -1;
+  const itemContainer = selectedTab?.groupId ? b.doc.structure.children?.find((n) => n.id === selectedTab.groupId) : b.doc.structure;
+  const index = selectedTab ? itemContainer?.children?.findIndex((n) => n.id === selectedTab.id) ?? -1 : -1;
   const material = resolveDefinitionMaterial(b.doc);
 
   return (
@@ -162,6 +169,8 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
                       <span className="tree-kind">
                         {t.id === root.defaultTab ? 'iniziale · ' : ''}
                         {t.disabled ? 'disabilitata · ' : ''}
+                        {t.visible === false ? 'nascosta · ' : ''}
+                        {t.groupId ? `${b.doc.content[t.groupId]?.text ?? t.groupId} · ` : ''}
                         {t.id}
                       </span>
                     </button>
@@ -186,23 +195,23 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
         {root ? (
           <>
             <div className="library-actions" role="group" aria-label="Azioni sulle tab">
-              <button type="button" className="button small" id="tabAdd" onClick={() => session.addTab()}>
+              <button type="button" className="button small" id="tabAdd" disabled={root.children.length >= MAX_TABS} onClick={() => session.addTab()}>
                 <Icon name="plus" /> Tab
               </button>
               <button type="button" className="button small" id="tabUp" aria-label="Sposta la tab prima" disabled={index <= 0} onClick={() => selectedTab && session.moveTab(selectedTab.id, -1)}>
                 ←
               </button>
-              <button type="button" className="button small" id="tabDown" aria-label="Sposta la tab dopo" disabled={index < 0 || index >= root.children.length - 1} onClick={() => selectedTab && session.moveTab(selectedTab.id, 1)}>
+              <button type="button" className="button small" id="tabDown" aria-label="Sposta la tab dopo" disabled={index < 0 || index >= (itemContainer?.children?.length ?? 0) - 1} onClick={() => selectedTab && session.moveTab(selectedTab.id, 1)}>
                 →
               </button>
-              <button type="button" className="button small" id="tabDuplicate" disabled={!selectedTab} onClick={() => selectedTab && session.duplicateTab(selectedTab.id)}>
+              <button type="button" className="button small" id="tabDuplicate" disabled={!selectedTab || root.children.length >= MAX_TABS} onClick={() => selectedTab && session.duplicateTab(selectedTab.id)}>
                 <Icon name="copy" /> Duplica
               </button>
               <button type="button" className="button small" id="tabRemove" disabled={!selectedTab || root.children.length <= 1} onClick={() => selectedTab && session.removeTab(selectedTab.id)}>
                 <Icon name="trash" /> Elimina
               </button>
             </div>
-            <p className="hint">{root.children.length} tab · nessun limite: quando non stanno nella barra decide «Responsive → Troppe tab».</p>
+            <p className="hint">{root.children.length} / {MAX_TABS} tab · quando non stanno nella barra decide «Responsive → Troppe tab».</p>
           </>
         ) : (
           <p className="hint">Un pulsante ha un’etichetta e, se vuoi, un’icona: si modificano dal pannello a destra.</p>
@@ -413,7 +422,8 @@ function relevant(f: FieldDescriptor, root: BnRoot): boolean {
 function PropertyField({ f, path, value, unsupported, onChange }: { f: FieldDescriptor; path: string; value: unknown; unsupported: ReadonlyMap<string, string>; onChange(v: unknown): void }) {
   const advanced = useAdvanced();
   const why = unsupported.get(path);
-  if (!advanced && !BASIC_FIELDS.has(f.path) && !why) return null;
+  const level = f.level ?? NAVBAR_FIELDS.find((d) => d.path === path)?.level;
+  if (!advanced && (level ? level !== 'base' : !BASIC_FIELDS.has(f.path)) && !why) return null;
   return (
     <>
       <FieldControl f={f} value={value} onChange={onChange} />
@@ -446,19 +456,20 @@ export function Inspector({ session }: { session: LabSession }) {
         </p>
       </div>
       <div className="panel-body"><InspectorLevel>
-        {b.selection === 'material' ? <MaterialPanel session={session} /> : tab && root ? <TabInspector session={session} tab={tab} root={root} /> : root ? <RootInspector session={session} root={root} /> : <ButtonInspector session={session} />}
+        {b.selection === 'material' ? <MaterialPanel session={session} /> : tab && root ? <TabInspector key={tab.id} session={session} tab={tab} root={root} /> : root ? <RootInspector session={session} root={root} /> : <ButtonInspector session={session} />}
       </InspectorLevel></div>
     </div>
   );
 }
 
 function RootInspector({ session, root }: { session: LabSession; root: BnRoot }) {
+  const [groupName, setGroupName] = useState('');
   const name = useLab((s) => s.builder.doc.name);
   const definition = useLab((s) => s.builder.doc);
   const unsupported = useMemo(() => unsupportedMap(definition), [definition]);
   const fields = (section: InspectorSection) =>
     BN_FIELDS.filter((f) => f.section === section && relevant(f, root)).map((f) => (
-      <PropertyField key={f.path} f={f} path={toCanonicalPath(f.path)} value={rootField(root, f.path)} unsupported={unsupported} onChange={(v) => session.setComponentField(f.path, v)} />
+      <PropertyField key={f.path} f={f} path={toCanonicalPath(f.path)} value={rootField(root, f.path) ?? f.default} unsupported={unsupported} onChange={(v) => session.setComponentField(f.path, v)} />
     ));
   return (
     <>
@@ -487,6 +498,14 @@ function RootInspector({ session, root }: { session: LabSession; root: BnRoot })
             ))}
           </select>
         </div>
+      </Section>
+      <Section id="groups" title="Struttura · gruppi" open={false}>
+        {navbarGroups(definition).map((g) => <div key={g.id} className="button-row"><span>{g.label ?? g.id} · {g.itemIds.length} voci</span><button type="button" className="button small" onClick={() => session.removeNavbarGroup(g.id)}>Sciogli gruppo {g.label ?? g.id}</button></div>)}
+        <form onSubmit={(e) => { e.preventDefault(); if (groupName.trim()) { session.addNavbarGroup(groupName.trim()); setGroupName(''); } }}>
+          <label htmlFor="navbar-group-name">Nome del gruppo</label>
+          <input id="navbar-group-name" value={groupName} maxLength={120} onChange={(e) => setGroupName(e.target.value)} />
+          <button type="submit" className="button small" disabled={!groupName.trim()}>Aggiungi gruppo</button>
+        </form>
       </Section>
       <Section id="layout" title={SECTION_LABEL.layout}>
         {fields('layout')}
@@ -540,10 +559,10 @@ function Breakpoints({ session, root }: { session: LabSession; root: BnRoot }) {
             return (
               <div key={path} className="bp-override">
                 <label className="check" htmlFor={`${id}-on`}>
-                  <input id={`${id}-on`} type="checkbox" checked={on} onChange={(e) => session.updateBreakpoint(bp.id, { set: [path, e.target.checked ? (rootField(root, path) as number | string) : null] })} />
+                  <input id={`${id}-on`} type="checkbox" checked={on} onChange={(e) => session.updateBreakpoint(bp.id, { set: [path, e.target.checked ? (rootField(root, path) ?? f.default) as number | string | boolean : null] })} />
                   <span>{f.label}</span>
                 </label>
-                {on && <FieldControl f={f} id={id} value={bp.overrides[path]} onChange={(v) => session.updateBreakpoint(bp.id, { set: [path, v as number | string] })} />}
+                {on && <FieldControl f={f} id={id} value={bp.overrides[path]} onChange={(v) => session.updateBreakpoint(bp.id, { set: [path, v as number | string | boolean] })} />}
               </div>
             );
           })}
@@ -562,6 +581,9 @@ function Breakpoints({ session, root }: { session: LabSession; root: BnRoot }) {
 
 function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab; root: BnRoot }) {
   const b = useLab((s) => s.builder);
+  const advanced = useAdvanced();
+  const fields = definitionFields(b.doc.type, 'item');
+  const field = (name: string) => fields.find((f) => f.path === `content.$item.${name}`)!;
   const index = root.children.indexOf(tab);
   return (
     <>
@@ -588,6 +610,12 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
         <p className="hint">
           Posizione {index + 1} di {root.children.length}. Sposta, duplica o elimina dalla Struttura a sinistra.
         </p>
+        <FieldControl id="tab-visible" f={field('visible')} value={tab.visible ?? true} onChange={(v) => session.updateTab(tab.id, { visible: v as boolean })} />
+        <label htmlFor="tab-group">Gruppo</label>
+        <select id="tab-group" value={tab.groupId ?? ''} onChange={(e) => session.moveTabToGroup(tab.id, e.target.value || null)}>
+          <option value="">Nessun gruppo</option>
+          {navbarGroups(b.doc).map((g) => <option key={g.id} value={g.id}>{g.label ?? g.id}</option>)}
+        </select>
       </Section>
       <Section id="appearance" title="Icona">
         <IconPicker prefix="tab" icon={tab.icon} onPick={(icon) => session.setTabIcon(tab.id, icon)} onUpload={(f) => session.uploadTabIcon(tab.id, f)} />
@@ -618,6 +646,7 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
           <input id="tab-disabled" type="checkbox" checked={tab.disabled} onChange={(e) => session.updateTab(tab.id, { disabled: e.target.checked })} />
           <span>Disabilitata</span>
         </label>
+        <NavbarActionEditor key={`${tab.id}-${JSON.stringify(tab.action)}`} session={session} tab={tab} />
         <div className="button-row">
           <button type="button" className="button small" id="tab-default" disabled={root.defaultTab === tab.id} onClick={() => session.setComponentRoot({ defaultTab: tab.id })}>
             {root.defaultTab === tab.id ? 'Tab attiva iniziale' : 'Rendi attiva all’avvio'}
@@ -641,6 +670,15 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
           <p className="param-desc">Mostra lo stato su questa tab senza interagire. Gli stili degli stati sono della navigazione (seleziona la radice).</p>
         </div>
       </Section>
+      {advanced && <Section id="accessibility" title="Accessibilità" open={false}>
+        <FieldControl id="tab-accessible-label" f={field('accessibleLabel')} value={tab.accessibleLabel ?? ''} onChange={(v) => session.updateTab(tab.id, { accessibleLabel: String(v) || null })} />
+        <FieldControl id="tab-description" f={field('description')} value={tab.description ?? ''} onChange={(v) => session.updateTab(tab.id, { description: String(v) || null })} />
+        <label htmlFor="tab-icon-position">Posizione icona</label>
+        <select id="tab-icon-position" value={tab.iconPosition ?? ''} onChange={(e) => session.updateTab(tab.id, { iconPosition: (e.target.value || null) as NavbarIconPosition | null })}>
+          <option value="">Eredita dal layout</option>
+          {field('iconPosition').type === 'enum' && (field('iconPosition') as Extract<FieldDescriptor, { type: 'enum' }>).options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </Section>}
       <Section id="interactions" title={SECTION_LABEL.interactions} open={false}>
         <p className="hint">
           Premere questa tab emette <code>{root.interactions.events.press}</code>; sceglierla emette <code>{root.interactions.events.change}</code> con <code>{`{ tabId: "${tab.id}", value: ${tab.value === null ? 'null' : JSON.stringify(tab.value)} }`}</code>.
@@ -648,6 +686,25 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
       </Section>
     </>
   );
+}
+
+function NavbarActionEditor({ session, tab }: { session: LabSession; tab: BnTab }) {
+  const action = tab.action ?? { kind: 'select' };
+  const [kind, setKind] = useState<NavbarAction['kind']>(action.kind);
+  const [destination, setDestination] = useState(action.kind === 'navigate' ? action.href : action.kind === 'consumer' ? action.name : '');
+  const [target, setTarget] = useState<'_self' | '_blank'>(action.kind === 'navigate' ? action.target ?? '_self' : '_self');
+  // The form keeps incomplete destinations local; only an explicit, validated action is persisted.
+  const f = definitionFields('mobile-navbar', 'item').find((f) => f.path === 'content.$item.action.kind')!;
+  return <form onSubmit={(e) => {
+    e.preventDefault();
+    session.setTabAction(tab.id, kind === 'select' ? { kind } : kind === 'navigate' ? { kind, href: destination, target } : { kind, name: destination });
+  }}>
+    <FieldControl id="tab-action-kind" f={f} value={kind} onChange={(v) => { setKind(v as NavbarAction['kind']); setDestination(''); }} />
+    {kind !== 'select' && <><label htmlFor="tab-action-destination">{kind === 'navigate' ? 'Destinazione URL' : 'Nome azione'}</label><input id="tab-action-destination" value={destination} maxLength={kind === 'navigate' ? 2048 : 64} onChange={(e) => setDestination(e.target.value)} required /></>}
+    {kind === 'navigate' && <><label htmlFor="tab-action-target">Apri in</label><select id="tab-action-target" value={target} onChange={(e) => setTarget(e.target.value as '_self' | '_blank')}><option value="_self">Stessa scheda</option><option value="_blank">Nuova scheda</option></select></>}
+    <button id="tab-action-apply" type="submit" className="button small">Applica azione</button>
+    <Messages />
+  </form>;
 }
 
 /** Icon of a tab or of a button: the built-in set, none, or a custom SVG (sanitized by the session). Ids keep the prefix. */

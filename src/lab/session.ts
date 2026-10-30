@@ -64,16 +64,24 @@ import {
 import { importComponentText, legacyPreset, legacyTemplate } from '../migration';
 import {
   addBreakpoint,
-  addTab,
-  duplicateTab,
-  moveTab,
+  addNavbarItem,
+  duplicateNavbarItem,
+  moveNavbarItem,
+  removeNavbarItem,
+  updateNavbarItem,
+  addNavbarGroup,
+  removeNavbarGroup,
+  moveNavbarItemToGroup,
+  NavbarStructureError,
+  navbarActiveItem,
+  navbarItemNodes,
+  type NavbarItemPatch,
+  type NavbarAction,
   removeBreakpoint,
-  removeTab,
   updateBreakpoint,
   updateTab,
   type BnOverrideKey,
   type BnRoot,
-  type BnTab,
   type BnTabStyle,
 } from '../components';
 import { iconFromSvg, SVG_MAX_BYTES, type IconRef } from '../components/icons';
@@ -912,7 +920,7 @@ export class LabSession {
     const b = this.state.builder;
     const modified = opts.dirty === false ? false : b.origin === 'template' ? true : b.modified;
     if (this.state.workspace === 'builder') this.syncPreview(doc);
-    const previewTab = tabsOf(doc).some((t) => t.id === b.previewTab) ? b.previewTab : isNavbar(doc) ? navbarView(doc).defaultTab : '';
+    const previewTab = isNavbar(doc) ? navbarActiveItem(doc, b.previewTab) : '';
     const selection = b.selection === 'root' || b.selection === 'material' || tabsOf(doc).some((t) => t.id === b.selection) ? b.selection : 'root';
     const components = b.origin === 'user' ? this.state.components.map((i) => (i.id === b.componentId ? { ...i, name: doc.name, doc } : i)) : this.state.components;
     this.store.set({ builder: { ...b, doc, modified, previewTab, selection }, components });
@@ -1070,10 +1078,15 @@ export class LabSession {
     if (!isNavbar(this.state.builder.doc)) return '';
     const b = this.state.builder;
     const after = navbarView(b.doc).children.some((t) => t.id === b.selection) ? b.selection : undefined;
-    const r = addTab(navbarView(b.doc), after ? { after } : {});
-    this.applyComponent(this.withRoot(r.root));
-    this.selectElement(r.id);
-    return r.id;
+    let id = '';
+    this.editNavbarStructure((doc) => {
+      const found = after ? navbarItemNodes(doc).find((n) => n.node.id === after) : undefined;
+      const parent = found?.groupId ? doc.structure.children!.find((n) => n.id === found.groupId)! : doc.structure;
+      const r = addNavbarItem(doc, {}, { groupId: found?.groupId ?? null, ...(after ? { index: parent.children!.findIndex((n) => n.id === after) + 1 } : {}) });
+      id = r.id; return r.definition;
+    });
+    if (id) this.selectElement(id);
+    return id;
   }
 
   removeTab(id: string): void {
@@ -1084,31 +1097,58 @@ export class LabSession {
       return;
     }
     const i = root.children.findIndex((t) => t.id === id);
-    const next = removeTab(root, id);
-    this.applyComponent(this.withRoot(next));
-    this.selectElement(next.children[Math.min(i, next.children.length - 1)]?.id ?? 'root');
+    if (this.editNavbarStructure((doc) => removeNavbarItem(doc, id))) {
+      const next = navbarView(this.state.builder.doc);
+      this.selectElement(next.children[Math.min(i, next.children.length - 1)]?.id ?? 'root');
+    }
   }
 
   duplicateTab(id: string): void {
     if (!isNavbar(this.state.builder.doc)) return;
-    const r = duplicateTab(navbarView(this.state.builder.doc), id);
-    this.applyComponent(this.withRoot(r.root));
-    this.selectElement(r.id);
+    let copyId = '';
+    if (this.editNavbarStructure((doc) => {
+      const r = duplicateNavbarItem(doc, id); copyId = r.id;
+      const source = navbarView(doc).children.find((t) => t.id === id)!;
+      return updateNavbarItem(r.definition, r.id, { label: `${source.label} (copia)`.slice(0, 40) });
+    })) this.selectElement(copyId);
   }
 
   /** delta -1: one place towards the start; +1: towards the end. */
   moveTab(id: string, delta: number): void {
     if (!isNavbar(this.state.builder.doc)) return;
-    const root = navbarView(this.state.builder.doc);
-    const i = root.children.findIndex((t) => t.id === id);
-    if (i < 0) return;
-    this.applyComponent(this.withRoot(moveTab(root, id, i + delta)));
+    this.editNavbarStructure((doc) => {
+      const found = navbarItemNodes(doc).find((n) => n.node.id === id);
+      if (!found) throw new NavbarStructureError([`Voce inesistente: ${id}`]);
+      const parent = found.groupId ? doc.structure.children!.find((n) => n.id === found.groupId)! : doc.structure;
+      return moveNavbarItem(doc, id, parent.children!.findIndex((n) => n.id === id) + delta);
+    });
   }
 
-  updateTab(id: string, patch: Partial<Pick<BnTab, 'label' | 'icon' | 'value' | 'disabled'>>): void {
+  updateTab(id: string, patch: NavbarItemPatch): void {
     if (!isNavbar(this.state.builder.doc)) return;
     if (patch.label !== undefined && (!patch.label.trim() || patch.label.length > 40)) return;
-    this.applyComponent(this.withRoot(updateTab(navbarView(this.state.builder.doc), id, patch)));
+    this.editNavbarStructure((doc) => updateNavbarItem(doc, id, patch));
+  }
+
+  private editNavbarStructure(edit: (doc: ComponentDefinition) => ComponentDefinition): boolean {
+    if (!isNavbar(this.state.builder.doc)) return false;
+    try { this.applyComponent(edit(this.state.builder.doc)); return true; }
+    catch (error) {
+      if (!(error instanceof NavbarStructureError)) throw error;
+      this.patchBuilder({ messages: { ok: false, messages: error.errors } }); return false;
+    }
+  }
+
+  setTabAction(id: string, action: NavbarAction): void { this.updateTab(id, { action }); }
+
+  addNavbarGroup(label: string): void {
+    this.editNavbarStructure((doc) => addNavbarGroup(doc, label).definition);
+  }
+
+  removeNavbarGroup(id: string): void { this.editNavbarStructure((doc) => removeNavbarGroup(doc, id)); }
+
+  moveTabToGroup(id: string, groupId: string | null): void {
+    this.editNavbarStructure((doc) => moveNavbarItemToGroup(doc, id, groupId));
   }
 
   setTabStyle(id: string, key: keyof BnTabStyle, value: number | null): void {
@@ -1141,7 +1181,7 @@ export class LabSession {
     this.applyComponent(this.withRoot(addBreakpoint(navbarView(this.state.builder.doc), maxWidth).root));
   }
 
-  updateBreakpoint(id: string, patch: { maxWidth?: number; set?: [BnOverrideKey, number | string | null] }): void {
+  updateBreakpoint(id: string, patch: { maxWidth?: number; set?: [BnOverrideKey, number | string | boolean | null] }): void {
     if (!isNavbar(this.state.builder.doc)) return;
     this.applyComponent(this.withRoot(updateBreakpoint(navbarView(this.state.builder.doc), id, patch)));
   }

@@ -22,8 +22,8 @@
  * Structure carries no text and no style; content carries no hierarchy;
  * material carries no content. `layout`, `responsive`, `style`, the `style`
  * of a state and `interactions.behavior` are the properties of the component
- * type: `mobile-navbar` has them (navbar.ts), the other three types declare
- * their slots and wait for their editors (M2).
+ * type: Button and Mobile have renderers; Desktop has a validated property
+ * contract (M5.1) and waits for its renderer/editor. Input declares slots only.
  *
  * Material. `family` + `preset` + `params` describe the material from the
  * registry: the built-in preset (or the family's defaults) and the parameter
@@ -49,13 +49,16 @@ import type { FieldDescriptor } from './fields';
 import { checkIconRef, type IconRef } from './icons';
 import { BUTTON_FIELDS, BUTTON_STATES, BUTTON_TRIGGERS, checkButtonSections, withButtonDefaults } from './button';
 import { NAVBAR_FIELDS, NAVBAR_STATES, NAVBAR_TRIGGERS, checkNavbarSections, type NavbarSections } from './navbar';
+import { checkNavbarAction, checkNavbarStructure, isSafeNavigationHref, navbarItemNodes, type NavbarAction, type NavbarIconPosition } from './navbar-contract';
+import { DESKTOP_NAVBAR_FIELDS, checkDesktopNavbarSections } from './navbar-desktop';
+import { DESKTOP_NAVBAR_REGION_FIELD, NAVBAR_GROUP_FIELDS, NAVBAR_ITEM_FIELDS } from './navbar-inspector';
 
 export const DEFINITION_FORMAT = 'jello-component-definition';
 export const DEFINITION_SCHEMA_VERSION = 1;
 
 export type DefinitionType = 'button' | 'mobile-navbar' | 'desktop-navbar' | 'input';
-export type NodeRole = 'button' | 'navbar' | 'field' | 'label' | 'icon' | 'item' | 'brand' | 'action' | 'control' | 'helper';
-export type Trigger = 'press' | 'hover' | 'focus' | 'change' | 'submit' | 'reselect';
+export type NodeRole = 'button' | 'navbar' | 'group' | 'field' | 'label' | 'icon' | 'item' | 'brand' | 'action' | 'control' | 'helper';
+export type Trigger = 'press' | 'hover' | 'focus' | 'change' | 'submit' | 'reselect' | 'action';
 /** Material states plus `focus`, a ring drawn by the component rather than a material state. */
 export type ComponentStateId = MaterialStateId | 'focus';
 
@@ -82,11 +85,13 @@ export interface DefinitionTypeInfo {
   /** Roles that receive input. */
   interactive: readonly NodeRole[];
   /** Which property profile validates layout, style, per-state style and behavior. `null`: none yet. */
-  profile: 'navbar' | 'button' | null;
+  profile: 'navbar' | 'desktop-navbar' | 'button' | null;
 }
 
 const optional = (role: NodeRole, max = 1): Slot => ({ role, min: 0, max });
 const required = (role: NodeRole, min = 1, max = min): Slot => ({ role, min, max });
+const navbarItemSlot: Slot = { role: 'item', min: 0, max: 200, children: [optional('icon'), optional('label')] };
+const navbarGroupSlot: Slot = { role: 'group', min: 0, max: 200, children: [navbarItemSlot] };
 
 export const DEFINITION_TYPES: readonly DefinitionTypeInfo[] = [
   {
@@ -108,7 +113,7 @@ export const DEFINITION_TYPES: readonly DefinitionTypeInfo[] = [
     typeVersion: 1,
     implemented: true,
     legacyType: 'bottom-navigation',
-    root: { role: 'navbar', slots: [{ role: 'item', min: 1, max: 200, children: [optional('icon'), optional('label')] }] },
+    root: { role: 'navbar', slots: [navbarItemSlot, navbarGroupSlot] },
     states: NAVBAR_STATES,
     triggers: NAVBAR_TRIGGERS,
     interactive: ['item'],
@@ -124,14 +129,15 @@ export const DEFINITION_TYPES: readonly DefinitionTypeInfo[] = [
       role: 'navbar',
       slots: [
         { role: 'brand', min: 0, max: 1, children: [optional('icon'), optional('label')] },
-        { role: 'item', min: 1, max: 12, children: [optional('icon'), required('label')] },
+        navbarItemSlot,
+        navbarGroupSlot,
         { role: 'action', min: 0, max: 4, children: [optional('icon'), optional('label')] },
       ],
     },
     states: ['default', 'hover', 'pressed', 'active', 'focus', 'disabled'],
-    triggers: ['press', 'hover', 'focus'],
+    triggers: NAVBAR_TRIGGERS,
     interactive: ['brand', 'item', 'action'],
-    profile: null,
+    profile: 'desktop-navbar',
   },
   {
     type: 'input',
@@ -152,10 +158,16 @@ export function definitionType(type: string): DefinitionTypeInfo | undefined {
 }
 
 /** The described properties of a type, by canonical path (what an inspector for the component lists). */
-export function definitionFields(type: DefinitionType): readonly FieldDescriptor[] {
+export function definitionFields(type: DefinitionType, role?: NodeRole): readonly FieldDescriptor[] {
+  if ((type === 'mobile-navbar' || type === 'desktop-navbar') && role) {
+    const fields = role === 'group' ? NAVBAR_GROUP_FIELDS : ['item', 'brand', 'action'].includes(role) ? NAVBAR_ITEM_FIELDS : [];
+    return type === 'desktop-navbar' && fields.length ? [...fields, { ...DESKTOP_NAVBAR_REGION_FIELD, path: role === 'group' ? 'layout.regions.$group' : DESKTOP_NAVBAR_REGION_FIELD.path }] : fields;
+  }
   switch (definitionType(type)?.profile) {
     case 'navbar':
       return NAVBAR_FIELDS;
+    case 'desktop-navbar':
+      return DESKTOP_NAVBAR_FIELDS;
     case 'button':
       return BUTTON_FIELDS;
     default:
@@ -183,6 +195,11 @@ export interface NodeContent {
   value?: string;
   href?: string;
   disabled?: boolean;
+  visible?: boolean;
+  action?: NavbarAction;
+  iconPosition?: NavbarIconPosition;
+  accessibleLabel?: string;
+  description?: string;
   inputType?: InputType;
   placeholder?: string;
 }
@@ -250,12 +267,13 @@ const ROLE_CONTENT: Readonly<Record<NodeRole, { required: readonly (keyof NodeCo
   button: { required: [], allowed: ['value', 'href', 'disabled'] },
   /** `text` is the accessible name of the navigation. */
   navbar: { required: ['text'], allowed: ['text'] },
+  group: { required: [], allowed: ['text'] },
   field: { required: [], allowed: [] },
   label: { required: ['text'], allowed: ['text'] },
   icon: { required: ['icon'], allowed: ['icon'] },
-  item: { required: [], allowed: ['value', 'href', 'disabled'] },
-  brand: { required: [], allowed: ['href'] },
-  action: { required: ['value'], allowed: ['value', 'href', 'disabled'] },
+  item: { required: [], allowed: ['value', 'href', 'disabled', 'visible', 'action', 'iconPosition', 'accessibleLabel', 'description'] },
+  brand: { required: [], allowed: ['value', 'href', 'disabled', 'visible', 'action', 'iconPosition', 'accessibleLabel', 'description'] },
+  action: { required: ['value'], allowed: ['value', 'href', 'disabled', 'visible', 'action', 'iconPosition', 'accessibleLabel', 'description'] },
   control: { required: ['value'], allowed: ['value', 'inputType', 'placeholder', 'disabled'] },
   helper: { required: ['text'], allowed: ['text'] },
 };
@@ -372,8 +390,10 @@ function checkContent(input: unknown, ids: ReadonlyMap<string, NodeRole>, errors
       switch (key as keyof NodeContent) {
         case 'text':
         case 'placeholder':
+        case 'accessibleLabel':
+        case 'description':
           if (typeof v !== 'string' || (key === 'text' && v.trim() === '') || v.length > TEXT_MAX) errors.push(`${at}: atteso un testo di 1–${TEXT_MAX} caratteri`);
-          else c[key as 'text' | 'placeholder'] = v;
+          else c[key as 'text' | 'placeholder' | 'accessibleLabel' | 'description'] = v;
           break;
         case 'value':
           // Free payload for the host (a route, a key…): the item's id is its identity, not this.
@@ -381,12 +401,23 @@ function checkContent(input: unknown, ids: ReadonlyMap<string, NodeRole>, errors
           else c.value = v;
           break;
         case 'href':
-          if (typeof v !== 'string' || !/^(\/|#|https?:\/\/)[^\s]*$/.test(v) || v.length > 2048) errors.push(`${at}: atteso un percorso (/…), un'ancora (#…) o un URL http(s)`);
+          if (!isSafeNavigationHref(v)) errors.push(`${at}: atteso un percorso (/…), un'ancora (#…) o un URL http(s)`);
           else c.href = v;
           break;
         case 'disabled':
+        case 'visible':
           if (typeof v !== 'boolean') errors.push(`${at}: atteso true o false`);
-          else c.disabled = v;
+          else c[key as 'disabled' | 'visible'] = v;
+          break;
+        case 'action': {
+          const error = checkNavbarAction(v);
+          if (error) errors.push(`${at}: ${error}`);
+          else c.action = structuredClone(v) as NavbarAction;
+          break;
+        }
+        case 'iconPosition':
+          if (!['start', 'end', 'top', 'bottom'].includes(String(v))) errors.push(`${at}: posizione icona non valida`);
+          else c.iconPosition = v as NavbarIconPosition;
           break;
         case 'inputType':
           if (typeof v !== 'string' || !(INPUT_TYPES as readonly string[]).includes(v)) errors.push(`${at}: atteso uno tra ${INPUT_TYPES.join(', ')}`);
@@ -556,9 +587,12 @@ export function parseDefinition(input: unknown): DefinitionImport {
   let events: Record<string, string> = {};
   if (structureOk) {
     const sections = { layout: env.layout, responsive: env.responsive, style: env.style, states: env.states, interactions: env.interactions };
-    if (info.profile === 'navbar') {
-      const items = (isObject(env.structure) && Array.isArray(env.structure.children) ? env.structure.children : []).filter((n): n is { id: string } => isObject(n) && n.role === 'item' && typeof n.id === 'string');
-      profile = checkNavbarSections(sections, items, errors, warnings);
+    if (info.profile === 'navbar' || info.profile === 'desktop-navbar') {
+      const structure = env.structure as StructureNode;
+      const items = navbarItemNodes({ structure }).filter(({ node }) => node.role === 'item').map(({ node }) => node);
+      profile = info.profile === 'navbar' ? checkNavbarSections(sections, items, errors, warnings) : checkDesktopNavbarSections(sections, items, structure, errors, warnings);
+      const inter = isObject(env.interactions) ? env.interactions : {};
+      checkNavbarStructure({ type: info.type, structure, content, interactions: { behavior: isObject(inter.behavior) ? inter.behavior : {}, events: {} } }, errors);
     } else if (info.profile === 'button') {
       profile = checkButtonSections(sections, content, errors, warnings);
     } else {
@@ -573,7 +607,14 @@ export function parseDefinition(input: unknown): DefinitionImport {
         if (isObject(entry) && isObject(entry.style) && Object.keys(entry.style).length) warnings.push(`states.${s}.style: «${info.label}» non ha ancora proprietà di stile per gli stati, ignorato`);
       }
     }
-    if (profile) events = profile.sections.events as Record<string, string>;
+    if (profile) {
+      events = profile.sections.events as Record<string, string>;
+      if (info.profile === 'navbar' || info.profile === 'desktop-navbar') {
+        const inter = isObject(env.interactions) ? env.interactions : {};
+        const extra = isObject(inter.events) ? Object.fromEntries(Object.entries(inter.events).filter(([k]) => !['press', 'change', 'reselect'].includes(k))) : {};
+        events = { ...events, ...checkEvents(extra, info, errors) };
+      }
+    }
   }
   if (errors.length || !material || !structureOk) return { ok: false, errors };
 
@@ -619,7 +660,7 @@ export function parseDefinitionText(text: string): DefinitionImport {
 
 /** Keeps only `id`, `role` and `children` of each node (a validated tree, without stray fields). */
 function normalizeStructure(n: StructureNode): StructureNode {
-  return n.children?.length ? { id: n.id, role: n.role, children: n.children.map(normalizeStructure) } : { id: n.id, role: n.role };
+  return n.children?.length || (n.role === 'group' && n.children) ? { id: n.id, role: n.role, children: n.children!.map(normalizeStructure) } : { id: n.id, role: n.role };
 }
 
 /** Content in the order of the structure (depth first), so a definition reads the same however it was edited. */
@@ -783,21 +824,21 @@ export function starterDefinition(type: DefinitionType, o: { id?: string; name?:
     interactions: { behavior: {}, events },
     meta: { createdAt: null, updatedAt: null, basedOn: null, notes: '' },
   };
-  return info.profile === 'navbar' ? withNavbarDefaults(base) : info.profile === 'button' ? withButtonDefaults(base) : base;
+  return info.profile === 'navbar' || info.profile === 'desktop-navbar' ? withNavbarDefaults(base) : info.profile === 'button' ? withButtonDefaults(base) : base;
 }
 
 /** A navbar definition with every described property at its default (used by starters and templates). */
 export function withNavbarDefaults(def: ComponentDefinition): ComponentDefinition {
-  const items = (def.structure.children ?? []).filter((n) => n.role === 'item').map((n) => ({ id: n.id }));
+  const items = navbarItemNodes(def).filter(({ node }) => node.role === 'item').map(({ node }) => node);
   const warnings: string[] = [];
   const errors: string[] = [];
-  const c = checkNavbarSections({}, items, errors, warnings);
+  const c = def.type === 'desktop-navbar' ? checkDesktopNavbarSections({}, items, def.structure, errors, warnings) : checkNavbarSections({}, items, errors, warnings);
   if (!c) throw new Error(`Valori iniziali della navbar non validi: ${errors.join('; ')}`);
   const states: ComponentDefinition['states'] = {};
   for (const [k, v] of Object.entries(c.sections.stateStyles)) states[k as ComponentStateId] = { style: v! };
   return {
     ...def,
-    layout: c.sections.layout,
+    layout: def.type === 'mobile-navbar' ? { ...c.sections.layout, icons: 'show', distribution: 'evenly', compact: false } : c.sections.layout,
     responsive: c.sections.responsive,
     style: c.sections.style,
     states,

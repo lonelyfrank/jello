@@ -22,7 +22,7 @@
  * Pure: strings in, files out (tests/unit/export.test.ts, tests/e2e/react-export.spec.ts).
  */
 
-import { BN_FIELDS, navbarView, resolveDefinitionMaterial, serializeDefinition, toCanonicalPath, unsupportedProperties, type BnTab, type ComponentDefinition } from '../components';
+import { COMPONENTS, BN_FIELDS, navbarView, resolveDefinitionMaterial, serializeDefinition, toCanonicalPath, unsupportedProperties, type BnTab, type ComponentDefinition } from '../components';
 import { BACKEND_LABEL, BACKEND_REQUIRES, RUNTIME_VERSION, serializeMaterial, type Backend } from './model-deps';
 import { candidates, sha256Hex, type PackageFile, type PackageResult, type RuntimeBundle } from './package';
 import { buttonExample, buttonIndexDts, buttonIndexJs, buttonReadme, buttonTsx } from './react-button';
@@ -63,6 +63,7 @@ const enc = new TextEncoder();
 
 export async function buildReactPackage(input: ReactPackageInput): Promise<PackageResult> {
   const doc = input.component;
+  if (!COMPONENTS.get(doc.type)?.export.formats.includes('component-react')) throw new Error(`Export React non disponibile per ${doc.type}.`);
   const names = reactNames(doc);
   const warnings: string[] = [];
   const files: PackageFile[] = [];
@@ -149,12 +150,12 @@ function indexJs(doc: ComponentDefinition, n: ReactNames, materialName: string):
  * Le tab non sono pagine: onChange riceve l'id stabile della tab, la navigazione è dell'applicazione.
  */
 import { createElement, useEffect, useLayoutEffect, useRef } from 'react';
-import { createBottomNavigation } from './runtime/jello.js';
+import { createBottomNavigation, navbarItems } from './runtime/jello.js';
 
 /** Documento jello-component-definition (materiale incluso), identico a component.json. */
 export const config = ${serializeDefinition(doc)};
 
-export const tabs = config.structure.children.filter((n) => n.role === 'item').map((n) => n.id);
+export const tabs = navbarItems(config).filter((n) => n.role === 'item').map((n) => n.id);
 
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
@@ -178,6 +179,7 @@ export function JelloBottomNavigation(props) {
       onChange: (id, e) => latest.current.onChange?.(id, e),
       onTabPress: (id, e) => latest.current.onTabPress?.(id, e),
       onReselect: (id, e) => latest.current.onReselect?.(id, e),
+      onAction: (id, e) => latest.current.onAction?.(id, e),
     };
     if (label) options.label = label;
     if (anchor) options.anchor = anchor;
@@ -215,9 +217,9 @@ export default ${n.component};
 function indexDts(doc: ComponentDefinition, n: ReactNames): string {
   if (doc.type === 'button') return buttonIndexDts(doc, n);
   return `import type { ReactElement, RefObject } from 'react';
-import type { BackendRequest, BnLayout, BottomNavigationEvent, ComponentDefinition } from './runtime/jello.js';
+import type { BackendRequest, BnLayout, BottomNavigationEvent, NavbarActionEvent, ComponentDefinition } from './runtime/jello.js';
 
-export type { BottomNavigationEvent, ComponentDefinition } from './runtime/jello.js';
+export type { BottomNavigationEvent, NavbarActionEvent, ComponentDefinition } from './runtime/jello.js';
 
 /** Id stabili delle tab di ${doc.name} (non dipendono dalle etichette). */
 export type ${n.tabType} = ${tabUnion(navbarView(doc).children)};
@@ -235,6 +237,7 @@ export interface JelloBottomNavigationProps<TabId extends string = string> {
   onTabPress?: (tabId: TabId, event: BottomNavigationEvent) => void;
   /** Tab già attiva premuta di nuovo (interactions.reselect = "event"). */
   onReselect?: (tabId: TabId, event: BottomNavigationEvent) => void;
+  onAction?: (tabId: TabId, event: NavbarActionEvent) => void;
   /**
    * GlassSource: elemento opaco dietro la barra, il cui contenuto viene rifratto (backend SVG).
    * Senza, la superficie usa backdrop-filter (CSS), senza rifrazione.
@@ -276,6 +279,7 @@ import {
   type BnLayout,
   type BottomNavigation as BottomNavigationInstance,
   type BottomNavigationEvent,
+  type NavbarActionEvent,
   type BottomNavigationOptions,
   type ComponentDefinition,
 } from '../runtime/jello.js';
@@ -291,6 +295,7 @@ export interface ${n.component}Props {
   onChange?: (tabId: ${n.tabType}, event: BottomNavigationEvent) => void;
   onTabPress?: (tabId: ${n.tabType}, event: BottomNavigationEvent) => void;
   onReselect?: (tabId: ${n.tabType}, event: BottomNavigationEvent) => void;
+  onAction?: (tabId: ${n.tabType}, event: NavbarActionEvent) => void;
   sourceRef?: RefObject<HTMLElement | null>;
   scrollerRef?: RefObject<HTMLElement | null>;
   anchor?: BnLayout['anchor'];
@@ -321,6 +326,7 @@ export function ${n.component}(props: ${n.component}Props): ReactElement {
       onChange: (id, e) => latest.current.onChange?.(id as ${n.tabType}, e),
       onTabPress: (id, e) => latest.current.onTabPress?.(id as ${n.tabType}, e),
       onReselect: (id, e) => latest.current.onReselect?.(id as ${n.tabType}, e),
+      onAction: (id, e) => latest.current.onAction?.(id as ${n.tabType}, e),
     };
     if (label) options.label = label;
     if (anchor) options.anchor = anchor;
@@ -412,6 +418,7 @@ function readme(doc: ComponentDefinition, n: ReactNames, warnings: string[], svg
     '| `activeTab` / `onChange` | modalità controllata: la tab attiva cambia solo quando la cambi tu |',
     '| `defaultActiveTab` | modalità non controllata: tab iniziale (default `' + r.defaultTab + '`) |',
     '| `onTabPress`, `onReselect` | inizio della pressione; tab attiva premuta di nuovo |',
+    '| `onAction` | attivazione: `event.action` distingue select, navigate e consumer; callback mai salvati nel JSON |',
     '| `sourceRef` | GlassSource: senza, la superficie usa backdrop-filter (CSS), senza rifrazione |',
     '| `scrollerRef` | elemento che scorre con la rotella sopra la barra (default `sourceRef`) |',
     '| `anchor` | `viewport` (fixed), `container` (absolute), `inline` (default dal componente: `' + r.layout.anchor + '`) |',
@@ -419,7 +426,8 @@ function readme(doc: ComponentDefinition, n: ReactNames, warnings: string[], svg
     '| `className`, `aria-label` | classe dell’elemento `<nav>`, nome accessibile |',
     '',
     'Nessun router richiesto: `onChange(tabId, event)` riceve l’id stabile e `event.value` (il valore libero della tab).',
-    `Eventi DOM (CustomEvent, bubbles) sull’elemento \`<nav>\`: \`${r.interactions.events.change}\`, \`${r.interactions.events.press}\`, \`${r.interactions.events.reselect}\`.`,
+    `Eventi DOM (CustomEvent, bubbles) sull’elemento \`<nav>\`: \`${r.interactions.events.change}\`, \`${r.interactions.events.press}\`, \`${r.interactions.events.reselect}\`, \`${r.interactions.events.action ?? 'jello-action'}\`.`,
+    'Azioni navigate: link nativi con destinazione esplicita; consumer: pulsanti senza selezione automatica. Senza action resta la selezione storica.',
     '',
     '## Tab',
     '',

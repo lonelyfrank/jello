@@ -17,6 +17,15 @@ fase).
 
 I pulsanti storici in *Proprietà → Importa ed esporta* restano.
 
+M5.1 estende il runtime e i wrapper esistenti, senza aggiungere formati:
+[Navbar Architecture](navbar-architecture.md). Gruppi, ID, SVG, azioni e
+responsive viaggiano in `component.json`; React espone `onAction(id, event)`
+con `NavbarActionEvent`, Vanilla accetta lo stesso callback in `mount(options)`.
+Le azioni `navigate` sono link nativi; `consumer` riporta il nome dell'azione,
+`select` mantiene `onChange/onReselect`. `interactions.events.action` personalizza
+il CustomEvent (default `jello-action`). I pacchetti prodotti prima restano
+autonomi. Desktop non è esportabile finché non esiste il suo renderer.
+
 ## 1. Preset JSON
 
 Il solo documento `jello-material` v2 («Mostra JSON», «Scarica preset»). Serve a riaprirlo nel

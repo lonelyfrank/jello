@@ -41,13 +41,14 @@ describe('definition types', () => {
     expect(definitionType('carousel')).toBeUndefined();
   });
 
-  it('property descriptors by canonical path exist for the implemented types only', () => {
+  it('property descriptors include the prepared desktop contract without advertising a renderer', () => {
     const fields = definitionFields('mobile-navbar');
     expect(fields.length).toBeGreaterThan(30);
     expect(fields.map((f) => f.path)).toEqual(expect.arrayContaining(['layout.height', 'style.typography.fontSize', 'states.focus.style.color', 'interactions.behavior.reselect', 'interactions.events.change', 'responsive.minTabWidth']));
     expect(fields.every((f) => !/^(appearance|typography|icon|motion)\./.test(f.path))).toBe(true);
     expect(definitionFields('button').map((f) => f.path)).toEqual(expect.arrayContaining(['layout.size', 'style.variant', 'states.hover.style.background', 'interactions.behavior.semantics', 'interactions.events.press']));
-    for (const t of ['desktop-navbar', 'input'] as const) expect(definitionFields(t)).toEqual([]);
+    expect(definitionFields('desktop-navbar').map((f) => f.path)).toContain('layout.orientation');
+    expect(definitionFields('input')).toEqual([]);
   });
 });
 
@@ -117,10 +118,12 @@ describe('structure', () => {
     expect(errorsOf(named)).toEqual(['structure.id: la radice si chiama «root»']);
   });
 
-  it('a desktop navbar needs a label on every item; a mobile one does not', () => {
+  it('desktop items require a label or explicit accessible name; legacy mobile icon-only entries remain valid', () => {
     const d = raw('desktop-navbar');
     d.structure.children[1].children = [];
-    expect(errorsOf(d)).toEqual(['structure.children[1]: «label» ammesso da 1 a 1, trovati 0']);
+    expect(errorsOf(d)).toEqual(['content.docs.accessibleLabel: richiesto senza etichetta']);
+    d.content.docs.accessibleLabel = 'Documentazione';
+    expect(errorsOf(d)).toEqual([]);
     const m = raw('mobile-navbar');
     m.structure.children[0].children = [{ id: 'home-icon', role: 'icon' }];
     delete m.content['home-label'];
@@ -270,10 +273,7 @@ describe('material, states and interactions', () => {
   it('events name a trigger of the type and a DOM event', () => {
     const j = raw('desktop-navbar');
     j.interactions.events = { change: 'x', press: 'Bad Name', hover: 'ok-name' };
-    expect(errorsOf(j)).toEqual([
-      'interactions.events.change: il tipo «desktop-navbar» ammette press, hover, focus',
-      'interactions.events.press: atteso un nome di evento (minuscole, cifre, trattino, max 40)',
-    ]);
+    expect(errorsOf(j)).toEqual(['interactions.events.press: testo non valido']);
     const k = raw('mobile-navbar');
     k.interactions.events.change = 'x'.repeat(41);
     expect(errorsOf(k)[0]).toMatch(/interactions\.events\.change/);

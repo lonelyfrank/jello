@@ -60,6 +60,7 @@ export function App() {
           setTab(id);
         }}
         onTabPress={log('press')}
+        onAction={(id, e) => window.__consumer.events.push(`action:${id}:${e.action.kind}`)}
         onReselect={(id, e) => {
           log('reselect')(id, e);
           content.current?.scrollTo({ top: 0 });

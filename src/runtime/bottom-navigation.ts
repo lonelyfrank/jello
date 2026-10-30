@@ -27,6 +27,7 @@ import { glassParams } from '../model/document';
 import type { BackendRequest } from '../model/support';
 import { resolveDefinitionMaterial, type ComponentDefinition } from '../components/definition';
 import { unsupportedProperties } from '../components/registry';
+import { checkNavbarAction, navbarActiveItem, navbarItems, type NavbarAction } from '../components/navbar-contract';
 import { iconTree, type SvgNode } from '../components/icons';
 import { navbarPresentation, navbarView, resolveNavbar, tabStyle, type BnLayout, type BnRoot, type BnTab } from '../components/navbar';
 import type { ComponentInstance, ComponentStatus, PreviewState } from './component-types';
@@ -42,6 +43,7 @@ export interface BottomNavigationEvent {
   index: number;
   trigger: 'pointer' | 'keyboard' | 'api';
 }
+export interface NavbarActionEvent extends BottomNavigationEvent { action: NavbarAction }
 
 export interface BottomNavigationOptions {
   /** Element the <nav> is appended to. */
@@ -68,6 +70,8 @@ export interface BottomNavigationOptions {
   onChange?(tabId: string, e: BottomNavigationEvent): void;
   onTabPress?(tabId: string, e: BottomNavigationEvent): void;
   onReselect?(tabId: string, e: BottomNavigationEvent): void;
+  /** Activation of a serializable action. Navigation keeps native anchor behavior. */
+  onAction?(tabId: string, e: NavbarActionEvent): void;
 }
 
 export interface BottomNavigationStatus extends ComponentStatus {
@@ -77,7 +81,7 @@ export interface BottomNavigationStatus extends ComponentStatus {
 }
 
 interface TabView {
-  el: HTMLButtonElement;
+  el: HTMLButtonElement | HTMLAnchorElement;
   icon: SVGSVGElement | null;
   label: HTMLSpanElement;
   iconKey: string;
@@ -102,7 +106,7 @@ export class BottomNavigation implements ComponentInstance {
   private surface: BoundSurface | null = null;
   private active: string;
   private preview: { target: string; state: PreviewState } | null = null;
-  private pressedTab: HTMLButtonElement | null = null;
+  private pressedTab: HTMLButtonElement | HTMLAnchorElement | null = null;
   private pointer: number | null = null;
   private overflowing = false;
   private interactive = true;
@@ -112,6 +116,7 @@ export class BottomNavigation implements ComponentInstance {
   private destroyed = false;
 
   constructor(options: BottomNavigationOptions) {
+    checkRuntimeNavbar(options.config);
     this.options = options;
     this.config = options.config;
     this.effective = navbarView(options.config);
@@ -135,8 +140,7 @@ export class BottomNavigation implements ComponentInstance {
     this.track.append(this.indicator);
     this.host.append(this.track);
     options.container.append(this.host);
-    const first = options.activeTab ?? navbarView(options.config).defaultTab;
-    this.active = navbarView(options.config).children.some((t) => t.id === first) ? first : navbarView(options.config).defaultTab;
+    this.active = navbarActiveItem(options.config, options.activeTab ?? null);
     this.host.toggleAttribute('data-motion-reduced', this.binding.status.motionReduced);
     this.lifetime.push(this.binding.onStatus((s) => this.host.toggleAttribute('data-motion-reduced', s.motionReduced)));
     this.render(true);
@@ -220,10 +224,11 @@ export class BottomNavigation implements ComponentInstance {
 
   /** New configuration (same component). The surface is re-created only if its shape changes. */
   update(config: ComponentDefinition): void {
+    checkRuntimeNavbar(config);
     const materialChanged = config.material !== this.material || config.states !== this.config.states;
     this.config = config;
     this.material = config.material;
-    if (!navbarView(config).children.some((t) => t.id === this.active)) this.active = navbarView(config).defaultTab;
+    this.active = navbarActiveItem(config, this.active);
     if (materialChanged) this.binding.setMaterial(resolveDefinitionMaterial(config));
     this.render(false);
     this.placeIndicator(false);
@@ -235,7 +240,7 @@ export class BottomNavigation implements ComponentInstance {
   }
 
   setActiveTab(id: string, animate = true): void {
-    if (id === this.active || !navbarView(this.config).children.some((t) => t.id === id)) return;
+    if (id === this.active || navbarActiveItem(this.config, id) !== id) return;
     this.active = id;
     this.applySelection();
     this.placeIndicator(animate);
@@ -291,7 +296,9 @@ export class BottomNavigation implements ComponentInstance {
   }
 
   private render(force: boolean) {
-    const { root, breakpoint } = resolveNavbar(this.config, this.containerWidth());
+    const resolved = resolveNavbar(this.config, this.containerWidth());
+    const { breakpoint } = resolved;
+    const root = { ...resolved.root, children: resolved.root.children.filter((t) => t.visible !== false) };
     this.effective = root;
     this.breakpoint = breakpoint;
     const key = JSON.stringify([root.layout, root.appearance, root.typography, root.icon, root.states, root.motion, root.responsive.overflow, root.responsive.minTabWidth, root.semantics, this.options.label ?? root.label, breakpoint, this.binding.family]);
@@ -322,6 +329,7 @@ export class BottomNavigation implements ComponentInstance {
 
   private renderTabs(root: BnRoot) {
     const doc = this.host.ownerDocument;
+    const focused = this.tabOf(doc.activeElement)?.dataset.tab;
     const wanted = new Set(root.children.map((t) => t.id));
     for (const [id, t] of this.tabs) {
       if (wanted.has(id)) continue;
@@ -331,9 +339,14 @@ export class BottomNavigation implements ComponentInstance {
     }
     root.children.forEach((tab, i) => {
       let view = this.tabs.get(tab.id);
+      const link = tab.action?.kind === 'navigate';
+      if (view && (view.el.tagName === 'A') !== link) {
+        if (this.pressedTab === view.el) this.release();
+        view.el.remove(); this.tabs.delete(tab.id); view = undefined;
+      }
       if (!view) {
-        const el = doc.createElement('button');
-        el.type = 'button';
+        const el = link ? doc.createElement('a') : doc.createElement('button');
+        if (el instanceof HTMLButtonElement) el.type = 'button';
         el.className = cls('jello-bnav-tab', this.options.classNames?.tab);
         el.dataset.tab = tab.id;
         const label = doc.createElement('span');
@@ -346,10 +359,28 @@ export class BottomNavigation implements ComponentInstance {
       const at = this.track.children[i + 1] ?? null;
       if (at !== view.el) this.track.insertBefore(view.el, at);
     });
+    if (focused) {
+      const target = this.tabs.get(focused) ?? this.tabs.get(this.active);
+      if (target && target.el !== doc.activeElement) target.el.focus();
+    }
   }
 
   private updateTab(view: TabView, tab: BnTab, root: BnRoot) {
     const el = view.el;
+    if (el instanceof HTMLAnchorElement && tab.action?.kind === 'navigate') {
+      if (tab.disabled) el.removeAttribute('href');
+      else el.href = tab.action.href;
+      el.target = tab.action.target ?? '_self';
+      if (tab.action.target === '_blank') el.rel = 'noopener noreferrer';
+      else el.removeAttribute('rel');
+      el.tabIndex = tab.disabled ? -1 : 0;
+    }
+    if (tab.accessibleLabel) el.setAttribute('aria-label', tab.accessibleLabel);
+    else el.removeAttribute('aria-label');
+    if (tab.description) el.setAttribute('aria-description', tab.description);
+    else el.removeAttribute('aria-description');
+    if (tab.groupId) el.dataset.group = tab.groupId; else delete el.dataset.group;
+    if (tab.iconPosition) el.dataset.iconPosition = tab.iconPosition; else delete el.dataset.iconPosition;
     if (view.label.textContent !== tab.label) view.label.textContent = tab.label;
     const iconKey = JSON.stringify(tab.icon);
     if (iconKey !== view.iconKey) {
@@ -378,12 +409,13 @@ export class BottomNavigation implements ComponentInstance {
       if (tabs) {
         t.el.setAttribute('role', 'tab');
         t.el.setAttribute('aria-selected', String(on));
-        t.el.tabIndex = on ? 0 : -1;
+        t.el.tabIndex = on || (!this.active && id === this.effective.children.find((n) => !n.disabled)?.id) ? 0 : -1;
         t.el.removeAttribute('aria-current');
       } else {
         t.el.removeAttribute('role');
         t.el.removeAttribute('aria-selected');
-        t.el.removeAttribute('tabindex');
+        if (t.el instanceof HTMLAnchorElement) t.el.tabIndex = t.el.getAttribute('aria-disabled') === 'true' ? -1 : 0;
+        else t.el.removeAttribute('tabindex');
         if (on) t.el.setAttribute('aria-current', 'page');
         else t.el.removeAttribute('aria-current');
       }
@@ -414,6 +446,7 @@ export class BottomNavigation implements ComponentInstance {
   private placeIndicator(animate: boolean) {
     if (!this.surface) return;
     const view = this.tabs.get(this.preview?.state === 'active' ? this.preview.target : this.active);
+    this.indicator.hidden = !view;
     if (!view) return;
     const s = this.indicator.style;
     if (!animate) this.indicator.setAttribute('data-instant', '');
@@ -476,19 +509,21 @@ export class BottomNavigation implements ComponentInstance {
         if (!this.pressedTab.contains(e.relatedTarget as Node | null)) this.release();
       }),
       listen(h, 'click', (e) => {
-        if (!this.interactive) return;
         const tab = this.tabOf(e.target);
-        if (tab && tab.getAttribute('aria-disabled') !== 'true') this.select(tab.dataset.tab!, e.detail === 0 ? 'keyboard' : 'pointer');
+        if (!this.interactive || tab?.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+        if (tab) this.select(tab.dataset.tab!, e.detail === 0 ? 'keyboard' : 'pointer');
       }),
       listen(h, 'keydown', (e) => {
         if (!this.interactive) return;
         const tab = this.tabOf(e.target);
         if (!tab) return;
         if (PRESS_KEYS.has(e.key)) {
+          if (e.key === ' ' && tab instanceof HTMLAnchorElement) e.preventDefault();
           if (!e.repeat && tab.getAttribute('aria-disabled') !== 'true') this.press(tab, this.centreOf(tab), 'keyboard');
           return;
         }
-        const list = [...this.tabs.values()].map((t) => t.el);
+        const list = [...this.tabs.values()].map((t) => t.el).filter((el) => el.getAttribute('aria-disabled') !== 'true');
+        if (!list.length) return;
         const i = list.indexOf(tab);
         const next = { ArrowLeft: i - 1, ArrowRight: i + 1, Home: 0, End: list.length - 1 }[e.key];
         if (next === undefined) return;
@@ -499,7 +534,10 @@ export class BottomNavigation implements ComponentInstance {
         }
         target.focus();
       }),
-      listen(h, 'keyup', (e) => PRESS_KEYS.has(e.key) && this.release()),
+      listen(h, 'keyup', (e) => {
+        if (e.key === ' ' && this.interactive && this.pressedTab instanceof HTMLAnchorElement) this.pressedTab.click();
+        if (PRESS_KEYS.has(e.key)) this.release();
+      }),
       // Focus leaving the bar ends a press; focus moving to another tab of the bar (the mouse pressed it) does not.
       listen(h, 'focusout', (e) => {
         if (e.relatedTarget instanceof Node && h.contains(e.relatedTarget)) return;
@@ -534,8 +572,8 @@ export class BottomNavigation implements ComponentInstance {
     return this.effective.interactions.pressFeedback && this.binding.family === 'glass';
   }
 
-  private tabOf(target: EventTarget | null): HTMLButtonElement | null {
-    const tab = target instanceof Element ? target.closest<HTMLButtonElement>('.jello-bnav-tab') : null;
+  private tabOf(target: EventTarget | null): HTMLButtonElement | HTMLAnchorElement | null {
+    const tab = target instanceof Element ? target.closest<HTMLButtonElement | HTMLAnchorElement>('.jello-bnav-tab') : null;
     return tab && this.host.contains(tab) ? tab : null;
   }
 
@@ -548,7 +586,7 @@ export class BottomNavigation implements ComponentInstance {
     this.host.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
   }
 
-  private press(tab: HTMLButtonElement, point: { x: number; y: number }, trigger: BottomNavigationEvent['trigger']) {
+  private press(tab: HTMLButtonElement | HTMLAnchorElement, point: { x: number; y: number }, trigger: BottomNavigationEvent['trigger']) {
     if (this.pressedTab && this.pressedTab !== tab) this.pressedTab.removeAttribute('data-pressed');
     this.pressedTab = tab;
     tab.setAttribute('data-pressed', '');
@@ -567,8 +605,13 @@ export class BottomNavigation implements ComponentInstance {
 
   private select(id: string, trigger: BottomNavigationEvent['trigger']) {
     const tab = navbarView(this.config).children.find((t) => t.id === id);
-    if (!tab || tab.disabled) return;
+    if (!tab || tab.disabled || tab.visible === false) return;
     const e = this.event(id, trigger, this.active);
+    const action = tab.action ?? { kind: 'select' };
+    const detail: NavbarActionEvent = { ...e, action };
+    this.options.onAction?.(id, detail);
+    this.emit(this.effective.interactions.events.action ?? 'jello-action', detail);
+    if (action.kind !== 'select') return;
     if (id === this.active) {
       if (this.effective.interactions.reselect === 'event') {
         this.options.onReselect?.(id, e);
@@ -593,6 +636,16 @@ export function createBottomNavigation(options: BottomNavigationOptions): Bottom
   return nav;
 }
 
+/** Refuse unsafe actions before creating resources or mutating a live component. */
+function checkRuntimeNavbar(config: ComponentDefinition): void {
+  if (config.type !== 'mobile-navbar') throw new Error('BottomNavigation richiede una mobile-navbar');
+  for (const item of navbarItems(config)) {
+    const error = checkNavbarAction(item.action);
+    if (error) throw new Error(`Azione non valida (${item.id}): ${error}`);
+    if (item.action.kind === 'navigate' && config.interactions.behavior.semantics === 'tabs') throw new Error('navigate richiede semantica navigation');
+  }
+}
+
 function renderIcon(doc: Document, tab: BnTab, extra: string | undefined): SVGSVGElement | null {
   const tree = iconTree(tab.icon);
   if (!tree) return null;
@@ -615,7 +668,7 @@ function renderIcon(doc: Document, tab: BnTab, extra: string | undefined): SVGSV
 }
 
 /** Attributes and variables `navbarPresentation` may write: the ones it leaves out are removed, so a material switch leaves nothing behind. */
-const MANAGED_ATTRS = ['data-text-shadow', 'data-breakpoint'];
+const MANAGED_ATTRS = ['data-text-shadow', 'data-breakpoint', 'data-icons', 'data-distribution', 'data-compact'];
 const MANAGED_VARS = ['--jbn-fg', '--jbn-indicator'];
 
 const cls = (base: string, extra: string | undefined) => (extra ? `${base} ${extra}` : base);

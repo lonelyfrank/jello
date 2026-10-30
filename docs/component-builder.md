@@ -96,7 +96,7 @@ nav.jello-bnav               una superficie di materiale per tutta la barra
   `aria-selected`, focus a rotazione). Frecce, Home, Fine spostano il focus; Spazio/Invio attivano.
   Le etichette nascoste restano il nome accessibile. Tab disabilitate: `aria-disabled`, restano
   raggiungibili.
-- **Overflow**: nessun limite al numero di tab. Sotto `minTabWidth` (≥ 44 px) le tab scorrono
+- **Overflow**: da 1 a 200 tab. Sotto `minTabWidth` (≥ 44 px) le tab scorrono
   (`scroll`) o perdono l’etichetta (`compress`).
 - **Responsive**: breakpoint sulla larghezza del contenitore (finestra per l’ancoraggio
   `viewport`), applicati dal più largo al più stretto (`resolveRoot`, puro).
@@ -175,8 +175,28 @@ tabella è isolata in `src/migration/legacy.ts` ([Component Definition](componen
 - Nessun drag-and-drop nella struttura: riordino con ←/→ (accessibile da tastiera).
 - Il builder non ha il confronto A/B né la scena WebGL2 (la componente è DOM).
 - La barra *agganciata* usa raggio 0: la lente ha un raggio unico, non solo gli angoli superiori.
-- Badge e sottomenu non sono previsti dallo schema; le tab della navbar non sono collegamenti (`<a href>`): il
-  collegamento esiste nel Button (`semantics: 'link'`).
+- Badge e sottomenu non sono previsti dallo schema. Le voci Mobile con azione
+  `navigate` usano veri collegamenti; selezioni e azioni del consumatore usano pulsanti.
+
+## Navbar Architecture (M5.1)
+
+Le modifiche alle voci di `LabSession` passano dalle [operazioni canoniche](navbar-architecture.md#operazioni-pubbliche),
+con validazione atomica ed errori nel pannello. Restano gli stessi comandi per
+aggiungere, duplicare, riordinare ed eliminare tab e gli stessi flussi di
+salvataggio, riapertura ed export.
+
+Nella radice, «Struttura · gruppi» crea gruppi logici e permette di scioglierli
+conservando le voci. Nell'inspector di una tab, «Gruppo» ne cambia l'appartenenza
+e «Visibile» la rimuove dall'anteprima mantenendola nel documento e nell'albero.
+«Stati e interazioni» consente selezione, URL oppure azione del consumatore:
+l'indirizzo o il nome si applicano con «Applica azione», senza salvare bozze
+incomplete. In Avanzato, «Accessibilità» aggiunge nome, descrizione e posizione
+dell'icona. Il livello Base/Avanzato continua a essere solo presentazione.
+
+I descrittori vengono dallo stesso `definitionFields(type, role)`, con ambito
+comune/Mobile/Desktop e livello; nessun Inspector parallelo. Il contratto
+Desktop è pronto per un renderer dedicato in M5.2 ma il Builder non lo offre
+come componente già disponibile. Non sono introdotti dropdown o drag-and-drop.
 
 ## Studio M3.1
 

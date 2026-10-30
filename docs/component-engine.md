@@ -7,6 +7,16 @@ materiali sono [Material Core](material-core.md): qui c'è ciò che li lega.
 
 Questa pagina documenta M2. Studio React e completamento M3.1/M4.1 sono descritti nel [report Studio](studio-completion.md); Jelly, backend, account, AI e WordPress restano fuori ambito.
 
+## Navbar Architecture (M5.1)
+
+Il [Navbar Structure Engine](navbar-architecture.md) introduce operazioni pure e
+validate sulla definizione canonica per entrambe le navbar: voci, identità, gruppi,
+visibilità, disponibilità e azioni serializzabili. Riutilizza slot, icone,
+descrittori, materiali e breakpoint. [Audit del codice](navbar-audit.md).
+Il Builder Mobile usa queste operazioni; `BnRoot` resta la vista del suo renderer.
+Desktop ha un profilo completo e validato, senza ereditare il posizionamento
+inferiore, e resta pianificata nel medesimo `COMPONENTS` fino a M5.2.
+
 ## Che cosa c'è
 
 | Richiesta | Dove |
@@ -42,8 +52,9 @@ che `setField` rifiuta, `defaults()` diverso dai descrittori, nomi di evento non
 
 **Desktop Navbar e Input** restano nello schema (`DEFINITION_TYPES`) e in `COMPONENTS.planned()`:
 elencati come «in arrivo» nel Builder, senza template, senza editor, senza renderer. Un file che li
-contiene si legge, ma `layout`, `style`, `states.<s>.style` e `interactions.behavior` vengono ignorati
-**con un avviso** (prima gli ultimi due sparivano in silenzio).
+contiene si legge. Da M5.1 Desktop valida e conserva anche layout, responsive,
+stili, azioni e comportamento. Solo Input continua a ignorare queste proprietà
+**con un avviso**.
 
 Il runtime lega ogni voce al proprio renderer come fa per i materiali:
 [`createComponent({ container, config, source? })`](../src/runtime/components.ts) sceglie la classe dal
