@@ -18,6 +18,8 @@ const node = (page: Page, id: string) => page.locator(`#structureTree [data-node
 async function controls(page: Page) {
   const toggle = page.locator('#panelToggle');
   if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+  const advanced = page.getByRole('button', { name: 'Avanzato', exact: true });
+  if (await advanced.isVisible()) await advanced.click();
 }
 
 async function openSection(page: Page, id: string) {

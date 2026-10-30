@@ -7,16 +7,13 @@
 Jello è un laboratorio di materiali e componenti UI, riutilizzabili su web desktop, browser
 mobile e app Android basate su WebView. Due modalità condividono lo stesso motore di anteprima:
 
-- **Material Lab** — si creano, modificano, verificano, salvano ed esportano materiali; **Glass**
-  è il materiale con editor (preset ufficiali: Jello · iniziale, Ottica nuda, Satinato,
-  Lente marcata, Jello · navbar); **Solid** (superficie piena con bordo, ombra, elevazione e
-  stati) è disponibile nel runtime e nelle componenti (non ancora nel Material Lab); **Jelly** è in
-  sviluppo e non è utilizzabile. Vedi [Material Core](docs/material-core.md).
-- **Component Builder** — si configura una componente che usa un materiale (**Button / CTA** e **Mobile
-  Navbar**, con **Glass** o **Solid** senza perdere contenuto, layout e stati), la si salva nella libreria e la si
-  esporta come componente **React + TypeScript** installabile, oppure si esporta il solo materiale Glass.
-  Vedi [Component Builder e componenti](docs/component-builder.md) e [Component Engine](docs/component-engine.md); il formato delle componenti è
-  `jello-component-definition` ([Component Definition](docs/component-definition.md)).
+Il flusso principale è **Scegli componente → Scegli materiale → Personalizza → Prova → Esporta**.
+
+- **Material Lab** — Glass e Solid sono materiali indipendenti, con preset inclusi e personali, controlli dal registro, anteprima, duplicazione, rinomina, eliminazione, preferiti e import/export JSON. Solid usa il proprio renderer CSS, senza filtri Glass. Jelly resta disabilitato.
+- **Component Builder** — Button e Mobile Navbar con Glass o Solid; contenuti, struttura, layout, stati e interazioni restano al cambio famiglia. Libreria personale, preset collegati con revisioni, Inspector **Base / Avanzato** e sei sezioni contestuali. Il wizard componente è opzionale; l’accesso diretto resta disponibile.
+- **Export** — componenti **React + TypeScript** oppure **Vanilla (HTML/CSS/JS)**, con lo stesso runtime dello Studio, definizioni canoniche, CSS, esempi, README e manifest. Materiali Glass e Solid esportabili autonomamente con runtime; CSS statico Glass esplicitamente ridotto. Il progetto `.jello` serve al recupero del lavoro e rimane distinto dai pacchetti di integrazione.
+
+Schema materiale `jello-material` v2 e componente `jello-component-definition` v1 conservati. Vedi [Builder](docs/component-builder.md), [Export](docs/export.md) e [audit e stato M3.1/M4.1](docs/studio-completion.md).
 
 Si ispira ai principi di Apple Liquid Glass (lente, luce che segue la geometria, risposta al
 tocco) ma **non** ne replica lo shader: parametri e modello ottico sono di Jello.
@@ -36,11 +33,12 @@ npm run dev          # laboratorio: http://localhost:5173 · anteprima leggera: 
 | `npm run typecheck` | TypeScript rigoroso |
 | `npm test` | Vitest: modello e migrazioni, geometria, molla, persistenza (fake-indexeddb), export, protocollo, relay, confini |
 | `npm run build` | `build:lib` + typecheck + build del laboratorio e della pagina di anteprima in `dist/` |
-| `npm run test:e2e:local` | Playwright su Chromium, Firefox e viewport Pixel 7 emulato (avvia laboratorio, esempio, progetto React esterno e relay) |
+| `npm run test:e2e:local` | Playwright su Chromium, Firefox e viewport Pixel 7 emulato (avvia laboratorio, esempio, progetti React e Vanilla esterni e relay) |
 | `npm run test:e2e` | come sopra + WebKit (dipendenze di sistema necessarie) |
 | `npm run test:perf` / `node scripts/perf.mjs --suite navbar\|scene` | misure headless → `docs/perf/` |
 | `npm run example:prepare` · `npm run example:serve` | pacchetto del preset `navbar` → esempio consumatore `examples/navbar` su :4175 |
 | `npm run consumer:prepare` · `npm run consumer:serve` | navbar React esportata → progetto esterno `examples/react-consumer` (npm install, typecheck, build) su :4176 |
+| `npm run vanilla:prepare` · `npm run vanilla:serve` | quattro componenti Vanilla e materiale Solid autonomo, con typecheck dei tipi pubblici, senza installazione React, su :4177 |
 | `npm run relay` | relay locale per l’anteprima sul telefono (:5174) |
 | `npm run verify` | typecheck + unit + build + e2e locali |
 
@@ -63,12 +61,13 @@ Materiali (Material Lab): dashboard React a tre colonne (pannelli laterali richi
 - **Centro** — anteprima: «Componenti reali» (CSS/SVG su HTML vero) o «Scena controllata»
   (WebGL2 su texture), Singola/A·B, desktop / telefono 390 px / dimensioni personalizzate, pausa,
   ripristino, scroll in cima, metriche misurabili.
-- **Destra** — due schede. *Parametri*: materiale, geometria, comportamento (generati dalla tabella
+- **Destra (Glass)** — due schede. *Parametri*: materiale, geometria, comportamento (generati dalla tabella
   dei parametri, con validazione dei campi numerici), import/export, anteprima sul telefono.
   *Rendering*: renderer richiesto ed effettivo con motivi e livelli di supporto, accessibilità
   (movimento e trasparenza ridotti), profilo qualità, compatibilità e diagnostica (mappa di
   displacement, misura dei frame, risorse WebGL2, perdita del contesto simulata). Con la
   trasparenza ridotta un avviso sopra l’anteprima dice perché il materiale è opaco.
+  **Solid** mostra superficie, bordo, elevazione, forma, transizioni e override di stato. La sua anteprima usa Button o Mobile Navbar; scena WebGL2, lente libera e A/B non sono applicabili.
 
 Salvataggio automatico in IndexedDB con stato visibile («Salvato alle…», «Non salvato: spazio
 esaurito», «Non persistente: solo questa scheda»). Gli scenari restano riproducibili dall’URL; le

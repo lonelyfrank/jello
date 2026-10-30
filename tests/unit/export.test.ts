@@ -181,7 +181,7 @@ describe('export adapters', () => {
   it('describes files and dependencies before building, and lists adapters by target', () => {
     const req = { material: navbar, component: demo() };
     expect(adaptersFor('material', req).map((a) => a.id)).toEqual(['material-runtime', 'material-css']);
-    expect(adaptersFor('component', req).map((a) => a.id)).toEqual(['component-react']);
+    expect(adaptersFor('component', req).map((a) => a.id)).toEqual(['component-react', 'component-vanilla']);
     expect(adaptersFor('component', { material: navbar })).toEqual([]);
     expect(adaptersFor('configuration', req).map((a) => a.id)).toEqual(['material-json', 'component-json']);
     const plan = componentReactAdapter.describe(req);
@@ -275,14 +275,14 @@ describe('React packages of any component and material', () => {
     expect(r.warnings.join('\n')).toMatch(/style\.appearance\.foreground/);
   });
 
-  it('adapters: the material-only packages are Glass’s; the component and JSON ones take any material', async () => {
+  it('adapters: Solid has a material runtime package and both component destinations', async () => {
     const d = solid(cta());
     const material = resolveDefinitionMaterial(d);
     const req = { material, component: d, runtime: rt, now };
-    expect(adaptersFor('material', req).map((a) => a.id)).toEqual([]);
-    expect(adaptersFor('component', req).map((a) => a.id)).toEqual(['component-react']);
+    expect(adaptersFor('material', req).map((a) => a.id)).toEqual(['material-runtime']);
+    expect(adaptersFor('component', req).map((a) => a.id)).toEqual(['component-react', 'component-vanilla']);
     expect(adaptersFor('configuration', req).map((a) => a.id)).toEqual(['material-json', 'component-json']);
-    await expect(exportAdapter('material-runtime')!.build(req)).rejects.toThrow(/disponibile per Glass, non per solid/);
+    expect((await exportAdapter('material-runtime')!.build(req)).files.some((f) => f.path.endsWith('/index.js'))).toBe(true);
     const plan = componentReactAdapter.describe(req);
     expect(plan.name).toBe('jello-button-react.zip');
     expect(plan.files.map((f) => f.path).join(' ')).toContain('src/Button.tsx');

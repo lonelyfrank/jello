@@ -6,7 +6,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BUILTIN_MATERIALS, parseMaterialText, serializeMaterial } from '../../model';
-import { serializeDefinition } from '../../components';
+import { componentTemplate, switchMaterialFamily, serializeDefinition, type ComponentDefinition } from '../../components';
+import { createComponent } from '../../runtime/components';
 import { importComponentText } from '../../migration';
 import { CHOICE_LABEL, collect, findConflicts, inspectFile, inspectJsonText, ITEM_LABEL, summarize, type Choice, type Conflict, type ImportItem } from '../../project/importer';
 import { buildProjectPackage, estimateBytes, formatBytes, usedIconNames, type PackageSelection } from '../../project/package';
@@ -42,9 +43,60 @@ function Frame({ title, kicker, steps, current, done, onClose, children, footer 
 export function FlowPage({ session }: { session: LabSession }) {
   const flow = useLab((s) => s.flow);
   if (flow === 'wizard') return <Wizard session={session} />;
+  if (flow === 'component') return <ComponentWizard session={session} />;
   if (flow === 'import') return <ImportFlow session={session} />;
   if (flow === 'export') return <ExportFlow session={session} />;
   return null;
+}
+
+/** Preview uses the public runtime, including its mount/destroy lifecycle. */
+function ComponentSample({ config }: { config: ComponentDefinition }) {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!root.current) return;
+    const c = createComponent({ container: root.current, config, anchor: 'container' });
+    c.mount();
+    c.setInteractive(false);
+    return () => c.destroy();
+  }, [config]);
+  return <div className="component-sample" ref={root} aria-hidden="true" inert />;
+}
+
+function ComponentWizard({ session }: { session: LabSession }) {
+  const [step, setStep] = useState(0);
+  const [type, setType] = useState('button');
+  const [family, setFamily] = useState('glass');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const templates = useMemo(() => ['button', 'mobile-navbar'].map((id) => ({ id, config: componentTemplate(id)!.create() })), []);
+  const preview = useMemo(() => switchMaterialFamily(componentTemplate(type)!.create(), family).definition, [type, family]);
+  const open = async () => {
+    setBusy(true);
+    try {
+      if (!session.state.projectId) await session.projects.create({ name: 'Il mio kit UI', platform: 'web', previewTheme: 'system', start: 'empty' });
+      session.openComponent(type);
+      session.setComponentFamily(family);
+      session.selectElement('root');
+      session.setPage('lab', 'builder');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <Frame title="Crea componente" kicker="Scegli → personalizza → prova → esporta" steps={['Componente', 'Materiale', 'Personalizzazione']} current={step} onClose={() => session.openFlow(null)} footer={<>
+    <button type="button" className="button" disabled={busy} onClick={step ? () => setStep(step - 1) : () => session.openFlow(null)}>{step ? 'Indietro' : 'Annulla'}</button>
+    {step < 2 ? <button type="button" className="button primary" onClick={() => setStep(step + 1)}>Continua</button> : <button type="button" className="button primary" id="openComponentBuilder" disabled={busy} onClick={() => void open()}>Personalizza nel Builder</button>}
+  </>}>
+    {step === 0 && <fieldset className="choice-group"><legend>Quale componente vuoi creare?</legend><div className="choice-cards">{templates.map((t) => <label key={t.id} className="choice-card" data-checked={type === t.id}>
+      <input type="radio" name="componentType" value={t.id} checked={type === t.id} onChange={() => setType(t.id)} /><strong>{t.id === 'button' ? 'Button' : 'Mobile Navbar'}</strong><ComponentSample config={t.config} />
+    </label>)}</div></fieldset>}
+    {step === 1 && <fieldset className="choice-group"><legend>Materiale della stessa componente</legend><div className="choice-cards">{['glass', 'solid'].map((id) => <label key={id} className="choice-card" data-checked={family === id}>
+      <input type="radio" name="componentFamily" value={id} checked={family === id} onChange={() => setFamily(id)} /><strong>{id === 'glass' ? 'Glass' : 'Solid'}</strong>
+    </label>)}</div><ComponentSample config={preview} /></fieldset>}
+    {step === 2 && <div className="stack"><h2 className="flow-h2">Pronto da personalizzare</h2><ComponentSample config={preview} /><p>Modifica contenuto, layout e materiale. Prova gli stati e i formati, salva nella libreria ed esporta per React o Vanilla.</p></div>}
+    {error && <p role="alert">{error}</p>}
+  </Frame>;
 }
 
 // ---------- new project ----------

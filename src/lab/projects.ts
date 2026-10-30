@@ -6,7 +6,7 @@
  */
 
 import { bindMaterial, componentTemplate, resolveDefinitionMaterial, type ComponentDefinition } from '../components';
-import { builtinMaterial, type GlassDocument } from '../model';
+import { MATERIALS, type MaterialDocument } from '../model';
 import { newToken } from '../sync/protocol';
 import { createProject, uniqueName } from '../project/document';
 import { kitAssets, minimalAssets, stagePalette, statePalette, brandPalette } from '../project/defaults';
@@ -127,7 +127,7 @@ export class ProjectActions {
 
   // ---------- creating ----------
 
-  private async addMaterial(doc: GlassDocument, projectId: string): Promise<StoredMaterial> {
+  private async addMaterial(doc: MaterialDocument, projectId: string): Promise<StoredMaterial> {
     const rec: StoredMaterial = { id: doc.id, doc, projectId, createdAt: now(), updatedAt: now() };
     await this.host.repo.putMaterial(rec);
     this.host.userMaterials.set(rec.id, rec);
@@ -141,8 +141,8 @@ export class ProjectActions {
     return rec;
   }
 
-  private copyOfPreset(presetId: string): GlassDocument | null {
-    const b = builtinMaterial(presetId);
+  private copyOfPreset(presetId: string): MaterialDocument | null {
+    const b = MATERIALS.preset(presetId);
     if (!b) return null;
     return { ...b.doc, id: matId(), meta: { ...b.doc.meta, basedOn: presetId, createdAt: now(), updatedAt: now() } };
   }
@@ -187,7 +187,7 @@ export class ProjectActions {
       if (m) await this.addMaterial({ ...m, name: 'Glass' }, id);
     } else if (spec.start === 'duplicate' && source) {
       for (const rec of [...this.host.userMaterials.values()].filter((m) => m.projectId === source!.id)) {
-        const copy: GlassDocument = { ...rec.doc, id: matId(), meta: { ...rec.doc.meta, createdAt: now(), updatedAt: now() } };
+        const copy: MaterialDocument = { ...rec.doc, id: matId(), meta: { ...rec.doc.meta, createdAt: now(), updatedAt: now() } };
         favMap.set(rec.id, copy.id);
         await this.addMaterial(copy, id);
       }
@@ -321,7 +321,7 @@ export class ProjectActions {
   // ---------- export ----------
 
   /** Materials and components of the active project as documents. */
-  contents(): { materials: GlassDocument[]; components: ComponentDefinition[] } {
+  contents(): { materials: MaterialDocument[]; components: ComponentDefinition[] } {
     const id = this.state.projectId;
     return {
       materials: [...this.host.userMaterials.values()].filter((m) => m.projectId === id).map((m) => m.doc),

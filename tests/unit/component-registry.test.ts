@@ -70,7 +70,7 @@ describe('registration', () => {
       expect(c.states[0]).toBe('default');
       expect(c.interactions.length).toBeGreaterThan(0);
       expect(Object.keys(c.materials).sort()).toEqual(MATERIALS.list().map((m) => m.id).sort());
-      expect(c.export.formats).toEqual(['component-json', 'component-react']);
+      expect(c.export.formats).toEqual(['component-json', 'component-react', 'component-vanilla']);
       expect(c.renderer.id).toBe(c.id);
       // The defaults are the descriptors' defaults and a new component carries them.
       const fresh = c.create();

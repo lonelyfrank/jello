@@ -3,12 +3,12 @@
 Jello ha due modalità di lavoro, scelte nell’intestazione e condivise da un unico motore di anteprima:
 
 - **Material Lab**: il laboratorio dei materiali di sempre (libreria, parametri, renderer,
-  diagnostica, import/export). Invariato.
+  diagnostica, import/export), ora con Glass e Solid.
 - **Component Builder**: configura una componente UI che *usa* un materiale, la salva nella libreria
   personale e la esporta.
 
 Le due modalità usano lo stesso `PreviewController`, lo stesso stage (sorgente, scene di prova,
-formati), lo stesso `GlassGroup` e lo stesso filtro SVG: il builder monta la componente al posto
+formati) e il runtime della famiglia scelta (GlassGroup o SolidGroup): il builder monta la componente al posto
 dell’oggetto dimostrativo, non crea un secondo renderer (`tests/e2e/builder.spec.ts` lo verifica:
 un solo filtro, una sola superficie dopo cambi ripetuti di modalità).
 
@@ -171,11 +171,21 @@ tabella è isolata in `src/migration/legacy.ts` ([Component Definition](componen
 
 ## Limiti attuali
 
-- Due tipi di componente con editor (Mobile Navbar, Button); nel Material Lab si edita solo Glass, e i preset
-  personali sono solo Glass (una componente Solid tiene le proprie modifiche).
-- Il layout dell'inspector non è quello definitivo: la nuova interfaccia (Studio) è M3.
+- Due tipi di componente con editor: Mobile Navbar e Button. Glass e Solid hanno entrambi un ciclo completo nel Material Lab e preset personali collegati.
 - Nessun drag-and-drop nella struttura: riordino con ←/→ (accessibile da tastiera).
 - Il builder non ha il confronto A/B né la scena WebGL2 (la componente è DOM).
 - La barra *agganciata* usa raggio 0: la lente ha un raggio unico, non solo gli angoli superiori.
 - Badge e sottomenu non sono previsti dallo schema; le tab della navbar non sono collegamenti (`<a href>`): il
   collegamento esiste nel Button (`semantics: 'link'`).
+
+## Studio M3.1
+
+La sinistra segue l’ordine Componenti, Materiali, Struttura, Libreria personale. Il wizard opzionale (Home o “Crea componente guidata”) propone Componente → Materiale → Personalizzazione, con anteprime dal runtime pubblico. I template sono generici.
+
+La radice dell’Inspector ha sei sezioni: Contenuto, Layout, Aspetto (con tipografia), Materiale, Stati e interazioni, Responsive. Base mostra i controlli comuni; Avanzato rende accessibili le proprietà supportate e gli override del materiale. È un livello di presentazione, senza un secondo modello o perdita dei valori nascosti. Descrizioni, unità, intervalli, validazione e ripristino provengono dai descrittori. Le proprietà senza effetto sono segnalate con il motivo; forma e dimensioni del materiale sono controllate dal layout della componente.
+
+Desktop, tablet, telefono e dimensioni personalizzate condividono lo stesso stage. Zoom 50–150%, ripristino, sfondo, Seleziona/Interagisci e simulazione degli stati supportati permettono di provare il componente. Button supporta Default/Hover/Pressed/Focus/Disabled; Navbar aggiunge Active sulla tab selezionata. Le simulazioni non modificano il documento.
+
+Solid si salva anche dall’Inspector come preset personale. Le revisioni seguono le regole già usate da Glass: un collegamento senza override segue il preset; i valori locali restano protetti e “Aggiorna dal preset” rende esplicita la sostituzione. Il salvataggio allinea l’URL prima di dichiararsi concluso, per recuperare il lavoro anche con una ricarica immediata.
+
+Le destinazioni sono React, Vanilla e JSON; il formato progetto `.jello` mantiene il lavoro dello Studio. Dettagli e limiti in [Export](export.md) e [report M3.1/M4.1](studio-completion.md).

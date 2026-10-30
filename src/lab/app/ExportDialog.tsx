@@ -13,7 +13,7 @@ import { Icon } from './icons';
 
 const TARGETS: { id: ExportTarget; label: string; hint: string }[] = [
   { id: 'material', label: 'Solo materiale', hint: 'Il materiale configurato, senza componenti: da applicare a elementi del tuo progetto.' },
-  { id: 'component', label: 'Componente + materiale', hint: 'La componente completa, con il suo materiale e il runtime, pronta per React.' },
+  { id: 'component', label: 'Componente + materiale', hint: 'La componente completa, con il suo materiale e il runtime, pronta per React oppure Vanilla (HTML/CSS/JS).' },
   { id: 'configuration', label: 'Configurazione JSON', hint: 'Il documento che il laboratorio salva: si riapre senza perdite, lo leggono strumenti e agenti.' },
 ];
 
@@ -93,7 +93,7 @@ export function ExportDialog({ session }: { session: LabSession }) {
         )}
         {!adapter && (
           <p className="hint" id="exportNone">
-            {target === 'material' ? `Il pacchetto del solo materiale è disponibile per Glass: con ${material.name} esporta la componente (include il materiale) o la configurazione JSON.` : 'Nessun formato disponibile.'}
+            Nessun formato disponibile per questa selezione.
           </p>
         )}
         {plan && adapter && (

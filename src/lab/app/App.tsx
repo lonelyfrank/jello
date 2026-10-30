@@ -47,6 +47,7 @@ export function App({ session }: { session: LabSession }) {
   const report = useLab((s) => s.report);
   const workspace = useLab((s) => s.workspace);
   const builder = useLab((s) => s.builder);
+  const solid = (workspace === 'builder' ? builder.doc.material.family : doc.family) === 'solid';
   const page = useLab((s) => s.page);
   const flow = useLab((s) => s.flow);
   const projects = useLab((s) => s.projects);
@@ -117,7 +118,7 @@ export function App({ session }: { session: LabSession }) {
             <div className="page-title">
               {projects.length > 1 || flow ? <ProjectSwitch session={session} /> : <span>{project?.name ?? 'Jello'}</span>}
               <span aria-hidden="true">·</span>
-              <span className="crumb-current">{flow === 'wizard' ? 'Nuovo progetto' : flow === 'import' ? 'Importazione' : flow === 'export' ? 'Esportazione' : page === 'assets' ? 'Asset' : 'Impostazioni'}</span>
+              <span className="crumb-current">{flow === 'component' ? 'Nuova componente' : flow === 'wizard' ? 'Nuovo progetto' : flow === 'import' ? 'Importazione' : flow === 'export' ? 'Esportazione' : page === 'assets' ? 'Asset' : 'Impostazioni'}</span>
             </div>
             <p className="save-status" id="saveStatus" role="status" data-kind={save.kind} title={save.kind === 'error' || save.kind === 'memory' ? save.message : undefined}>
               {pageSave}
@@ -273,9 +274,9 @@ export function App({ session }: { session: LabSession }) {
           {report && (
             <>
               <span className="chip" data-kind={scene ? 'webgl2' : report.main.effective}>
-                {scene ? `Backend: ${report.scene?.effective === 'webgl2' ? 'WebGL2' : 'CSS su texture'}` : `Percorso: ${PATH_LABEL[report.main.effective]}`}
+                {solid ? 'Solid · renderer CSS' : scene ? `Backend: ${report.scene?.effective === 'webgl2' ? 'WebGL2' : 'CSS su texture'}` : `Percorso: ${PATH_LABEL[report.main.effective]}`}
               </span>
-              {scene ? (
+              {solid ? null : scene ? (
                 <span className="chip" data-kind="warn" title="I record raster riguardano il backend SVG; WebGL2 non ha ancora una verifica visiva">
                   WebGL2: nessuna verifica raster
                 </span>

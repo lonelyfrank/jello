@@ -5,8 +5,7 @@ indipendenti dal materiale. Questa pagina raccoglie le decisioni, le API, i test
 incompatibilità e le attività residue. Il formato è [Component Definition](component-definition.md), i
 materiali sono [Material Core](material-core.md): qui c'è ciò che li lega.
 
-Non fa parte di M2, e non c'è: il nuovo Jello Studio (M3), Jelly, backend, account, AI, WordPress, React
-nell'interfaccia di Studio. Nessuna dipendenza nuova.
+Questa pagina documenta M2. Studio React e completamento M3.1/M4.1 sono descritti nel [report Studio](studio-completion.md); Jelly, backend, account, AI e WordPress restano fuori ambito.
 
 ## Che cosa c'è
 

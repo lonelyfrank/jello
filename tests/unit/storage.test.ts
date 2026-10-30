@@ -33,7 +33,7 @@ describe('IndexedDB repository', () => {
     const repo = await openRepository(factory, 'jello-draft');
     const draft = { ...builtinMaterial('navbar')!.doc, material: { ...builtinMaterial('navbar')!.doc.material, blur: 9 } };
     await repo.putProject({ id: 'last', materialId: 'navbar', draft, options, savedAt: iso });
-    expect((await repo.getProject())?.draft?.material.blur).toBe(9);
+    expect((await repo.getProject())?.draft).toMatchObject({ family: 'glass', material: { blur: 9 } });
   });
 
   it('migrates a version 1 database without losing records, and reads stored v1 documents', async () => {
@@ -61,7 +61,7 @@ describe('IndexedDB repository', () => {
     const list = await repo.listMaterials();
     expect(list.items).toHaveLength(1);
     expect(list.items[0]!.id).toBe('old-1');
-    expect(list.items[0]!.doc.material.blur).toBe(11);
+    expect(list.items[0]!.doc).toMatchObject({ family: 'glass', material: { blur: 11 } });
     expect(list.skipped[0]).toMatch(/broken: schemaVersion 99/);
     // Version 2 added the assets store.
     await repo.putAsset({ hash: 'a'.repeat(64), type: 'image/png', blob: new Blob(['x']), name: 'x.png' });

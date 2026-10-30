@@ -36,9 +36,9 @@ export function ParamField({ d, value, applicability: a, support, onChange, idKe
   const note = a?.note;
   const supportNote = support && support.level !== 'supported' ? `${support.level === 'ignored' ? 'Ignorato' : 'Approssimato'} da questo backend: ${support.note}` : null;
   const label = (
-    <label htmlFor={`param-${k}`} id={`label-${k}`}>
+    <span className="control-label"><label htmlFor={`param-${k}`} id={`label-${k}`}>
       {d.label}
-    </label>
+    </label><button type="button" className="control-reset" aria-label={`Ripristina ${d.label}`} disabled={disabled || value === d.default} onClick={() => onChange(d.default)}>↺</button></span>
   );
   const notes = (
     <>

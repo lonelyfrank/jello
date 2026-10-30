@@ -142,6 +142,7 @@ export function Home({ session }: { session: LabSession }) {
         <section className="home-section" aria-labelledby="h-projects">
           <div className="section-head">
             <h1 id="h-projects">Progetti recenti</h1>
+            <button type="button" className="button primary" onClick={() => session.openFlow('component')}>Crea componente</button>
             <div className="seg" role="group" aria-label="Vista">
               <button type="button" className="seg-b icon" aria-label="Griglia" aria-pressed={view === 'grid'} onClick={() => setView('grid')}>
                 <Ic name="grid" />
@@ -341,8 +342,9 @@ export function HomeEmpty({ session }: { session: LabSession }) {
       <SideNav session={session} current="home" />
       <main className="home-main empty-main" aria-label="Primo avvio">
         <img className="empty-mark" src={`${BASE}brand/jello-mark-192.png`} alt="" width="96" height="80" />
-        <h1>Iniziamo dal primo materiale</h1>
-        <p className="muted lead">In Jello costruisci materiali, li applichi alle componenti e poi esporti tutto in JSON per i tuoi progetti web e app.</p>
+        <h1>Crea la tua prima componente</h1>
+        <button type="button" className="button primary" id="homeComponentWizard" onClick={() => session.openFlow('component')}>Crea componente guidata</button>
+        <p className="muted lead">In Jello costruisci materiali, li applichi alle componenti e poi esporti componenti React o Vanilla per i tuoi progetti web e app.</p>
         <div className="start-grid">
           <button type="button" className="card start-card" onClick={() => session.openFlow('wizard')} id="startEmpty">
             <span className="plus-disc">
@@ -379,7 +381,7 @@ export function HomeEmpty({ session }: { session: LabSession }) {
         >
           <Ic name="upload" size={20} />
           <span>Oppure trascina qui un file .json o .jello</span>
-          <span className="muted small">Formati accettati: jello-glass v1 e v2, jello-component v1, jello-project</span>
+          <span className="muted small">Formati accettati: jello-material v2 (Glass/Solid), jello-glass v1, jello-component-definition, jello-project</span>
         </div>
         <ol className="how-steps">
           <li>

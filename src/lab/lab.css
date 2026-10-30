@@ -1684,3 +1684,12 @@ code {
     padding: 0 10px;
   }
 }
+
+.control-label { display: inline-flex; gap: 8px; align-items: center; }
+.control-reset { border: 0; background: transparent; color: inherit; cursor: pointer; padding: 4px 8px; font: inherit; font-size: 12px; }
+.control-reset:disabled { opacity: .45; cursor: default; }
+.inspector-level { padding: 12px 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.inspector-level .hint { flex-basis: 100%; margin: 0; }
+.inspector-level button[aria-pressed='true'] { color: #5727b6; background: #eee8fb; border-color: #7546d8; }
+.component-sample { position: relative; isolation: isolate; min-height: 120px; width: 100%; display: grid; place-items: center; overflow: hidden; background: repeating-linear-gradient(135deg, #e8dcff 0 20px, #f2f5fa 20px 60px); border-radius: 12px; }
+.component-sample .jello-bnav { max-width: calc(100% - 24px); }

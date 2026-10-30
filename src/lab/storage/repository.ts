@@ -16,7 +16,7 @@
  * never swallowed: the UI must not claim a save that did not happen.
  */
 
-import { parseGlassMaterial, type GlassDocument } from '../../model';
+import { parseMaterial, type MaterialDocument } from '../../model';
 import type { ComponentDefinition } from '../../components';
 import { importComponent } from '../../migration';
 import { parseProject } from '../../project/document';
@@ -40,7 +40,7 @@ export class StorageError extends Error {
 
 export interface StoredMaterial {
   id: string;
-  doc: GlassDocument;
+  doc: MaterialDocument;
   /** Owning project; absent on records from before projects. */
   projectId?: string;
   createdAt: string;
@@ -59,7 +59,7 @@ export interface ProjectRecord {
   id: 'last';
   materialId: string;
   /** Working document when it differs from the stored one (e.g. an edited built-in). */
-  draft: GlassDocument | null;
+  draft: MaterialDocument | null;
   options: ViewOptions;
   /** Local image of the photo scene / texture (assets store). */
   imageHash?: string | null;
@@ -160,7 +160,7 @@ class IdbRepository implements Repository {
     const items: StoredMaterial[] = [];
     const skipped: string[] = [];
     for (const r of raw as { id: string; doc: unknown; projectId?: string; createdAt: string; updatedAt: string }[]) {
-      const parsed = parseGlassMaterial(r.doc);
+      const parsed = parseMaterial(r.doc);
       if (parsed.ok) items.push({ id: r.id, doc: { ...parsed.doc, id: r.id }, ...(r.projectId ? { projectId: r.projectId } : {}), createdAt: r.createdAt, updatedAt: r.updatedAt });
       else skipped.push(`${r.id}: ${parsed.errors[0] ?? 'non leggibile'}`);
     }
@@ -180,9 +180,9 @@ class IdbRepository implements Repository {
     const tx = this.db.transaction('projects', 'readonly');
     const raw = (await req(tx.objectStore('projects').get('last'))) as (Omit<ProjectRecord, 'draft' | 'componentDraft'> & { draft: unknown; componentDraft?: unknown }) | undefined;
     if (!raw) return null;
-    let draft: GlassDocument | null = null;
+    let draft: MaterialDocument | null = null;
     if (raw.draft) {
-      const parsed = parseGlassMaterial(raw.draft);
+      const parsed = parseMaterial(raw.draft);
       if (parsed.ok) draft = parsed.doc;
     }
     let componentDraft: ComponentDefinition | null = null;

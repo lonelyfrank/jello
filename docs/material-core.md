@@ -109,8 +109,7 @@ controlla parametri, preset, ordine, versione minima e simboli esportati.
 Cambiamenti **di tipo** che chi usa le API deve conoscere:
 
 - `MaterialDocument` è ora l’unione `GlassDocument | SolidDocument`. Il codice che accede a
-  `quality`, `source`, `target` o alle sezioni di Glass usa `GlassDocument` (il laboratorio, il
-  runtime Glass, l’export, la sincronizzazione, i progetti).
+  `quality`, `source`, `target` o alle sezioni di Glass usa `GlassDocument` dopo il controllo della famiglia. Libreria, progetti e sincronizzazione usano l’unione.
 - `parseMaterial` / `parseMaterialText` restituiscono l’unione. Per i chiamanti che gestiscono solo
   Glass esistono `parseGlassMaterial` / `parseGlassMaterialText` / `onlyGlass`: un documento valido
   di un’altra famiglia è rifiutato con un motivo, mai applicato a metà.
@@ -268,12 +267,8 @@ rigenerati con la suite E2E: vedi [Compatibilità](compatibility.md).
 
 ## Limiti noti
 
-- **Il Material Lab non modifica Solid** (da M2 sì il Component Builder). Importare un file Solid nel
-  Material Lab, in un progetto `.jello` o dal relay è rifiutato con un motivo; la libreria personale contiene solo
-  Glass. In una componente Solid si modificano parametri e stati con lo stesso pannello di Glass
-  ([Component Engine](component-engine.md#inspector-condiviso)).
-- **Export:** il pacchetto del solo materiale (`material-runtime`, `material-css`) è di Glass; la componente
-  si esporta con Glass o Solid, e il JSON del materiale con qualunque famiglia.
+- **Material Lab M3.1:** Glass e Solid hanno preset personali, controlli e import/export; anche progetti e relay accettano entrambe le famiglie. Solid si prova su Button e Mobile Navbar, senza scena ottica o confronto A/B.
+- **Export M4.1:** pacchetti materiale con runtime per Glass e Solid; CSS statico ridotto solo Glass; componenti React e Vanilla con entrambe le famiglie; JSON canonico sempre disponibile.
 - **`SolidGroup` non è un `MaterialGroup`.** Condivide ciclo di vita e stato di base
   (`BaseMaterialGroup`, `MaterialSurface`) ma non i tipi di Glass (backend, sorgente). Le componenti non lo sanno:
   passano da `MaterialBinding` (`runtime/surface-binding.ts`), che sceglie il gruppo della famiglia.

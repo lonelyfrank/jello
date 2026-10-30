@@ -6,12 +6,12 @@ e dipendenze prima di scaricare:
 | Scelta | Adapter | Risultato |
 | --- | --- | --- |
 | Solo materiale | `material-runtime`, `material-css` | pacchetto del materiale (sotto, §2) |
-| Componente + materiale | `component-react` | pacchetto React + TypeScript (§3), solo nel Component Builder |
-| Configurazione JSON | `material-json`, `component-json` | il documento `jello-material` o `jello-component` |
+| Componente + materiale | `component-react`, `component-vanilla` | React + TypeScript (§3) oppure HTML/CSS/JS (§4), solo nel Component Builder |
+| Configurazione JSON | `material-json`, `component-json` | il documento `jello-material` o `jello-component-definition` |
 
 Gli adapter (`src/export/adapters.ts`) hanno tutti la stessa interfaccia — `describe(req)` (nome,
 file, dipendenze, note) e `build(req)` (file) — e sono puri: nessun DOM, nessuno stato del
-laboratorio. Il builder non conosce i formati: Web Components, HTML/CSS/JS, plugin Figma, Canva
+laboratorio. Il builder non conosce i formati: Web Components, plugin Figma, Canva
 Apps, CLI e server MCP saranno nuovi adapter sugli stessi documenti (non implementati in questa
 fase).
 
@@ -64,7 +64,7 @@ materiale Glass o Solid. Gli esempi sotto sono della Mobile Navbar; il Button ha
 (`<NomeButton>`: props `label`/figlio, `disabled`, `onPress`, `onHover`, `onFocus`, `sourceRef`, `backend`,
 `className`; tipo `NomeVariant`) che monta `createButton` del runtime. Con Solid non serve `sourceRef`, il
 manifest dichiara `backend: none` e il README elenca le proprietà della definizione senza effetto con quel
-materiale (anche negli avvisi dell'export). Il pacchetto del solo materiale (sezione 2) è di Glass.
+materiale (anche negli avvisi dell'export). Il pacchetto con runtime del solo materiale supporta anche Solid (§5); il CSS statico è solo Glass.
 
 ```
 jello-<nome>-react/
@@ -134,3 +134,22 @@ node scripts/prepare-consumer.mjs --component mia.jello-component.json
 
 Il confronto vale a parità di backend: lo stesso JSON su un backend diverso ha una resa diversa e
 non viene confrontato.
+
+## 4. Componente Vanilla (M4.1)
+
+`component-vanilla` esporta Button e Mobile Navbar con Glass o Solid. Nessun peer React, nessuna build nel consumatore: servire la cartella via HTTP e aprire `example/index.html`.
+
+- `component.json` e `material.json`: definizioni canoniche complete.
+- `index.js`, `index.d.ts`, `package.json`: `mount({ container, source?, ...options })` restituisce l’istanza del runtime condiviso; `update(config)`, `unmount()`, `mount()` e `destroy()` mantengono il lifecycle originale.
+- `runtime/`: stessi byte costruiti da `build:lib`, CSS con namespace Jello, dichiarazioni e chunk; nessun renderer generato.
+- `example/`, README e manifest: istruzioni, dipendenze incluse, compatibilità, limitazioni e hash SHA-256.
+
+Gli eventi e i callback rimangono quelli runtime: `onPress/onHover/onFocus` per Button, `onChange/onTabPress/onReselect` per Navbar. Le definizioni conservano i breakpoint; il container deve avere una larghezza. La navbar accetta `anchor: 'container'` per una cornice locale; i link Button usano la semantica nativa del browser. Gli esempi mostrano anche destroy/mount ripetuti.
+
+Glass rifrange una sorgente DOM opaca separata dal container; senza sorgente usa CSS. Il renderer DOM non legge texture WebGL2: questo limite è dichiarato nel manifest e nel README. Solid non richiede sorgenti. Le preferenze di movimento/trasparenza e i fallback restano quelli del runtime; non viene appiattito il componente in markup statico.
+
+`npm run vanilla:prepare` genera quattro consumatori indipendenti e verifica i tipi pubblici. `npm run vanilla:serve` li serve su :4177. I test `vanilla-consumer.spec.ts` confrontano contenuto, stile effettivo del contenuto e superficie con lo Studio, verificano eventi, tastiera, viewport da 320 px, preferenze e cleanup. I byte JS/CSS sono confrontati con `dist-lib`.
+
+## 5. Materiale Solid autonomo
+
+`material-runtime` include anche Solid: documento, `createGroup()`, runtime, CSS, tipi, esempio e manifest. `group.attach(host, { interaction: 'interactive' })` conserva hover e pressione; active e disabled si impostano dalla superficie. La semantica HTML e disabled/aria-disabled appartengono all’host. `group.destroy()` rilascia strati, variabili e listener. Non si offre uno stylesheet statico Solid che perda gli override di stato senza avviso.

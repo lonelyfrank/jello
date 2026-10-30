@@ -141,7 +141,7 @@ test.describe('removed presets', () => {
     const ids = await page.locator('#preset option').evaluateAll((o) => (o as HTMLOptionElement[]).map((x) => x.value).filter(Boolean));
     expect(ids).toEqual(['jello', 'optics', 'satin', 'deep', 'navbar']);
     await expect(page.locator('#sidebar')).not.toContainText(/cable|\bBT\b|darts/i);
-    expect((await lab<{ id: string }[]>(page, 'return h.library()')).map((i) => i.id)).toEqual(ids);
+    expect((await lab<{ id: string }[]>(page, 'return h.library()')).map((i) => i.id)).toEqual([...ids, 'solid-neutral', 'solid-dark', 'solid-accent', 'solid-outline']);
   });
 
   test('an old URL opens the replacement as a draft that keeps the original parameters', async ({ page }) => {

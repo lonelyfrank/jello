@@ -101,6 +101,7 @@ export class BottomNavigation implements ComponentInstance {
   private readonly tabs = new Map<string, TabView>();
   private surface: BoundSurface | null = null;
   private active: string;
+  private preview: { target: string; state: PreviewState } | null = null;
   private pressedTab: HTMLButtonElement | null = null;
   private pointer: number | null = null;
   private overflowing = false;
@@ -243,16 +244,22 @@ export class BottomNavigation implements ComponentInstance {
   /** False: pointer and keyboard input are ignored (the editor's selection mode). */
   setInteractive(on: boolean): void {
     this.interactive = on;
-    if (!on) this.release();
+    if (!on) { this.release(); this.surface?.setHovered(false); }
     this.host.toggleAttribute('data-inert-preview', !on);
   }
 
   /** Shows a state on one tab without input (editor). null clears it. */
   previewState(tabId: string | null, state: PreviewState | null): void {
+    this.preview = tabId && state ? { target: tabId, state } : null;
+    this.render(false);
     for (const [id, t] of this.tabs) {
       if (id === tabId && state) t.el.dataset.previewState = state;
       else delete t.el.dataset.previewState;
+      if (id === tabId && state === 'disabled') t.el.setAttribute('aria-disabled', 'true');
     }
+    this.surface?.setHovered(state === 'hover');
+    this.surface?.setPressed(state === 'pressed' && this.feedback());
+    this.placeIndicator(false);
   }
 
   destroy(): void {
@@ -366,7 +373,7 @@ export class BottomNavigation implements ComponentInstance {
   private applySelection() {
     const tabs = this.effective.semantics === 'tabs';
     for (const [id, t] of this.tabs) {
-      const on = id === this.active;
+      const on = id === (this.preview?.state === 'active' ? this.preview.target : this.active);
       t.el.toggleAttribute('data-active', on);
       if (tabs) {
         t.el.setAttribute('role', 'tab');
@@ -406,7 +413,7 @@ export class BottomNavigation implements ComponentInstance {
   /** Layout reads happen only on mount, resize and selection changes. */
   private placeIndicator(animate: boolean) {
     if (!this.surface) return;
-    const view = this.tabs.get(this.active);
+    const view = this.tabs.get(this.preview?.state === 'active' ? this.preview.target : this.active);
     if (!view) return;
     const s = this.indicator.style;
     if (!animate) this.indicator.setAttribute('data-instant', '');
@@ -447,6 +454,10 @@ export class BottomNavigation implements ComponentInstance {
     ro.observe(this.layoutParent());
     this.cleanups = [
       () => ro.disconnect(),
+      listen(h, 'pointerenter', (e) => {
+        if (this.interactive && e.pointerType !== 'touch') this.surface?.setHovered(true);
+      }),
+      listen(h, 'pointerleave', () => this.surface?.setHovered(false)),
       listen(h, 'pointerdown', (e) => {
         if (!this.interactive || !e.isPrimary || e.button !== 0 || this.pointer !== null) return;
         const tab = this.tabOf(e.target);
@@ -467,7 +478,7 @@ export class BottomNavigation implements ComponentInstance {
       listen(h, 'click', (e) => {
         if (!this.interactive) return;
         const tab = this.tabOf(e.target);
-        if (tab) this.select(tab.dataset.tab!, e.detail === 0 ? 'keyboard' : 'pointer');
+        if (tab && tab.getAttribute('aria-disabled') !== 'true') this.select(tab.dataset.tab!, e.detail === 0 ? 'keyboard' : 'pointer');
       }),
       listen(h, 'keydown', (e) => {
         if (!this.interactive) return;

@@ -22,7 +22,9 @@
     "geometry:cases": "node --experimental-strip-types --no-warnings scripts/geometry-cases.mjs",
     "verify": "npm run typecheck && npm run test && npm run build && npm run test:e2e:local",
     "consumer:prepare": "npm run build:lib && node scripts/prepare-consumer.mjs",
-    "consumer:serve": "node scripts/serve-static.mjs examples/react-consumer/dist 4176"
+    "consumer:serve": "node scripts/serve-static.mjs examples/react-consumer/dist 4176",
+    "vanilla:prepare": "npm run build:lib && node scripts/prepare-vanilla.mjs",
+    "vanilla:serve": "node scripts/serve-static.mjs examples/vanilla-consumer 4177"
   },
   "engines": {
     "node": ">=20"

@@ -62,7 +62,7 @@ export interface ComponentSpec {
   renderer: { id: string };
   export: {
     /** `component-json` is always available (the definition is the format); `react` needs a runtime and a template. */
-    formats: readonly ('component-json' | 'component-react')[];
+    formats: readonly ('component-json' | 'component-react' | 'component-vanilla')[];
     /** Families the exporter can ship (the runtime is included). */
     families: readonly string[];
     /** Events (DOM) the exported component dispatches. */
@@ -94,7 +94,7 @@ const BUTTON: ComponentSpec = {
   unsupported: (family) => BUTTON_UNSUPPORTED[family] ?? [],
   renderer: { id: 'button' },
   export: {
-    formats: ['component-json', 'component-react'],
+    formats: ['component-json', 'component-react', 'component-vanilla'],
     families: ['glass', 'solid'],
     events: eventsOf(BUTTON_INFO, defaultsOf(BUTTON_FIELDS)).map((e) => e.event),
     notes: ['Azione (<button>) o navigazione (<a href>), secondo «Elemento». Il pulsante non naviga da solo: un’azione riporta la pressione all’applicazione, un collegamento lo segue il browser.'],
@@ -122,7 +122,7 @@ const NAVBAR: ComponentSpec = {
   unsupported: (family) => NAVBAR_UNSUPPORTED[family] ?? [],
   renderer: { id: 'mobile-navbar' },
   export: {
-    formats: ['component-json', 'component-react'],
+    formats: ['component-json', 'component-react', 'component-vanilla'],
     families: ['glass', 'solid'],
     events: ['jello-change', 'jello-press', 'jello-reselect'],
     notes: ['Le tab non sono pagine: l’applicazione decide che cosa significano. Nessun router richiesto.'],

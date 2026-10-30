@@ -9,10 +9,9 @@
  *   material-json       jello-material document (any family)
  *   component-json      jello-component-definition document (material included)
  *
- * The package of the material alone (`material-runtime`, `material-css`) is
- * built for Glass: a component with another material exports as a component.
+ * Material runtime packages support Glass and Solid. CSS-only is explicitly reduced Glass.
  *
- * Planned targets (Web Components, HTML/CSS/JS, Figma, Canva, CLI, MCP) are
+ * Planned targets (Web Components, Figma, Canva, CLI, MCP) are
  * new adapters reading the same documents: there is no separate format for
  * tools or AI agents.
  */
@@ -22,6 +21,7 @@ import { serializeDefinition } from '../components';
 import { serializeMaterial, type GlassDocument, type MaterialDocument } from '../model/document';
 import { buildPackage, packageRoot, sha256Hex, type AssetData, type PackageResult, type RuntimeBundle } from './package';
 import { buildReactPackage, reactNames } from './react';
+import { buildSolidPackage, buildVanillaPackage } from './vanilla';
 
 export type ExportTarget = 'material' | 'component' | 'configuration';
 
@@ -97,11 +97,10 @@ export const materialRuntimeAdapter: ExportAdapter = {
   needsRuntime: true,
   output: 'zip',
   requires: 'material',
-  families: ['glass'],
   describe: (req) => {
-    const m = glass(req);
+    const m = need(req.material, 'il materiale');
     return {
-      name: `${packageRoot(m)}.zip`,
+      name: m.family === 'glass' ? `${packageRoot(m)}.zip` : `jello-${m.id}-material.zip`,
       files: [
         { path: 'material.json', description: 'definizione e parametri (jello-material v2)' },
         { path: 'index.js · index.d.ts · package.json', description: 'modulo installabile: materiale tipizzato e createGroup()' },
@@ -113,7 +112,13 @@ export const materialRuntimeAdapter: ExportAdapter = {
       notes: ['Nessuna componente: solo il materiale, da applicare a elementi del tuo progetto.'],
     };
   },
-  build: async (req) => buildPackage({ material: glass(req), kind: 'runtime', runtime: need(req.runtime, 'il runtime (npm run build:lib)'), ...(req.resolveAsset ? { resolveAsset: req.resolveAsset } : {}), ...(req.now ? { now: req.now } : {}) }),
+  build: async (req) => {
+    const material = need(req.material, 'il materiale');
+    const runtime = need(req.runtime, 'il runtime (npm run build:lib)');
+    return material.family === 'solid'
+      ? buildSolidPackage({ material, runtime, ...(req.now ? { now: req.now } : {}) })
+      : buildPackage({ material, kind: 'runtime', runtime, ...(req.resolveAsset ? { resolveAsset: req.resolveAsset } : {}), ...(req.now ? { now: req.now } : {}) });
+  },
 };
 
 export const materialCssAdapter: ExportAdapter = {
@@ -175,6 +180,26 @@ export const componentReactAdapter: ExportAdapter = {
   build: (req) => buildReactPackage({ component: need(req.component, 'la componente'), runtime: need(req.runtime, 'il runtime (npm run build:lib)'), ...(req.now ? { now: req.now } : {}) }),
 };
 
+export const componentVanillaAdapter: ExportAdapter = {
+  id: 'component-vanilla', label: 'Componente Vanilla · HTML / CSS / JavaScript', target: 'component', needsRuntime: true, output: 'zip', requires: 'component',
+  describe: (req) => {
+    const component = need(req.component, 'la componente');
+    return {
+      name: reactNames(component).root.replace(/-react$/, '-vanilla.zip'),
+      files: [
+        { path: 'component.json · material.json', description: 'definizioni canoniche, struttura, stati, eventi e breakpoint' },
+        { path: 'index.js · index.d.ts · package.json', description: 'mount(), istanza runtime con update/unmount/destroy e tipi' },
+        { path: 'runtime/', description: 'stesso runtime e CSS dello Studio, senza React' },
+        { path: 'example/index.html · example/main.js', description: 'pagina HTTP funzionante senza build' },
+        { path: 'README.md · jello-manifest.json', description: 'integrazione, compatibilità, requisiti e limitazioni' },
+      ],
+      dependencies: [RUNTIME_DEP(req.runtime?.version)],
+      notes: ['Nessuna installazione React. Servi la cartella via HTTP e apri example/.', 'CSS con namespace jello-*. Il lifecycle libera le risorse con destroy().', ...unsupportedProperties(component).map((u) => `${u.path}: ${u.reason}`)],
+    };
+  },
+  build: (req) => buildVanillaPackage({ component: need(req.component, 'la componente'), runtime: need(req.runtime, 'il runtime (npm run build:lib)'), ...(req.now ? { now: req.now } : {}) }),
+};
+
 export const materialJsonAdapter: ExportAdapter = {
   id: 'material-json',
   label: 'Configurazione JSON del materiale',
@@ -219,7 +244,7 @@ export const componentJsonAdapter: ExportAdapter = {
   },
 };
 
-export const EXPORT_ADAPTERS: readonly ExportAdapter[] = [materialRuntimeAdapter, materialCssAdapter, componentReactAdapter, materialJsonAdapter, componentJsonAdapter];
+export const EXPORT_ADAPTERS: readonly ExportAdapter[] = [materialRuntimeAdapter, materialCssAdapter, componentReactAdapter, componentVanillaAdapter, materialJsonAdapter, componentJsonAdapter];
 
 export function exportAdapter(id: string): ExportAdapter | undefined {
   return EXPORT_ADAPTERS.find((a) => a.id === id);
@@ -231,7 +256,7 @@ export function adaptersFor(target: ExportTarget, req: ExportRequest): ExportAda
     if (a.requires === 'material') return !!req.material && (!a.families || a.families.includes(req.material.family));
     if (!req.component) return false;
     // The definition's JSON is always available; the React package only for a type that has a template.
-    return a.id !== 'component-react' || !!COMPONENTS.get(req.component.type)?.export.formats.includes('component-react');
+    return a.id === 'component-json' || !!COMPONENTS.get(req.component.type)?.export.formats.includes(a.id as 'component-react' | 'component-vanilla');
   };
   return EXPORT_ADAPTERS.filter((a) => a.target === target && usable(a));
 }

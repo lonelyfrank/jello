@@ -283,7 +283,7 @@
 }
 .jello-bnav[data-material='solid'] .jello-bnav-indicator {
   background: rgb(0 0 0 / 0.08);
-  box-shadow: none;
+  box-shadow: inset 0 0 0 2px var(--jbn-active, #0a54bd);
 }
 @supports (color: color-mix(in srgb, red 50%, transparent)) {
   .jello-bnav[data-material='solid'] .jello-bnav-indicator {

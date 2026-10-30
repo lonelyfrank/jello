@@ -14,7 +14,7 @@ import '../stage/theme.css';
 import '../core/glass.css';
 import '../stage/stage.css';
 import './preview.css';
-import { builtinMaterial, type GlassDocument } from '../model';
+import { builtinMaterial, type MaterialDocument } from '../model';
 import { DOM_FIXTURE_HTML, FIXTURE_CSS, SCENE_FIXTURE_HTML } from '../export/example';
 import { createGlassGroup } from '../runtime/glass-group';
 import { createSceneView, textureFromDocument } from '../runtime/scene';
@@ -55,7 +55,10 @@ function mountPreview() {
       if (r.type === 'option') {
         options = { ...options, [r.key]: r.value };
         controller.setOption(r.key, r.value as never);
-      } else controller.setMaterial({ ...controller.material, material: { ...controller.material.material, refraction: r.value } });
+      } else {
+        const current = controller.material;
+        if (current.family === 'glass') controller.setMaterial({ ...current, material: { ...current.material, refraction: r.value } });
+      }
     },
     resolveAsset: (url) => (url === 'example:tulips' ? PHOTO.src : url),
     photo: PHOTO.src,
@@ -107,7 +110,7 @@ function mountPreview() {
 
 let appliedImage: string | null = null;
 
-function apply(controller: PreviewController, material: GlassDocument, view: ViewOptions, image: string | null) {
+function apply(controller: PreviewController, material: MaterialDocument, view: ViewOptions, image: string | null) {
   controller.setMaterial(material);
   for (const key of Object.keys(view) as (keyof ViewOptions)[]) controller.setOption(key, view[key] as never);
   if (image !== appliedImage) {

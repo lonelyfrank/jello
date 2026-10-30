@@ -43,6 +43,7 @@ import { useLab } from '../store';
 import { FieldControl, TextControl } from './FieldControl';
 import { Icon } from './icons';
 import { ParamField } from './ParamField';
+import { InspectorLevel, useAdvanced, BASIC_FIELDS, BASIC_MATERIAL } from './InspectorLevel';
 
 const LEVEL_LABEL = { supported: 'supportato', approximated: 'approssimato', ignored: 'ignorato' } as const;
 
@@ -65,6 +66,36 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
 
   return (
     <>
+      <section className="side-section" aria-labelledby="bl-components">
+        <h2 className="side-title" id="bl-components">
+          Componenti
+        </h2>
+        <button type="button" className="button small primary" id="newComponentWizard" onClick={() => session.openFlow('component')}>Crea componente guidata</button>
+        <div className="bl-group">
+          <h3 className="side-sub">Template ufficiali Jello</h3>
+          <div className="bl-list" role="group" aria-label="Template ufficiali Jello">
+            {templates.map((c) => (
+              <button key={c.id} type="button" className="bl-item" data-template={c.id} data-type={c.doc.type} aria-pressed={b.componentId === c.id} title={c.description} onClick={() => session.openComponent(c.id)}>
+                <TemplateGlyph type={c.doc.type} />
+                <span>
+                  <strong>{c.name}</strong>
+                  <span className="bl-sub">{c.description}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="side-caption">In arrivo · non ancora disponibili</p>
+        <ul className="soon-grid" aria-label="Componenti in arrivo">
+          {COMPONENTS.planned().map((t) => (
+            <li key={t.id} className="soon-card" title={t.description} data-planned={t.id}>
+              {t.name}
+              <span className="visually-hidden">: {t.description} {t.reason}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className="side-section" aria-labelledby="bl-materials">
         <h2 className="side-title" id="bl-materials">
           Materiali
@@ -110,36 +141,73 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
         </ul>
       </section>
 
-      <section className="side-section" aria-labelledby="bl-components">
-        <h2 className="side-title" id="bl-components">
-          Componenti
+      <section className="side-section" aria-labelledby="bl-structure">
+        <h2 className="side-title" id="bl-structure">
+          Struttura
         </h2>
-        <div className="bl-group">
-          <h3 className="side-sub">Template ufficiali Jello</h3>
-          <div className="bl-list" role="group" aria-label="Template ufficiali Jello">
-            {templates.map((c) => (
-              <button key={c.id} type="button" className="bl-item" data-template={c.id} data-type={c.doc.type} aria-pressed={b.componentId === c.id} title={c.description} onClick={() => session.openComponent(c.id)}>
-                <TemplateGlyph type={c.doc.type} />
-                <span>
-                  <strong>{c.name}</strong>
-                  <span className="bl-sub">{c.description}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-        <p className="side-caption">In arrivo · non ancora disponibili</p>
-        <ul className="soon-grid" aria-label="Componenti in arrivo">
-          {COMPONENTS.planned().map((t) => (
-            <li key={t.id} className="soon-card" title={t.description} data-planned={t.id}>
-              {t.name}
-              <span className="visually-hidden">: {t.description} {t.reason}</span>
-            </li>
-          ))}
+        <ul className="tree" id="structureTree" aria-label="Elementi della componente">
+          <li>
+            <button type="button" className="tree-node" data-node="root" aria-pressed={b.selection === 'root'} onClick={() => session.selectElement('root')}>
+              <Icon name="left" />
+              <span>{b.doc.name}</span>
+              <span className="tree-kind">{navbar ? 'navigazione' : 'pulsante'}</span>
+            </button>
+            {root ? (
+              <ul>
+                {root.children.map((t) => (
+                  <li key={t.id}>
+                    <button type="button" className="tree-node" data-node={t.id} aria-pressed={b.selection === t.id} onClick={() => session.selectElement(t.id)}>
+                      <TabIcon icon={t.icon} />
+                      <span>{t.label}</span>
+                      <span className="tree-kind">
+                        {t.id === root.defaultTab ? 'iniziale · ' : ''}
+                        {t.disabled ? 'disabilitata · ' : ''}
+                        {t.id}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul>
+                {b.doc.structure.children?.map((n) => (
+                  <li key={n.id}>
+                    <span className="tree-node" data-node={n.id} aria-disabled="true">
+                      {n.role === 'icon' ? <TabIcon icon={b.doc.content[n.id]?.icon ?? { kind: 'none' }} /> : <Icon name="left" />}
+                      <span>{n.role === 'label' ? (b.doc.content[n.id]?.text ?? '') : 'Icona'}</span>
+                      <span className="tree-kind">{n.role === 'label' ? 'etichetta' : 'icona'} · {n.id}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
         </ul>
-      </section>
-
-      <section className="side-section" aria-labelledby="bl-library">
+        {root ? (
+          <>
+            <div className="library-actions" role="group" aria-label="Azioni sulle tab">
+              <button type="button" className="button small" id="tabAdd" onClick={() => session.addTab()}>
+                <Icon name="plus" /> Tab
+              </button>
+              <button type="button" className="button small" id="tabUp" aria-label="Sposta la tab prima" disabled={index <= 0} onClick={() => selectedTab && session.moveTab(selectedTab.id, -1)}>
+                ←
+              </button>
+              <button type="button" className="button small" id="tabDown" aria-label="Sposta la tab dopo" disabled={index < 0 || index >= root.children.length - 1} onClick={() => selectedTab && session.moveTab(selectedTab.id, 1)}>
+                →
+              </button>
+              <button type="button" className="button small" id="tabDuplicate" disabled={!selectedTab} onClick={() => selectedTab && session.duplicateTab(selectedTab.id)}>
+                <Icon name="copy" /> Duplica
+              </button>
+              <button type="button" className="button small" id="tabRemove" disabled={!selectedTab || root.children.length <= 1} onClick={() => selectedTab && session.removeTab(selectedTab.id)}>
+                <Icon name="trash" /> Elimina
+              </button>
+            </div>
+            <p className="hint">{root.children.length} tab · nessun limite: quando non stanno nella barra decide «Responsive → Troppe tab».</p>
+          </>
+        ) : (
+          <p className="hint">Un pulsante ha un’etichetta e, se vuoi, un’icona: si modificano dal pannello a destra.</p>
+        )}
+      </section>      <section className="side-section" aria-labelledby="bl-library">
         <h2 className="side-title" id="bl-library">
           La mia libreria
         </h2>
@@ -243,73 +311,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
         <Messages />
       </section>
 
-      <section className="side-section" aria-labelledby="bl-structure">
-        <h2 className="side-title" id="bl-structure">
-          Struttura
-        </h2>
-        <ul className="tree" id="structureTree" aria-label="Elementi della componente">
-          <li>
-            <button type="button" className="tree-node" data-node="root" aria-pressed={b.selection === 'root'} onClick={() => session.selectElement('root')}>
-              <Icon name="left" />
-              <span>{b.doc.name}</span>
-              <span className="tree-kind">{navbar ? 'navigazione' : 'pulsante'}</span>
-            </button>
-            {root ? (
-              <ul>
-                {root.children.map((t) => (
-                  <li key={t.id}>
-                    <button type="button" className="tree-node" data-node={t.id} aria-pressed={b.selection === t.id} onClick={() => session.selectElement(t.id)}>
-                      <TabIcon icon={t.icon} />
-                      <span>{t.label}</span>
-                      <span className="tree-kind">
-                        {t.id === root.defaultTab ? 'iniziale · ' : ''}
-                        {t.disabled ? 'disabilitata · ' : ''}
-                        {t.id}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <ul>
-                {b.doc.structure.children?.map((n) => (
-                  <li key={n.id}>
-                    <span className="tree-node" data-node={n.id} aria-disabled="true">
-                      {n.role === 'icon' ? <TabIcon icon={b.doc.content[n.id]?.icon ?? { kind: 'none' }} /> : <Icon name="left" />}
-                      <span>{n.role === 'label' ? (b.doc.content[n.id]?.text ?? '') : 'Icona'}</span>
-                      <span className="tree-kind">{n.role === 'label' ? 'etichetta' : 'icona'} · {n.id}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        </ul>
-        {root ? (
-          <>
-            <div className="library-actions" role="group" aria-label="Azioni sulle tab">
-              <button type="button" className="button small" id="tabAdd" onClick={() => session.addTab()}>
-                <Icon name="plus" /> Tab
-              </button>
-              <button type="button" className="button small" id="tabUp" aria-label="Sposta la tab prima" disabled={index <= 0} onClick={() => selectedTab && session.moveTab(selectedTab.id, -1)}>
-                ←
-              </button>
-              <button type="button" className="button small" id="tabDown" aria-label="Sposta la tab dopo" disabled={index < 0 || index >= root.children.length - 1} onClick={() => selectedTab && session.moveTab(selectedTab.id, 1)}>
-                →
-              </button>
-              <button type="button" className="button small" id="tabDuplicate" disabled={!selectedTab} onClick={() => selectedTab && session.duplicateTab(selectedTab.id)}>
-                <Icon name="copy" /> Duplica
-              </button>
-              <button type="button" className="button small" id="tabRemove" disabled={!selectedTab || root.children.length <= 1} onClick={() => selectedTab && session.removeTab(selectedTab.id)}>
-                <Icon name="trash" /> Elimina
-              </button>
-            </div>
-            <p className="hint">{root.children.length} tab · nessun limite: quando non stanno nella barra decide «Responsive → Troppe tab».</p>
-          </>
-        ) : (
-          <p className="hint">Un pulsante ha un’etichetta e, se vuoi, un’icona: si modificano dal pannello a destra.</p>
-        )}
-      </section>
+
     </>
   );
 }
@@ -371,6 +373,8 @@ export function TabIcon({ icon }: { icon: IconRef }) {
 // ---------- inspector ----------
 
 function Section({ id, title, open = true, children }: { id: InspectorSection | string; title: string; open?: boolean; children: React.ReactNode }) {
+  const advanced = useAdvanced();
+  if (!advanced && ['typography', 'interactions'].includes(id)) return null;
   return (
     <details className="panel-section" data-section={`b-${id}`} open={open}>
       <summary>{title}</summary>
@@ -407,10 +411,13 @@ function relevant(f: FieldDescriptor, root: BnRoot): boolean {
 
 /** A property control plus, when the component's material cannot render it, the reason (explicit and findable: `data-unsupported`). */
 function PropertyField({ f, path, value, unsupported, onChange }: { f: FieldDescriptor; path: string; value: unknown; unsupported: ReadonlyMap<string, string>; onChange(v: unknown): void }) {
+  const advanced = useAdvanced();
   const why = unsupported.get(path);
+  if (!advanced && !BASIC_FIELDS.has(f.path) && !why) return null;
   return (
     <>
       <FieldControl f={f} value={value} onChange={onChange} />
+      <button type="button" className="control-reset" aria-label={`Ripristina ${f.label}`} onClick={() => onChange(f.default)}>↺ Ripristina</button>
       {why && (
         <p className="param-support" data-level="ignored" data-unsupported={path}>
           Senza effetto con questo materiale: {why}
@@ -438,9 +445,9 @@ export function Inspector({ session }: { session: LabSession }) {
           {tab ? `Tab «${tab.label}» · id ${tab.id}` : b.selection === 'material' ? 'Materiale applicato alla componente' : root ? `${b.doc.name} · ${root.children.length} tab` : `${b.doc.name} · ${summary(b.doc)}`}
         </p>
       </div>
-      <div className="panel-body">
+      <div className="panel-body"><InspectorLevel>
         {b.selection === 'material' ? <MaterialPanel session={session} /> : tab && root ? <TabInspector session={session} tab={tab} root={root} /> : root ? <RootInspector session={session} root={root} /> : <ButtonInspector session={session} />}
-      </div>
+      </InspectorLevel></div>
     </div>
   );
 }
@@ -455,7 +462,7 @@ function RootInspector({ session, root }: { session: LabSession; root: BnRoot })
     ));
   return (
     <>
-      <Section id="structure" title={SECTION_LABEL.structure}>
+      <Section id="structure" title="Contenuto">
         <TextControl id="cmp-name" label={<label htmlFor="cmp-name">Nome della componente</label>} value={name} maxLength={80} description="Nome nella libreria e nell’export (diventa il nome del componente React)." onChange={(v) => session.setComponentName(v)} />
         <TextControl id="cmp-label" label={<label htmlFor="cmp-label">Nome accessibile</label>} value={root.label} maxLength={80} description="aria-label della navigazione, letto dagli screen reader." onChange={(v) => session.setComponentRoot({ label: v })} />
         <div className="field param">
@@ -486,22 +493,20 @@ function RootInspector({ session, root }: { session: LabSession; root: BnRoot })
       </Section>
       <Section id="appearance" title={SECTION_LABEL.appearance}>
         {fields('appearance')}
-      </Section>
-      <Section id="typography" title={SECTION_LABEL.typography} open={false}>
-        {fields('typography')}
+        <Section id="typography" title="Tipografia" open={false}>{fields('typography')}</Section>
       </Section>
       <Section id="material" title={SECTION_LABEL.material} open={false}>
         <MaterialPanel session={session} />
       </Section>
-      <Section id="states" title={SECTION_LABEL.states} open={false}>
+      <Section id="states" title="Stati e interazioni" open={false}>
         {fields('states')}
         <p className="hint">Per vedere hover, pressione e focus senza interagire seleziona una tab e usa «Anteprima stato».</p>
-      </Section>
-      <Section id="interactions" title={SECTION_LABEL.interactions} open={false}>
+        <Section id="interactions" title="Interazioni" open={false}>
         {fields('interactions')}
         <p className="hint">
           La componente esportata espone <code>onChange</code>, <code>onTabPress</code> e <code>onReselect</code> (React) e gli eventi DOM qui sopra: la navigazione resta all’applicazione, nessun router richiesto.
         </p>
+        </Section>
       </Section>
       <Section id="responsive" title={SECTION_LABEL.responsive} open={false}>
         {fields('responsive')}
@@ -560,7 +565,7 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
   const index = root.children.indexOf(tab);
   return (
     <>
-      <Section id="structure" title={SECTION_LABEL.structure}>
+      <Section id="structure" title="Contenuto">
         <TextControl id="tab-label" label={<label htmlFor="tab-label">Etichetta</label>} value={tab.label} maxLength={40} description="Testo visibile e nome accessibile. L’id non cambia." onChange={(v) => session.updateTab(tab.id, { label: v })} />
         <div className="field param">
           <div className="field-head">
@@ -608,7 +613,7 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
           );
         })}
       </Section>
-      <Section id="states" title={SECTION_LABEL.states}>
+      <Section id="states" title="Stati e interazioni">
         <label className="check" htmlFor="tab-disabled">
           <input id="tab-disabled" type="checkbox" checked={tab.disabled} onChange={(e) => session.updateTab(tab.id, { disabled: e.target.checked })} />
           <span>Disabilitata</span>
@@ -629,7 +634,9 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
             <option value="">Normale</option>
             <option value="hover">Hover</option>
             <option value="pressed">Premuta</option>
+            <option value="active">Active</option>
             <option value="focus">Focus</option>
+            <option value="disabled">Disabled</option>
           </select>
           <p className="param-desc">Mostra lo stato su questa tab senza interagire. Gli stili degli stati sono della navigazione (seleziona la radice).</p>
         </div>
@@ -702,7 +709,7 @@ function ButtonInspector({ session }: { session: LabSession }) {
     ));
   return (
     <>
-      <Section id="structure" title={SECTION_LABEL.structure}>
+      <Section id="structure" title="Contenuto">
         <TextControl id="cmp-name" label={<label htmlFor="cmp-name">Nome della componente</label>} value={def.name} maxLength={80} description="Nome nella libreria e nell’export (diventa il nome del componente React)." onChange={(v) => session.setComponentName(v)} />
         <TextControl id="btn-text" label={<label htmlFor="btn-text">Testo</label>} value={def.content[nodes.labelId]?.text ?? ''} maxLength={60} description="Testo visibile e nome accessibile del pulsante." onChange={(v) => session.setButtonText(v)} />
         <div className="field param">
@@ -756,8 +763,7 @@ function ButtonInspector({ session }: { session: LabSession }) {
           <input id="btn-disabled" type="checkbox" checked={p.disabled} onChange={(e) => session.setButtonDisabled(e.target.checked)} />
           <span>Disabilitato</span>
         </label>
-      </Section>
-      <Section id="icon" title="Icona">
+        <h3 className="panel-sub">Icona</h3>
         <IconPicker prefix="btn" icon={p.icon ?? { kind: 'none' }} onPick={(icon) => session.setButtonIcon(icon)} onUpload={(f) => session.uploadButtonIcon(f)} />
         <p className="hint">Solo forme e attributi di presentazione: script, eventi, link, stili, immagini e riferimenti esterni vengono rifiutati. Massimo 16 KB. La posizione (prima o dopo il testo) è nel Layout.</p>
         <Messages />
@@ -767,14 +773,12 @@ function ButtonInspector({ session }: { session: LabSession }) {
       </Section>
       <Section id="appearance" title={SECTION_LABEL.appearance}>
         {fields('appearance')}
-      </Section>
-      <Section id="typography" title={SECTION_LABEL.typography} open={false}>
-        {fields('typography')}
+        <Section id="typography" title="Tipografia" open={false}>{fields('typography')}</Section>
       </Section>
       <Section id="material" title={SECTION_LABEL.material} open={false}>
         <MaterialPanel session={session} />
       </Section>
-      <Section id="states" title={SECTION_LABEL.states} open={false}>
+      <Section id="states" title="Stati e interazioni" open={false}>
         <div className="field param">
           <div className="field-head">
             <label htmlFor="btn-preview-state">Anteprima stato</label>
@@ -784,16 +788,17 @@ function ButtonInspector({ session }: { session: LabSession }) {
             <option value="hover">Hover</option>
             <option value="pressed">Premuto</option>
             <option value="focus">Focus</option>
+            <option value="disabled">Disabled</option>
           </select>
           <p className="param-desc">Mostra lo stato sul pulsante senza interagire. Stati del tipo: {BUTTON_STATES.join(', ')}.</p>
         </div>
         {fields('states')}
-      </Section>
-      <Section id="interactions" title={SECTION_LABEL.interactions} open={false}>
+        <Section id="interactions" title="Interazioni" open={false}>
         {fields('interactions')}
         <p className="hint">
           La componente esportata espone <code>onPress</code>, <code>onHover</code> e <code>onFocus</code> (React) e gli eventi DOM qui sopra. Un collegamento non ha bisogno di <code>onPress</code>: lo segue il browser.
         </p>
+        </Section>
       </Section>
       <Section id="responsive" title={SECTION_LABEL.responsive} open={false}>
         <ButtonBreakpoints session={session} def={def} />
@@ -902,6 +907,7 @@ const GROUP_LABEL: Record<string, string> = { motion: 'Pressione' };
  * limits of the running backend); nothing else differs.
  */
 function MaterialPanel({ session }: { session: LabSession }) {
+  const advanced = useAdvanced();
   const definition = useLab((s) => s.builder.doc);
   const binding = definition.material;
   const library = useLab((s) => s.library);
@@ -993,7 +999,7 @@ function MaterialPanel({ session }: { session: LabSession }) {
         </p>
       )}
       {model.groups.map((g) => {
-        const controls = g.controls.filter((c) => usedByComponent(binding.family, g.id, c.key));
+        const controls = g.controls.filter((c) => usedByComponent(binding.family, g.id, c.key) && (advanced || BASIC_MATERIAL.has(c.key)));
         if (!controls.length) return null;
         return (
           <div key={g.id} data-group={g.id}>
@@ -1002,7 +1008,9 @@ function MaterialPanel({ session }: { session: LabSession }) {
           </div>
         );
       })}
-      {model.states.map((st) => (
+      {advanced && definition.type === 'button' && !glass && <p className="hint">Button non dispone di Active: questo stato del materiale resta nel preset e si prova nel Material Lab.</p>}
+      {advanced && definition.type === 'mobile-navbar' && !glass && <p className="hint">Pressed, Active e Disabled appartengono alle singole tab: si personalizzano in «Stati e interazioni». Gli override pressed/active/disabled del materiale sono conservati nel preset e si provano nel Material Lab, ma non modificano la superficie dell’intera navbar.</p>}
+      {advanced && model.states.filter((st) => spec.states.includes(st.state) && (definition.type !== 'mobile-navbar' || !['pressed', 'active', 'disabled'].includes(st.state))).map((st) => (
         <div key={st.state} data-state={st.state}>
           <h3 className="panel-sub">Stato · {st.state}</h3>
           {st.controls.map((c) => control(c, st.state as 'hover' | 'pressed' | 'active' | 'disabled'))}
@@ -1014,8 +1022,7 @@ function MaterialPanel({ session }: { session: LabSession }) {
           {presetDoc ? 'Ripristina valori del preset' : 'Ripristina valori iniziali'}
         </button>
       </div>
-      {glass ? (
-        <form
+      <form
           className="save-preset"
           onSubmit={async (e) => {
             e.preventDefault();
@@ -1030,11 +1037,6 @@ function MaterialPanel({ session }: { session: LabSession }) {
             </button>
           </div>
         </form>
-      ) : (
-        <p className="hint" id="cmpPresetNote">
-          I preset personali sono disponibili per Glass: il materiale {def.name} modificato resta incluso nella componente.
-        </p>
-      )}
       {glass && (
         <>
           <h3 className="panel-sub">Limiti del rendering ({effective === 'svg' ? 'SVG' : 'CSS'})</h3>

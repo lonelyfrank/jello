@@ -8,9 +8,10 @@
 import type { GlassSurface } from '../core/surface';
 import type { ComponentDefinition, DefinitionType, UnsupportedProperty } from '../components';
 import type { MaterialStatusBase } from './material-types';
+import type { BoundSurface } from './surface-binding';
 
 /** A state shown without input (the editor's «anteprima stato»). */
-export type PreviewState = 'hover' | 'pressed' | 'focus';
+export type PreviewState = 'hover' | 'pressed' | 'focus' | 'active' | 'disabled';
 
 export interface ComponentStatus {
   type: DefinitionType;
@@ -33,6 +34,7 @@ export interface ComponentInstance {
   readonly status: ComponentStatus;
   /** The Glass surface while the material is Glass (lens geometry, frames…), else null. */
   readonly glassSurface: GlassSurface | null;
+  readonly materialSurface: BoundSurface | null;
   /** Shows the component and attaches its surface. Idempotent. */
   mount(): void;
   /** Releases the surface and every listener; hides the component. */

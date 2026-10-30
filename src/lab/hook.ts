@@ -23,7 +23,8 @@ export function installHook(session: LabSession): void {
   const compare = () => c().compare;
   window.__jello = {
     get params(): GlassParams {
-      return glassParams(session.state.doc);
+      const doc = session.state.doc;
+      return doc.family === 'glass' ? glassParams(doc) : {} as GlassParams;
     },
     setParams: (patch: Partial<GlassParams>) => session.setParams(patch),
     setOption: <K extends keyof ViewOptions>(key: K, value: ViewOptions[K]) => session.setOption(key, value),
@@ -95,7 +96,8 @@ export function installHook(session: LabSession): void {
     flush: () => session.saveNow(),
     open: (id: string) => session.openMaterial(id),
     duplicate: () => session.duplicate(),
-    newMaterial: () => session.newMaterial(),
+    newMaterial: (family?: 'glass' | 'solid') => session.newMaterial(family),
+    setMaterialControl: (target: Parameters<LabSession['setMaterialControl']>[0], value: unknown) => session.setMaterialControl(target, value),
     rename: (name: string) => session.rename(name),
     remove: (id: string) => session.deleteMaterial(id),
     importText: (text: string) => session.importText(text),

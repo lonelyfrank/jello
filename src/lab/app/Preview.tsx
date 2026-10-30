@@ -13,6 +13,9 @@ export function Preview({ session }: { session: LabSession }) {
   const options = useLab((s) => s.options);
   const report = useLab((s) => s.report);
   const builder = useLab((s) => s.workspace === 'builder');
+  const solid = useLab((s) => (s.workspace === 'builder' ? s.builder.doc.material.family : s.doc.family) === 'solid');
+  const solidLab = useLab((s) => s.workspace === 'material' && s.doc.family === 'solid');
+  const [zoom, setZoom] = useState(1);
   const pick = useLab((s) => s.builder.pick);
 
   // The controller owns everything inside this element; React never renders into it.
@@ -24,7 +27,7 @@ export function Preview({ session }: { session: LabSession }) {
   const loops = report?.loops ?? [];
   const sceneStatus = report?.scene ?? null;
 
-  const forcedOpaque = !scene && report?.main.effective === 'opaque' && report.main.configured !== 'opaque';
+  const forcedOpaque = !solid && !scene && report?.main.effective === 'opaque' && report.main.configured !== 'opaque';
   const manualTransparency = options.reduceTransparency;
   return (
     <section className="preview" aria-labelledby="previewTitle">
@@ -81,7 +84,7 @@ export function Preview({ session }: { session: LabSession }) {
               </select>
             </label>
           )}
-          <div className="tb-segmented" role="group" aria-label="Modalità di anteprima" hidden={builder}>
+          <div className="tb-segmented" role="group" aria-label="Modalità di anteprima" hidden={builder || solidLab}>
             <button type="button" className="tb-seg" id="tb-mode-components" aria-pressed={!scene} onClick={() => session.setOption('mode', 'components')} title="Vere componenti HTML (backend CSS o SVG)">
               Componenti reali
             </button>
@@ -89,7 +92,7 @@ export function Preview({ session }: { session: LabSession }) {
               Scena controllata
             </button>
           </div>
-          <div className="tb-segmented" role="group" aria-label="Confronto" hidden={builder}>
+          <div className="tb-segmented" role="group" aria-label="Confronto" hidden={builder || solidLab}>
             <button type="button" className="tb-seg" id="tb-single" aria-pressed={!options.compare} onClick={() => session.setOption('compare', false)}>
               Singola
             </button>
@@ -140,7 +143,8 @@ export function Preview({ session }: { session: LabSession }) {
           >
             <Icon name={options.animate ? 'pause' : 'play'} />
           </button>
-          <button type="button" className="tb-icon-button" id="tb-restore" aria-label="Ripristina scroll, posizione e tempo" title="Ripristina" onClick={() => session.controller?.restore()}>
+          <label className="tb-select" htmlFor="previewZoom"><span className="visually-hidden">Zoom</span><select id="previewZoom" value={zoom} onChange={(e) => setZoom(Number(e.target.value))}>{[0.5, 0.75, 1, 1.25, 1.5].map((v) => <option key={v} value={v}>{Math.round(v * 100)}%</option>)}</select></label>
+          <button type="button" className="tb-icon-button" id="tb-restore" aria-label="Ripristina scroll, posizione e tempo" title="Ripristina" onClick={() => { setZoom(1); session.controller?.restore(); }}>
             <Icon name="restore" />
           </button>
           <button type="button" className="tb-icon-button" id="tb-scrollTop" aria-label="Scroll in cima" title="Riporta il contenuto all’inizio in tutti i riquadri" onClick={() => session.controller?.resetScroll()}>
@@ -148,7 +152,7 @@ export function Preview({ session }: { session: LabSession }) {
           </button>
         </div>
       </div>
-      <div className="preview-host" ref={host} />
+      <div className="preview-host" ref={host} style={{ zoom }} />
       <dl className="metrics" id="metrics" aria-label="Misure disponibili">
         <div>
           <dt>Loop JavaScript</dt>
@@ -179,8 +183,8 @@ export function Preview({ session }: { session: LabSession }) {
           </>
         ) : (
           <div>
-            <dt>CSS / SVG</dt>
-            <dd data-metric="compositing">Il costo di filtro e compositing è del browser: non misurabile da JS. Usa «Misura frame».</dd>
+            <dt>{solid ? 'Solid · CSS' : 'CSS / SVG'}</dt>
+            <dd data-metric="compositing">{solid ? 'Superficie e transizioni CSS, senza rifrazione o canvas.' : 'Il costo di filtro e compositing è del browser: non misurabile da JS. Usa «Misura frame».'}</dd>
           </div>
         )}
         {report?.suspended && (

@@ -20,17 +20,17 @@
     "blur renormalized at the source edge (no sharp content showing through)"
   ],
   "metrics": {
-    "rimMeanDifference": 27.498900245826654,
-    "passThroughMeanDifference": 0.00040998818438493616,
+    "rimMeanDifference": 29.40682394887483,
+    "passThroughMeanDifference": 0.00046715578435642234,
     "centreMeanDifference": 0,
-    "topMeanDifference": 31.323611416830452,
-    "bottomMeanDifference": 11.142233472741912,
-    "leftMeanDifference": 41.841250507512534,
-    "rightMeanDifference": 43.19222086223445,
-    "foregroundRimDifference": 0.0003665847241989042,
-    "navbarForegroundRimDifference": 0.0198368644619915,
-    "edgeBlurContrastNormalized": 6.102001071297949,
-    "edgeBlurContrastUnnormalized": 17.43120264335377,
-    "innerBlurContrast": 5.80939971555708
+    "topMeanDifference": 14.754347347567665,
+    "bottomMeanDifference": 33.42670041822411,
+    "leftMeanDifference": 40.70998025052205,
+    "rightMeanDifference": 41.175932729203794,
+    "foregroundRimDifference": 0.0004169272461955386,
+    "navbarForegroundRimDifference": 0.01606053586595629,
+    "edgeBlurContrastNormalized": 5.461811186645952,
+    "edgeBlurContrastUnnormalized": 17.128045459524643,
+    "innerBlurContrast": 5.784860626268937
   }
 }

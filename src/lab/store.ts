@@ -5,7 +5,7 @@
  */
 
 import { useSyncExternalStore } from 'react';
-import type { GlassDocument } from '../model';
+import type { MaterialDocument } from '../model';
 import type { ComponentDefinition } from '../components';
 import type { ProjectDoc } from '../project/types';
 import type { PreviewState } from '../runtime/component-types';
@@ -18,7 +18,7 @@ export interface LibraryItem {
   id: string;
   name: string;
   origin: 'builtin' | 'user';
-  doc: GlassDocument;
+  doc: MaterialDocument;
   approximation: boolean;
   note: string;
   updatedAt: string | null;
@@ -45,7 +45,7 @@ export type Workspace = 'material' | 'builder';
 export type Page = 'home' | 'lab' | 'assets' | 'settings';
 export type AssetTab = 'colors' | 'icons' | 'fonts';
 /** Guided full-screen flows over the pages. */
-export type FlowKind = 'wizard' | 'import' | 'export';
+export type FlowKind = 'wizard' | 'component' | 'import' | 'export';
 
 export interface BuilderState {
   doc: ComponentDefinition;
@@ -65,7 +65,7 @@ export interface BuilderState {
 }
 
 export interface LabState {
-  doc: GlassDocument;
+  doc: MaterialDocument;
   /** Library entry being edited. */
   materialId: string;
   origin: 'builtin' | 'user';

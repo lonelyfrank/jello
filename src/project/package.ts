@@ -11,7 +11,7 @@
 
 import { definitionIcons, serializeDefinition, type ComponentDefinition } from '../components';
 import { importComponentText } from '../migration';
-import { serializeMaterial, parseGlassMaterialText, type GlassDocument } from '../model';
+import { serializeMaterial, parseMaterialText, type MaterialDocument } from '../model';
 import { zip, type ZipEntry } from '../export/zip';
 import { formatHsl, formatOklch, formatRgb } from './color';
 import { parseProject, serializeProject, usedTokens } from './document';
@@ -21,7 +21,7 @@ const enc = new TextEncoder();
 const dec = new TextDecoder();
 
 export interface PackageSelection {
-  materials: GlassDocument[];
+  materials: MaterialDocument[];
   components: ComponentDefinition[];
   colors: boolean;
   /** `used`: only icons referenced by the exported components. */
@@ -221,7 +221,7 @@ export async function readZip(bytes: Uint8Array): Promise<ZipEntry[]> {
 
 export interface ReadPackage {
   project: ProjectDoc;
-  materials: { path: string; doc: GlassDocument; warnings: string[] }[];
+  materials: { path: string; doc: MaterialDocument; warnings: string[] }[];
   components: { path: string; doc: ComponentDefinition; warnings: string[] }[];
   /** Entries refused as a whole, with the reason. */
   rejected: { path: string; errors: string[] }[];
@@ -245,7 +245,7 @@ export function readProjectEntries(entries: readonly ZipEntry[]): PackageRead {
   const rejected: ReadPackage['rejected'] = [];
   for (const e of entries) {
     if (e.path.startsWith('materiali/') && e.path.endsWith('.json')) {
-      const r = parseGlassMaterialText(dec.decode(e.data));
+      const r = parseMaterialText(dec.decode(e.data));
       if (r.ok) materials.push({ path: e.path, doc: r.doc, warnings: r.warnings });
       else rejected.push({ path: e.path, errors: r.errors });
     } else if (e.path.startsWith('componenti/') && e.path.endsWith('.json')) {

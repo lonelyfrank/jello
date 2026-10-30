@@ -76,13 +76,13 @@ export type GlassImportResult =
 
 /**
  * Narrows a parse result to Glass for code that only handles Glass (the
- * material lab, project files, the sync channel). A valid document of
+ * legacy Glass-only integrations). A valid document of
  * another family is refused with a reason, never half-applied.
  */
 export function onlyGlass(r: ImportResult): GlassImportResult {
   if (!r.ok || r.doc.family === 'glass') return r as GlassImportResult;
   const label = familyInfo(r.doc.family)?.label ?? r.doc.family;
-  return { ok: false, errors: [`family: «${label}» è disponibile nel runtime ma questo editor modifica solo Glass: il documento non è stato importato.`] };
+  return { ok: false, errors: [`family: «${label}» è disponibile nel runtime ma questa integrazione accetta solo Glass: il documento non è stato importato.`] };
 }
 
 export const parseGlassMaterial = (input: unknown): GlassImportResult => onlyGlass(parseMaterial(input));

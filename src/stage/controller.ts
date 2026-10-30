@@ -15,11 +15,14 @@ import { computeLensMap, type LensGeometry } from '../core/geometry';
 import type { ContextStatus } from '../core/context';
 import { encodeMapAsPng, type FilterStats } from '../core/renderer/source-filter';
 import type { GlassSurface } from '../core/surface';
-import type { GlassDocument } from '../model/document';
+import type { GlassDocument, MaterialDocument } from '../model/document';
+import { builtinMaterial } from '../model/builtins';
+import type { SolidDocument, SolidState } from '../model/solid';
+import type { BottomNavigation } from '../runtime/bottom-navigation';
 import { engineParams, type GroupStatus, type UpdateReport } from '../runtime/glass-group';
 import type { SceneStatus } from '../runtime/scene-types';
 import type { ComponentInstance } from '../runtime/component-types';
-import { resolveDefinitionMaterial, type ComponentDefinition } from '../components';
+import { bindMaterial, componentTemplate, resolveDefinitionMaterial, type ComponentDefinition } from '../components';
 import { Dock } from './dock';
 import { renderScene, type SceneId } from './scenes';
 import { SceneStage } from './scene-stage';
@@ -57,7 +60,7 @@ export interface PreviewReport {
 
 export interface ControllerOptions {
   root: HTMLElement;
-  material: GlassDocument;
+  material: MaterialDocument;
   options: ViewOptions;
   onRequest(r: PreviewRequest): void;
   /** Resolves `example:` and `asset:` image URLs of scene textures. */
@@ -89,6 +92,8 @@ export class PreviewController {
   private readonly dock: Dock;
   private readonly opts: ViewOptions;
   private doc: GlassDocument;
+  private solidLab: SolidDocument | null = null;
+  private materialState: SolidState = 'default';
   private localImage: string | null = null;
   private capsuleAt: { x: number; y: number } | null = null;
   private readonly host: ControllerOptions;
@@ -107,7 +112,7 @@ export class PreviewController {
     this.host = o;
     this.root = o.root;
     this.opts = { ...o.options };
-    this.doc = o.material;
+    this.doc = o.material.family === 'glass' ? o.material : builtinMaterial('jello')!.doc;
     const doc = o.root.ownerDocument;
     this.stagesEl = doc.createElement('div');
     this.stagesEl.className = 'stages';
@@ -153,6 +158,7 @@ export class PreviewController {
     if (this.opts.showMap) this.stagesEl.classList.add('show-map');
     this.applyMode();
     this.syncMotion();
+    if (o.material.family === 'solid') this.setMaterial(o.material);
   }
 
   // ---------- public API ----------
@@ -161,8 +167,8 @@ export class PreviewController {
     return { ...this.opts };
   }
 
-  get material(): GlassDocument {
-    return this.doc;
+  get material(): MaterialDocument {
+    return this.solidLab ?? this.doc;
   }
 
   get compare(): Stage | null {
@@ -181,9 +187,40 @@ export class PreviewController {
     return this.compareStage ? [this.main, this.compareStage] : [this.main];
   }
 
-  setMaterial(doc: GlassDocument): UpdateReport {
+  setMaterial(doc: MaterialDocument): UpdateReport {
+    if (doc.family === 'solid') {
+      const state = this.solidLab ? this.materialState : 'default';
+      if (this.opts.mode !== 'components') this.setOption('mode', 'components');
+      const template = componentTemplate(this.opts.object === 'navbar' ? 'mobile-navbar' : 'button')!.create();
+      // A neutral variant shows the material itself rather than the component's accent.
+      const config = { ...template, style: { ...template.style, variant: 'secondary' }, layout: { ...template.layout, radius: doc.geometry.shape === 'capsule' ? 'capsule' : doc.geometry.radius }, material: bindMaterial(doc, null) };
+      if (this.solidLab && this.main.component?.type === config.type) this.updateComponent(config);
+      else this.showComponent(config, { activeTab: this.opts.nav, onChange: (id) => this.host.onRequest({ type: 'option', key: 'nav', value: id as NavId }) });
+      this.solidLab = doc;
+      this.previewMaterialState(state);
+      return { changed: [], stages: [], mapsGenerated: 0 };
+    }
+    if (this.solidLab) {
+      this.solidLab = null;
+      this.materialState = 'default';
+      this.hideComponent(doc);
+    }
     this.doc = doc;
     return this.applyMaterial();
+  }
+
+  /** Material Lab simulation; no component definition is changed. */
+  previewMaterialState(state: SolidState): void {
+    this.materialState = state;
+    if (!this.solidLab) return;
+    const component = this.main.component;
+    component?.previewState(component.type === 'button' ? 'root' : null, state === 'disabled' ? 'disabled' : null);
+    component?.setInteractive(state === 'default');
+    const surface = component?.materialSurface;
+    surface?.setActive(state === 'active');
+    surface?.setHovered(state === 'hover');
+    surface?.setPressed(state === 'pressed');
+    surface?.setDisabled(state === 'disabled');
   }
 
   // ---------- builder component ----------
@@ -201,6 +238,7 @@ export class PreviewController {
    * with its own group and leaves the stage's untouched.
    */
   showComponent(config: ComponentDefinition, handlers: ComponentHandlers = {}): ComponentInstance {
+    this.solidLab = null;
     this.setCompare(false);
     this.dock.unmount();
     this.followGlass(config);
@@ -232,7 +270,12 @@ export class PreviewController {
   }
 
   /** Back to the demo object and the given material (the Material Lab's). */
-  hideComponent(material: GlassDocument): void {
+  hideComponent(material: MaterialDocument): void {
+    this.solidLab = null;
+    if (material.family === 'solid') {
+      this.setMaterial(material);
+      return;
+    }
     if (!this.main.component) return;
     for (const off of this.componentListeners.splice(0)) off();
     this.main.hideComponent();
@@ -250,10 +293,12 @@ export class PreviewController {
         this.applyMode();
         break;
       case 'object':
-        this.applyObject();
+        if (this.solidLab) this.setMaterial(this.solidLab);
+        else this.applyObject();
         break;
       case 'nav':
         for (const st of this.stages()) st.navbar.setSelected(this.opts.nav);
+        if (this.solidLab && this.main.component?.type === 'mobile-navbar') (this.main.component as BottomNavigation).setActiveTab(this.opts.nav);
         break;
       case 'scene':
         this.renderScenes();
@@ -605,6 +650,13 @@ export class PreviewController {
     for (const st of this.stages()) {
       const el = st.root.querySelector<HTMLElement>('.stage-label');
       if (!el) continue;
+      if (st.component?.status.family === 'solid') {
+        el.textContent = 'Solid · CSS';
+        el.dataset.effective = 'solid';
+        el.dataset.requested = 'solid';
+        el.title = 'Renderer Solid: riempimento, bordo, ombra e stati CSS';
+        continue;
+      }
       const status = st.ctx.status;
       el.textContent = stageLabel(status);
       el.dataset.effective = status.effective;

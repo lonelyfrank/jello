@@ -3,6 +3,10 @@ import { PARAM_INDEX, PARAMS, type ParamDescriptor, type ParamGroup } from '../.
 import type { ContextStatus } from '../../core/context';
 import {
   BACKEND_LABEL,
+  DEFAULT_QUALITY,
+  MATERIALS,
+  inspectorModel,
+  type GlassDocument,
   BUILTIN_MATERIALS,
   glassParams,
   QUALITY_IDS,
@@ -49,6 +53,32 @@ function describe(status: ContextStatus) {
 
 export function Properties({ session }: { session: LabSession }) {
   const doc = useLab((s) => s.doc);
+  return doc.family === 'solid' ? <SolidProperties session={session} /> : <GlassProperties session={session} doc={doc} />;
+}
+
+function SolidProperties({ session }: { session: LabSession }) {
+  const doc = useLab((s) => s.doc);
+  const def = MATERIALS.get(doc.family)!;
+  const model = inspectorModel(def, doc);
+  const [previewState, setPreviewState] = useState('default');
+  return <div className="panel-inner" id="panelInner" data-family={doc.family}>
+    <div className="panel-head"><h2>{doc.name}</h2><span className="chip chip-accent">{def.name}</span></div>
+    <div className="panel-body">
+      {model.groups.map((g) => <Section key={g.id} id={g.id} title={g.label}>{g.controls.map((c) => <ParamField key={c.key} d={def.params.find((d) => d.key === c.key)!} value={c.value} applicability={undefined} support={undefined} onChange={(v) => session.setMaterialControl({ key: c.key }, v)} />)}</Section>)}
+      <Section id="solid-states" title="Stati" open={false}>
+        <label className="field" htmlFor="solid-preview-state"><span>Anteprima dello stato del materiale</span><select id="solid-preview-state" value={previewState} onChange={(e) => { setPreviewState(e.target.value); session.controller?.previewMaterialState(e.target.value as 'default' | 'hover' | 'pressed' | 'active' | 'disabled'); }}>{def.states.map((state) => <option key={state} value={state}>{state}</option>)}</select></label>
+        <p className="hint">Simulazione sulla superficie. Default ripristina l’interazione reale; Focus e semantica appartengono alla componente.</p>
+        {model.states.map((st) => <details key={st.state}><summary>{st.state}</summary>{st.controls.map((c) => <ParamField key={c.key} idKey={`${st.state}-${c.key}`} d={def.stateParams.find((d) => d.key === c.key)!} value={c.value} applicability={undefined} support={undefined} onChange={(v) => session.setMaterialControl({ key: c.key, state: st.state }, v)} />)}</details>)}
+      </Section>
+      <p className="hint">Solid usa il proprio renderer CSS: nessuna rifrazione, sorgente, backend ottico o qualità WebGL2.</p>
+      <ImportExport session={session} />
+      <Section id="solid-accessibility" title="Accessibilità"><p className="hint">Solid segue prefers-reduced-motion del sistema. È già opaco: la riduzione della trasparenza non cambia la superficie. Focus e semantica appartengono alla componente.</p></Section>
+      <PhoneSection session={session} />
+    </div>
+  </div>;
+}
+
+function GlassProperties({ session, doc }: { session: LabSession; doc: GlassDocument }) {
   const options = useLab((s) => s.options);
   const report = useLab((s) => s.report);
   const materialId = useLab((s) => s.materialId);
@@ -166,7 +196,7 @@ function AccessibilitySection({ session }: { session: LabSession }) {
 }
 
 function QualitySection({ session }: { session: LabSession }) {
-  const q = useLab((s) => s.doc.quality);
+  const q = useLab((s) => s.doc.family === 'glass' ? s.doc.quality : DEFAULT_QUALITY);
   const scene = useLab((s) => s.report?.scene ?? null);
   const r = resolveQuality(q);
   return (
@@ -234,6 +264,7 @@ function RendererSection({ session, effective }: { session: LabSession; effectiv
   const doc = useLab((s) => s.doc);
   const options = useLab((s) => s.options);
   const report = useLab((s) => s.report);
+  if (doc.family !== 'glass') return null;
   const scene = options.mode === 'scene';
   const rows = supportReport(effective).filter((r) => r.level !== 'supported');
   const reasons = scene ? (report?.scene?.reasons ?? []) : (report?.group.reasons ?? []);
@@ -305,7 +336,7 @@ function Diagnostics({ session }: { session: LabSession }) {
   const doc = useLab((s) => s.doc);
   const [measure, setMeasure] = useState<string>('');
   const [busy, setBusy] = useState(false);
-  if (!report) return null;
+  if (!report || doc.family !== 'glass') return null;
   const status = report.main;
   const { engine, verified } = describe(status);
   const g = report.geometry;
@@ -398,6 +429,7 @@ function Diagnostics({ session }: { session: LabSession }) {
 }
 
 function ImportExport({ session }: { session: LabSession }) {
+  const glass = useLab((s) => s.doc.family === 'glass');
   const messages = useLab((s) => s.importMessages);
   const exportText = useLab((s) => s.exportText);
   const [text, setText] = useState('');
@@ -430,6 +462,7 @@ function ImportExport({ session }: { session: LabSession }) {
           type="button"
           className="button"
           id="exportLegacy"
+          disabled={!glass}
           title="Formato jello-glass v1: solo i parametri"
           onClick={() => {
             setText('');
@@ -492,7 +525,7 @@ function ImportExport({ session }: { session: LabSession }) {
           type="button"
           className="button"
           id="exportCssOnly"
-          disabled={busy}
+          disabled={busy || !glass}
           onClick={async () => {
             setBusy(true);
             await session.exportPackage('css-only');

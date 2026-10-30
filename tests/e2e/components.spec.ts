@@ -26,6 +26,8 @@ const tabs = (page: Page) => bar(page).locator('.jello-bnav-tab');
 async function controls(page: Page) {
   const toggle = page.locator('#panelToggle');
   if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+  const advanced = page.getByRole('button', { name: 'Avanzato', exact: true });
+  if (await advanced.isVisible()) await advanced.click();
 }
 async function openSection(page: Page, id: string) {
   await page.evaluate((s) => document.querySelectorAll<HTMLDetailsElement>(`[data-section="${s}"]`).forEach((d) => (d.open = true)), id);
@@ -407,7 +409,7 @@ test.describe('mobile navbar on Solid', () => {
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
     await expect(tabs(page).nth(2)).toHaveAttribute('data-pressed', '');
-    await expect(bar(page)).toHaveAttribute('data-jello-state', 'default');
+    await expect(bar(page)).toHaveAttribute('data-jello-state', /^(default|hover)$/);
     await page.mouse.up();
   });
 

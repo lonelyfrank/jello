@@ -84,3 +84,7 @@ delle voci e legge sia voci non compresse sia compresse (`deflate`) dove il brow
 `tests/unit/project.test.ts` (colori, documento, pacchetto e round-trip, import e conflitti, asset)
 e `tests/e2e/projects.spec.ts` (primo avvio, progetti isolati, preferiti, asset, picker, esporta →
 importa con conflitti, ricerca, tastiera).
+
+## Materiali e recupero in M3.1
+
+Materiali e bozze dei progetti accettano `MaterialDocument` (Glass e Solid), senza cambiare lo schema `.jello` o IndexedDB. I documenti sono validati al recupero e all’importazione, inclusi gli stati Solid; gli import legacy conservano le migrazioni esistenti. Il salvataggio aggiorna anche l’URL: ricaricare subito dopo un save recupera l’elemento appena salvato. Gli indirizzi dello stesso progetto/materiale/componente recuperano anche le bozze; le opzioni esplicite di una scena nell’URL hanno precedenza sulla vista precedente.

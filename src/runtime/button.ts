@@ -212,7 +212,8 @@ export class JelloButton implements ComponentInstance {
 
   /** Shows a state without input (editor). null clears it. */
   previewState(target: string | null, state: PreviewState | null): void {
-    this.preview = target === null ? null : state;
+    this.preview = target === null || state === 'active' ? null : state;
+    this.applySemantics(this.props);
     this.syncState();
   }
 
@@ -318,7 +319,7 @@ export class JelloButton implements ComponentInstance {
   /** Accessibility attributes: the element's own semantics, never a made-up behavior. */
   private applySemantics(p: ButtonProps) {
     const el = this.el;
-    const disabled = this.options.disabled ?? p.disabled;
+    const disabled = this.preview === 'disabled' || (this.options.disabled ?? p.disabled);
     el.toggleAttribute('data-disabled', disabled);
     if (el instanceof HTMLButtonElement) {
       el.disabled = disabled;
@@ -378,6 +379,7 @@ export class JelloButton implements ComponentInstance {
     el.setAttribute('data-surface', this.surfaceShown() ? 'shown' : 'rest');
     const s = this.surface;
     if (!s) return;
+    s.setDisabled(this.isDisabled());
     s.setHovered(hover);
     // Press feedback only when the definition asks for it; Glass places its light at the contact point.
     s.setPressed(pressed && this.props.pressFeedback);
@@ -479,7 +481,7 @@ export class JelloButton implements ComponentInstance {
   }
 
   private isDisabled(): boolean {
-    return this.options.disabled ?? this.props.disabled;
+    return this.preview === 'disabled' || (this.options.disabled ?? this.props.disabled);
   }
 
   private release() {

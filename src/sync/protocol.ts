@@ -11,7 +11,7 @@
  */
 
 import * as z from 'zod/mini';
-import { formatIssues, parseGlassMaterial, type GlassDocument } from '../model';
+import { formatIssues, parseMaterial, type MaterialDocument } from '../model';
 import { CUSTOM_LIMITS, DEVICES, MODES, NAV_ITEMS, OBJECTS, PATHS, TEXTURES, type ViewOptions } from '../stage/view';
 import { SCENES } from '../stage/scenes';
 
@@ -56,7 +56,7 @@ export interface StateMessage {
   protocol: typeof PROTOCOL;
   seq: number;
   sentAt: number;
-  material: GlassDocument;
+  material: MaterialDocument;
   view: ViewOptions;
   image: string | null;
 }
@@ -82,7 +82,7 @@ export function decodeState(text: string): DecodeResult {
   }
   const env = stateSchema.safeParse(data);
   if (!env.success) return { ok: false, errors: formatIssues(env.error.issues as never) };
-  const material = parseGlassMaterial(env.data.material);
+  const material = parseMaterial(env.data.material);
   if (!material.ok) return { ok: false, errors: material.errors.map((e) => `material: ${e}`) };
   if (env.data.image !== null && !/^https?:\/\//.test(env.data.image) && !env.data.image.startsWith('/')) {
     return { ok: false, errors: ['image: atteso un URL http(s) raggiungibile dal telefono'] };

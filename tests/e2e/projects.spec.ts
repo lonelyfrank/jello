@@ -32,7 +32,7 @@ test.describe('first launch', () => {
   test('lands on Home with three ways to start and no project yet', async ({ page }) => {
     await firstLaunch(page);
     await expect(page.locator('#homePage[data-empty=true]')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Iniziamo dal primo materiale' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Crea la tua prima componente' })).toBeVisible();
     await expect(page.locator('#startEmpty')).toBeVisible();
     await expect(page.locator('#startKit')).toBeVisible();
     await expect(page.locator('#startImport')).toBeVisible();

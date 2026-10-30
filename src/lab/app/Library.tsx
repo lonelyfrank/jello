@@ -10,6 +10,7 @@ import { EmptyState, Ic } from './ui';
 
 /** A sphere that hints at the material: tint and opacity in the body, light in the highlight, refraction in the rim. */
 export function sphereStyle(item: LibraryItem['doc']): React.CSSProperties {
+  if (item.family === 'solid') return { ['--sample-tint' as string]: item.material.fill, ['--sample-blur' as string]: '0px', ['--sphere' as string]: item.material.fill, ['--rim' as string]: `${item.material.borderWidth}px` };
   const p = glassParams(item);
   const [r, g, b] = hexToRgbSafe(p.tint);
   const a = (v: number) => Math.max(0, Math.min(1, v)).toFixed(2);
@@ -59,7 +60,7 @@ export function Library({ session }: { session: LabSession }) {
   const favorites = useLab((s) => s.projects.find((p) => p.id === s.projectId)?.favorites ?? NO_FAVORITES);
 
   const q = query.trim().toLowerCase();
-  const visible = useMemo(() => library.filter((i) => !q || i.name.toLowerCase().includes(q) || 'glass'.includes(q)), [library, q]);
+  const visible = useMemo(() => library.filter((i) => i.doc.family === doc.family && (!q || i.name.toLowerCase().includes(q) || i.doc.family.includes(q))), [library, q, doc.family]);
   const builtins = visible.filter((i) => i.origin === 'builtin');
   const personal = visible.filter((i) => i.origin === 'user');
   const favs = visible.filter((i) => favorites.includes(i.id));
@@ -109,6 +110,11 @@ export function Library({ session }: { session: LabSession }) {
         <h2 className="side-title" id="side-library">
           Libreria materiali
         </h2>
+        <label className="field" htmlFor="labFamily"><span>Famiglia</span>
+          <select id="labFamily" value={doc.family} onChange={(e) => session.openMaterial(library.find((i) => i.origin === 'builtin' && i.doc.family === e.target.value)!.id)}>
+            {FAMILIES.map((f) => <option key={f.id} value={f.id} disabled={f.status !== 'available'}>{f.label}{f.status !== 'available' ? ' · in sviluppo' : ''}</option>)}
+          </select>
+        </label>
         <label className="search">
           <span className="visually-hidden">Cerca materiale</span>
           <input type="search" id="librarySearch" placeholder="Cerca materiale…" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -129,7 +135,7 @@ export function Library({ session }: { session: LabSession }) {
         </div>
         <div id="libPanel" role="tabpanel" aria-labelledby={`libTab-${tab}`}>
           {shown.length ? (
-            <div className="preset-grid" role="group" aria-label={tab === 'jello' ? 'Preset ufficiali Jello · Glass' : tab === 'mine' ? 'Materiali personali' : 'Materiali preferiti'} id={tab === 'mine' ? 'personalGrid' : undefined}>
+            <div className="preset-grid" role="group" aria-label={tab === 'jello' ? 'Preset ufficiali Jello' : tab === 'mine' ? 'Materiali personali' : 'Materiali preferiti'} id={tab === 'mine' ? 'personalGrid' : undefined}>
               {shown.map(card)}
             </div>
           ) : q ? (
@@ -233,7 +239,7 @@ export function Library({ session }: { session: LabSession }) {
           <legend className="visually-hidden">Componente in anteprima</legend>
           {OBJECTS.map((o) => (
             <label key={o.id} htmlFor={`tb-object-${o.id}`} className="object-card">
-              <input type="radio" name="tbObject" value={o.id} id={`tb-object-${o.id}`} checked={options.object === o.id} onChange={() => session.setOption('object', o.id)} />
+              <input disabled={doc.family === 'solid' && o.id !== 'button' && o.id !== 'navbar'} type="radio" name="tbObject" value={o.id} id={`tb-object-${o.id}`} checked={options.object === o.id} onChange={() => session.setOption('object', o.id)} />
               <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d={OBJECT_ICONS[o.id]} />
               </svg>
@@ -241,6 +247,7 @@ export function Library({ session }: { session: LabSession }) {
             </label>
           ))}
         </fieldset>
+        {doc.family === 'solid' && <p className="hint">Solid: anteprima Button o Mobile Navbar. Lente libera, card, pannello, confronto e WebGL2 non supportati.</p>}
         {scene && <p className="param-note">In Scena controllata la lente è libera sulla texture: i componenti DOM tornano in Componenti reali.</p>}
         <div className="option">
           <label className="field side-field" htmlFor="opt-nav">

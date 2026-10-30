@@ -19,15 +19,12 @@
 
 import {
   applyControl,
-  BUILTIN_MATERIALS,
   builtinMaterial,
   MATERIALS,
   type ControlTarget,
   type MaterialDocument,
-  createGlassDocument,
   glassParams,
-  isBuiltinId,
-  parseGlassMaterialText,
+  parseMaterialText,
   serializeMaterial,
   toLegacyV1,
   withGlassParams,
@@ -105,7 +102,7 @@ function userId(): string {
 }
 
 function builtinItems(): LibraryItem[] {
-  return BUILTIN_MATERIALS.map((b) => ({
+  return MATERIALS.list().flatMap((d) => d.presets).map((b) => ({
     id: b.doc.id,
     name: b.doc.name,
     origin: 'builtin',
@@ -191,8 +188,13 @@ export class LabSession {
     const repo = await openRepository();
     const lib = await repo.listMaterials().catch(() => ({ items: [], skipped: ['lettura della libreria non riuscita'] }));
     const comps = await repo.listComponents().catch(() => ({ items: [] as StoredComponent[], skipped: ['lettura delle componenti non riuscita'] }));
-    const project = boot.explicit ? null : await repo.getProject().catch(() => null);
     const query = new URLSearchParams(location.search);
+    const saved = await repo.getProject().catch(() => null);
+    // A reload of the Studio's own address restores its working drafts. Explicit
+    // links to other scenarios still use their URL options, not the last view.
+    const sameWorkingCopy = saved && query.get('project') === saved.projectId && query.get('material') === saved.materialId &&
+      (!query.has('component') || query.get('component') === saved.componentId);
+    const project = !boot.explicit || sameWorkingCopy ? saved : null;
     const ws = query.get('workspace');
     const workspace: Workspace = ws === 'builder' || ws === 'material' ? ws : (project?.workspace ?? 'material');
     const pdocs = await repo.listProjectDocs().catch(() => ({ items: [] as ProjectDoc[], skipped: ['lettura dei progetti non riuscita'] }));
@@ -236,7 +238,7 @@ export class LabSession {
       }
     }
 
-    let doc: GlassDocument = builtinMaterial(boot.preset)!.doc;
+    let doc: MaterialDocument = builtinMaterial(boot.preset)!.doc;
     let materialId = boot.preset;
     let origin: 'builtin' | 'user' = 'builtin';
     let modified = false;
@@ -258,12 +260,12 @@ export class LabSession {
       materialId = base.id;
       modified = true;
       notes.push(`«${wanted}» non è più un preset incluso: i suoi parametri sono aperti come bozza di «${base.name}». Usa «Salva come copia» per tenerli.`);
-    } else if (wanted && isBuiltinId(wanted)) {
-      doc = builtinMaterial(wanted)!.doc;
+    } else if (wanted && MATERIALS.preset(wanted)) {
+      doc = MATERIALS.preset(wanted)!.doc;
       materialId = wanted;
     }
     if (project) {
-      options = { ...options, ...project.options };
+      if (!boot.explicit) options = { ...options, ...project.options };
       if (!legacy && project.draft && project.materialId === materialId) {
         doc = project.draft;
         modified = origin === 'builtin';
@@ -271,9 +273,9 @@ export class LabSession {
     }
     // Tabs of the demo navbar changed: an id that no longer exists goes back to the first one.
     if (!isNav(options.nav)) options = { ...options, nav: 'home' };
-    if (boot.quality) doc = { ...doc, quality: { ...doc.quality, profile: boot.quality } };
+    if (boot.quality && doc.family === 'glass') doc = { ...doc, quality: { ...doc.quality, profile: boot.quality } };
     // A document that targets a DOM backend sets the path unless the URL chose one.
-    if (!new URLSearchParams(location.search).has('path')) {
+    if (doc.family === 'glass' && !new URLSearchParams(location.search).has('path')) {
       const path = PATH_OF_BACKEND[doc.target.backend];
       if (path) options = { ...options, path };
     }
@@ -368,27 +370,48 @@ export class LabSession {
 
   // ---------- material edits ----------
 
+  setMaterialControl(target: ControlTarget, value: unknown): boolean {
+    const doc = this.state.doc;
+    const result = applyControl(MATERIALS.get(doc.family)!, doc, target, value);
+    if (!result.ok) {
+      this.store.set({ importMessages: { ok: false, messages: [result.error] } });
+      return false;
+    }
+    this.applyDoc(result.doc);
+    return true;
+  }
+
   setParam<K extends ParamKey>(key: K, value: GlassParams[K]): void {
+    if (this.state.doc.family !== 'glass') return;
     const p = glassParams(this.state.doc);
     if (p[key] === value) return;
     this.applyDoc(withGlassParams(this.state.doc, { ...p, [key]: value }));
   }
 
   setParams(patch: Partial<GlassParams>): void {
+    if (this.state.doc.family !== 'glass') return;
     this.applyDoc(withGlassParams(this.state.doc, { ...glassParams(this.state.doc), ...patch }));
   }
 
   resetParams(): void {
-    this.applyDoc(withGlassParams(this.state.doc, defaultParams()));
+    const doc = this.state.doc;
+    if (doc.family === 'glass') {
+      this.applyDoc(withGlassParams(doc, defaultParams()));
+      return;
+    }
+    const fresh = MATERIALS.get(doc.family)!.create(doc.id, doc.name);
+    this.applyDoc({ ...fresh, meta: doc.meta });
   }
 
   setQuality(patch: Partial<QualitySettings>): void {
+    if (this.state.doc.family !== 'glass') return;
     this.applyDoc({ ...this.state.doc, quality: { ...this.state.doc.quality, ...patch } });
   }
 
   /** Requested backend. WebGL2 materials describe a texture source; DOM backends a DOM source. */
   setBackend(backend: BackendRequest): void {
     const doc = this.state.doc;
+    if (doc.family !== 'glass') return;
     const source: GlassDocument['source'] =
       backend === 'webgl2' ? { kind: 'texture', texture: this.textureSpec() } : { kind: 'dom' };
     this.applyDoc({ ...doc, target: { ...doc.target, backend }, source });
@@ -398,6 +421,7 @@ export class LabSession {
   }
 
   setFallback(fallback: 'css' | 'opaque'): void {
+    if (this.state.doc.family !== 'glass') return;
     this.applyDoc({ ...this.state.doc, target: { ...this.state.doc.target, fallback } });
   }
 
@@ -411,7 +435,11 @@ export class LabSession {
     return { kind: 'pattern', pattern: 'grid', animated: o.animate };
   }
 
-  private applyDoc(doc: GlassDocument, opts: { dirty?: boolean } = {}) {
+  private applyDoc(doc: MaterialDocument, opts: { dirty?: boolean } = {}) {
+    if (doc.family === 'solid' && this.state.workspace === 'material') {
+      if (this.state.options.mode !== 'components') this.setOption('mode', 'components', false);
+      if (!['button', 'navbar'].includes(this.state.options.object)) this.setOption('object', 'button', false);
+    }
     // In the builder the preview shows the component's material; the Material Lab's waits.
     const report = this.state.workspace === 'material' ? this.controller?.setMaterial(doc) : undefined;
     const modified = opts.dirty === false ? false : this.state.origin === 'builtin' ? true : this.state.modified;
@@ -422,7 +450,7 @@ export class LabSession {
   }
 
   /** Personal material edited: the library card shows the new name/params at once. */
-  private syncLibrary(doc: GlassDocument): LibraryItem[] {
+  private syncLibrary(doc: MaterialDocument): LibraryItem[] {
     const s = this.state;
     if (s.origin !== 'user') return s.library;
     return s.library.map((i) => (i.id === s.materialId ? { ...i, name: doc.name, doc } : i));
@@ -440,14 +468,14 @@ export class LabSession {
     const options = { ...this.state.options, [key]: value };
     this.controller?.setOption(key, value);
     this.store.set({ options });
-    if (syncDoc && key === 'path') {
+    if (syncDoc && key === 'path' && this.state.doc.family === 'glass') {
       const backend = BACKEND_OF_PATH[value as ViewOptions['path']];
       // "opaque" inspects the fallback; it is not a property of the material.
       if (backend && backend !== this.state.doc.target.backend && this.state.doc.target.backend !== 'webgl2') {
         this.applyDoc({ ...this.state.doc, target: { ...this.state.doc.target, backend }, source: { kind: 'dom' } });
       }
     }
-    if ((key === 'texture' || key === 'animate') && this.state.doc.source.kind === 'texture') {
+    if ((key === 'texture' || key === 'animate') && this.state.doc.family === 'glass' && this.state.doc.source.kind === 'texture') {
       this.applyDoc({ ...this.state.doc, source: { kind: 'texture', texture: this.textureSpec() } });
     }
     this.autosaver.schedule();
@@ -470,8 +498,9 @@ export class LabSession {
     this.loadDocIntoView(item.doc);
   }
 
-  private loadDocIntoView(doc: GlassDocument) {
+  private loadDocIntoView(doc: MaterialDocument) {
     this.applyDoc(doc, { dirty: false });
+    if (doc.family !== 'glass') return;
     const path = PATH_OF_BACKEND[doc.target.backend];
     if (path && path !== this.state.options.path) this.setOption('path', path, false);
     if (doc.source.kind === 'texture') {
@@ -488,15 +517,16 @@ export class LabSession {
     this.applyDoc(d.doc);
   }
 
-  async newMaterial(): Promise<void> {
+  async newMaterial(family = this.state.doc.family): Promise<void> {
     const n = this.state.library.filter((i) => i.origin === 'user').length + 1;
-    const doc = createGlassDocument({ id: userId(), name: `Nuovo glass ${n}`, meta: { createdAt: now(), updatedAt: now() } });
+    const doc = MATERIALS.get(family)!.create(userId(), `Nuovo ${family} ${n}`);
+    doc.meta = { ...doc.meta, createdAt: now(), updatedAt: now() };
     await this.addUser(doc, `Creato «${doc.name}».`);
   }
 
   async duplicate(): Promise<void> {
     const src = this.state.doc;
-    const doc: GlassDocument = {
+    const doc: MaterialDocument = {
       ...src,
       id: userId(),
       name: `Copia di ${src.name}`.slice(0, 80),
@@ -526,7 +556,7 @@ export class LabSession {
   }
 
   async deleteMaterial(id: string): Promise<void> {
-    if (isBuiltinId(id)) return;
+    if (MATERIALS.preset(id)) return;
     try {
       await this.repo.deleteMaterial(id);
     } catch (e) {
@@ -544,7 +574,7 @@ export class LabSession {
     this.notify('Materiale personale eliminato.');
   }
 
-  private async addUser(doc: GlassDocument, message: string) {
+  private async addUser(doc: MaterialDocument, message: string) {
     const rec: StoredMaterial = { id: doc.id, doc, ...this.owner(), createdAt: now(), updatedAt: now() };
     this.userMaterials.set(doc.id, rec);
     this.store.set({ library: [...this.state.library, userItem(rec)], materialId: doc.id, origin: 'user', modified: false, libraryTab: 'mine' });
@@ -604,19 +634,21 @@ export class LabSession {
       projectId: s.projectId,
       page: s.page,
     });
+    clearTimeout(this.urlTimer);
+    history.replaceState(null, '', this.scenarioUrl());
   }
 
   // ---------- import / export ----------
 
   importText(text: string): void {
-    const r = parseGlassMaterialText(text);
+    const r = parseMaterialText(text);
     if (!r.ok) {
       this.store.set({ importMessages: { ok: false, messages: r.errors } });
       return;
     }
     // Atomic: from here on the document is complete and valid.
-    const taken = isBuiltinId(r.doc.id) || this.userMaterials.has(r.doc.id);
-    const doc: GlassDocument = { ...r.doc, id: taken ? userId() : r.doc.id, meta: { ...r.doc.meta, createdAt: r.doc.meta.createdAt ?? now(), updatedAt: now() } };
+    const taken = !!MATERIALS.preset(r.doc.id) || this.userMaterials.has(r.doc.id);
+    const doc: MaterialDocument = { ...r.doc, id: taken ? userId() : r.doc.id, meta: { ...r.doc.meta, createdAt: r.doc.meta.createdAt ?? now(), updatedAt: now() } };
     const messages = [...(r.migratedFrom ? [`Migrato da ${r.migratedFrom} a jello-material v2, nessun parametro perso.`] : []), ...r.warnings];
     if (taken) messages.push(`id «${r.doc.id}» già in uso: salvato come «${doc.id}».`);
     this.store.set({ importMessages: { ok: true, messages } });
@@ -630,6 +662,7 @@ export class LabSession {
   }
 
   exportLegacy(): { text: string; dropped: string[] } {
+    if (this.state.doc.family !== 'glass') return { text: '', dropped: ['Solid non è rappresentabile in jello-glass v1'] };
     const r = toLegacyV1(this.state.doc);
     this.store.set({ exportText: r.text, importMessages: { ok: true, messages: [`Formato jello-glass v1. Non rappresentabili e omessi: ${r.dropped.join('; ')}.`] } });
     return r;
@@ -645,10 +678,12 @@ export class LabSession {
   }
 
   async exportPackage(kind: PackageKind): Promise<{ ok: boolean; messages: string[] }> {
+    if (this.state.doc.family === 'solid') return this.exportWith('material-runtime');
+    const material = this.state.doc;
     try {
       const runtime = kind === 'runtime' ? await fetchRuntime() : undefined;
       const result = await buildPackage({
-        material: this.state.doc,
+        material,
         kind,
         ...(runtime ? { runtime } : {}),
         resolveAsset: (url) => this.assetBytes(url),
@@ -691,7 +726,7 @@ export class LabSession {
     }
     this.useImage(asset);
     this.setOption('scene', 'photo');
-    if (this.state.doc.source.kind === 'texture') this.applyDoc({ ...this.state.doc, source: { kind: 'texture', texture: this.textureSpec() } });
+    if (this.state.doc.family === 'glass' && this.state.doc.source.kind === 'texture') this.applyDoc({ ...this.state.doc, source: { kind: 'texture', texture: this.textureSpec() } });
   }
 
   private async restoreImage(hash: string) {
@@ -746,7 +781,7 @@ export class LabSession {
 
   scenarioUrl(): string {
     const s = this.state;
-    const q = queryFromOptions(s.options, s.materialId, s.doc.quality.profile);
+    const q = queryFromOptions(s.options, s.materialId, s.doc.family === 'glass' ? s.doc.quality.profile : 'balanced');
     if (s.workspace === 'builder') {
       q.set('workspace', 'builder');
       q.set('component', s.builder.componentId);
@@ -1126,6 +1161,11 @@ export class LabSession {
    */
   setComponentControl(target: ControlTarget, value: unknown): boolean {
     const doc = this.state.builder.doc;
+    if (target.state && (!COMPONENTS.get(doc.type)?.states.includes(target.state) ||
+      (doc.type === 'mobile-navbar' && ['pressed', 'active', 'disabled'].includes(target.state)))) {
+      this.notify(`Lo stato materiale «${target.state}» non è applicabile alla superficie di ${doc.type}. Usa gli stati della componente o modifica il preset nel Material Lab.`);
+      return false;
+    }
     const def = MATERIALS.get(doc.material.family);
     if (!def) return false;
     const r = applyControl(def, resolveDefinitionMaterial(doc), target, value);
@@ -1272,11 +1312,7 @@ export class LabSession {
     if (!clean) return null;
     const doc = this.state.builder.doc;
     const src = resolveDefinitionMaterial(doc);
-    if (src.family !== 'glass') {
-      this.notify('I preset personali sono disponibili per Glass: il materiale Solid resta incluso nella componente.');
-      return null;
-    }
-    const m: GlassDocument = { ...src, id: userId(), name: clean, meta: { ...src.meta, basedOn: doc.material.preset ?? src.meta.basedOn, createdAt: now(), updatedAt: now() } };
+    const m: MaterialDocument = { ...src, id: userId(), name: clean, meta: { ...src.meta, basedOn: doc.material.preset ?? src.meta.basedOn, createdAt: now(), updatedAt: now() } };
     const rec: StoredMaterial = { id: m.id, doc: m, ...this.owner(), createdAt: now(), updatedAt: now() };
     try {
       await this.repo.putMaterial(rec);

@@ -9,7 +9,7 @@
 import type { ComponentDefinition } from '../components';
 import { importComponentText } from '../migration';
 import { iconFromSvg } from '../components/icons';
-import { glassParams, parseGlassMaterialText, type GlassDocument } from '../model';
+import { MATERIALS, parseMaterialText, type MaterialDocument } from '../model';
 import { readProjectEntries, readZip, ZipError, type ReadPackage } from './package';
 import { warningFor } from './assets';
 import { uniqueName, uniqueToken } from './document';
@@ -21,7 +21,7 @@ export const MAX_FONT_BYTES = 4 * 1024 * 1024;
 export const MAX_PACKAGE_BYTES = 32 * 1024 * 1024;
 
 export type ImportItem =
-  | { kind: 'material'; file: string; size: number; doc: GlassDocument; warnings: string[] }
+  | { kind: 'material'; file: string; size: number; doc: MaterialDocument; warnings: string[] }
   | { kind: 'component'; file: string; size: number; doc: ComponentDefinition; warnings: string[] }
   | { kind: 'project'; file: string; size: number; pkg: ReadPackage; warnings: string[] }
   | { kind: 'icon'; file: string; size: number; icon: IconAsset; warnings: string[] }
@@ -95,7 +95,7 @@ export function inspectJsonText(file: string, text: string): ImportItem {
     const r = importComponentText(text);
     return r.ok ? { kind: 'component', file, size, doc: r.doc, warnings: r.warnings } : { kind: 'rejected', file, size, errors: r.errors };
   }
-  const r = parseGlassMaterialText(text);
+  const r = parseMaterialText(text);
   return r.ok ? { kind: 'material', file, size, doc: r.doc, warnings: r.warnings } : { kind: 'rejected', file, size, errors: r.errors };
 }
 
@@ -129,14 +129,14 @@ export interface Conflict {
 }
 
 export interface Existing {
-  materials: readonly { id: string; name: string; doc: GlassDocument }[];
+  materials: readonly { id: string; name: string; doc: MaterialDocument }[];
   components: readonly { id: string; name: string; doc: ComponentDefinition }[];
   assets: ProjectAssets;
 }
 
 /** Everything an import would add, flattened across files. */
 export interface Incoming {
-  materials: { key: string; doc: GlassDocument }[];
+  materials: { key: string; doc: MaterialDocument }[];
   components: { key: string; doc: ComponentDefinition }[];
   colors: { key: string; palette: string; color: ColorAsset }[];
   icons: { key: string; set: string; icon: IconAsset }[];
@@ -163,10 +163,15 @@ export function collect(items: readonly ImportItem[]): Incoming {
   return out;
 }
 
-function diffParams(a: GlassDocument, b: GlassDocument): number {
-  const pa = glassParams(a) as unknown as Record<string, unknown>;
-  const pb = glassParams(b) as unknown as Record<string, unknown>;
-  return Object.keys(pa).filter((k) => pa[k] !== pb[k]).length;
+function diffParams(a: MaterialDocument, b: MaterialDocument): number {
+  if (a.family !== b.family) return 1;
+  const flatten = (doc: MaterialDocument) => {
+    const values = MATERIALS.get(doc.family)!.read(doc);
+    return { ...values.params, ...Object.fromEntries(Object.entries(values.states).flatMap(([state, props]) => Object.entries(props).map(([key, value]) => [`${state}.${key}`, value]))) };
+  };
+  const pa = flatten(a);
+  const pb = flatten(b);
+  return [...new Set([...Object.keys(pa), ...Object.keys(pb)])].filter((k) => pa[k] !== pb[k]).length;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
