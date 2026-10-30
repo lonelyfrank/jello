@@ -38,9 +38,9 @@ test('the phone preview follows the lab and recovers the full state on reconnect
   expect((await previewParams(phone)).options.object).toBe('navbar');
 
   await lab(page, `h.setParams({ refraction: 31 })`);
-  await lab(page, `h.setOption('nav', 'results')`);
+  await lab(page, `h.setOption('nav', 'profile')`);
   await expect.poll(async () => (await previewParams(phone)).material.refraction).toBe(31);
-  await expect.poll(async () => (await previewParams(phone)).options.nav).toBe('results');
+  await expect.poll(async () => (await previewParams(phone)).options.nav).toBe('profile');
   await expect(page.locator('#syncStatus')).toContainText('anteprime collegate: 1');
 
   // A preview that (re)connects later gets the last full state immediately.

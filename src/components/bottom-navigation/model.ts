@@ -1,6 +1,6 @@
 /**
- * BottomNavigation: a generic, configurable tab bar extracted from the lab's
- * demo navbar (BT Darts). The demo is now a template of this component.
+ * BottomNavigation: a generic, configurable tab bar. The lab's demo navbar
+ * and the official template are both documents of this component.
  *
  *   root (kind: bottom-navigation, id: root)
  *     layout · appearance · typography · icon · states · interactions · motion · responsive
@@ -149,7 +149,7 @@ const num = (path: string, section: NumberField['section'], label: string, unit:
 const opts = (...pairs: [string, string][]) => pairs.map(([value, label]) => ({ value, label }));
 const EVENT_NAME = /^[a-z][a-z0-9-]{0,39}$/;
 
-/** Every root property. Defaults are those of the BT Darts demo navbar. */
+/** Every root property, with Jello's defaults (a floating capsule bar, 64 px, up to 440 px wide). */
 export const BN_FIELDS: readonly FieldDescriptor[] = [
   { type: 'enum', path: 'layout.anchor', section: 'layout', label: 'Ancoraggio', options: opts(['viewport', 'Finestra (fixed)'], ['container', 'Contenitore (absolute)'], ['inline', 'Nel flusso']), default: 'viewport', description: 'A cosa si ancora la barra nell’applicazione. L’anteprima la mostra sempre nel riquadro.' },
   { type: 'enum', path: 'layout.placement', section: 'layout', label: 'Posizionamento', options: opts(['floating', 'Flottante'], ['docked', 'Agganciata al bordo']), default: 'floating', description: 'Flottante: staccata dal bordo di «Distanza dal bordo». Agganciata: a filo del bordo, a tutta larghezza.' },

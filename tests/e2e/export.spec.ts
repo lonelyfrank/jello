@@ -87,7 +87,7 @@ test('the DOM example of the package renders like the preview (same backend, sou
 });
 
 test('the WebGL2 example of the package renders like the preview at t = 0', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('./?workspace=material');
   const webgl2 = await page.evaluate(() => !!document.createElement('canvas').getContext('webgl2'));
   test.skip(!webgl2, 'WebGL2 non disponibile in questo browser headless');
   await openLab(page, 'preset=navbar&mode=scene&animate=0');

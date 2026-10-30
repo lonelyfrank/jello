@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import type { FieldDescriptor } from '../../components/fields';
+import { ColorField, useProjectTokens } from './ColorPicker';
 
 export const fieldId = (path: string) => `bf-${path.replace(/\./g, '-')}`;
 
@@ -145,6 +146,7 @@ function NumberControl(props: { id: string; label: React.ReactNode; min: number;
 
 function ColorControl(props: { id: string; label: React.ReactNode; value: string; description: string; disabled: boolean; onChange(v: string): void }) {
   const { id, label, value, description, disabled, onChange } = props;
+  const tokens = useProjectTokens();
   const rgb = value.slice(0, 7);
   const alpha = value.length === 9 ? parseInt(value.slice(7), 16) / 255 : 1;
   const compose = (hex: string, a: number) => (a >= 0.999 ? hex : `${hex}${Math.round(a * 255).toString(16).padStart(2, '0')}`);
@@ -152,12 +154,8 @@ function ColorControl(props: { id: string; label: React.ReactNode; value: string
     <div className="field param" data-field={id}>
       <div className="field-head">
         {label}
-        <input id={id} type="color" value={rgb} disabled={disabled} aria-describedby={`${id}-desc`} onChange={(e) => onChange(compose(e.target.value, alpha))} />
+        <ColorField id={id} label={typeof label === 'string' ? label : 'Colore'} hex={rgb} alpha={alpha} disabled={disabled} {...(tokens ? { tokens } : {})} onChange={(hex, a) => onChange(compose(hex, a))} />
       </div>
-      <label className="alpha" htmlFor={`${id}-alpha`}>
-        <span>Opacità {Math.round(alpha * 100)}%</span>
-        <input id={`${id}-alpha`} type="range" min={0} max={100} step={1} value={Math.round(alpha * 100)} disabled={disabled} onChange={(e) => onChange(compose(rgb, e.target.valueAsNumber / 100))} />
-      </label>
       <p className="param-desc" id={`${id}-desc`}>
         {description} <code>{value}</code>
       </p>

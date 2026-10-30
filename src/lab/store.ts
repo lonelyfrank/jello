@@ -7,6 +7,7 @@
 import { useSyncExternalStore } from 'react';
 import type { MaterialDocument } from '../model';
 import type { ComponentDocument } from '../components/document';
+import type { ProjectDoc } from '../project/types';
 import type { PreviewState } from '../runtime/bottom-navigation';
 import type { PreviewReport } from '../stage/controller';
 import type { ViewOptions } from '../stage/view';
@@ -39,6 +40,12 @@ export interface ComponentItem {
 }
 
 export type Workspace = 'material' | 'builder';
+
+/** What the main area shows. `lab` is the preview workspace (Materiali or Componenti). */
+export type Page = 'home' | 'lab' | 'assets' | 'settings';
+export type AssetTab = 'colors' | 'icons' | 'fonts';
+/** Guided full-screen flows over the pages. */
+export type FlowKind = 'wizard' | 'import' | 'export';
 
 export interface BuilderState {
   doc: ComponentDocument;
@@ -73,7 +80,7 @@ export interface LabState {
   report: PreviewReport | null;
   importMessages: Messages | null;
   exportText: string;
-  notice: { text: string; undo: boolean } | null;
+  notice: { text: string; undo: boolean; action?: { label: string; run: () => void } } | null;
   sync: SyncState;
   layout: { left: boolean; right: boolean; drawer: boolean };
   workspace: Workspace;
@@ -81,7 +88,27 @@ export interface LabState {
   components: ComponentItem[];
   componentsSkipped: string[];
   exportOpen: boolean;
+  page: Page;
+  projects: ProjectDoc[];
+  /** Active project; null only on a first launch with nothing created yet. */
+  projectId: string | null;
+  projectsSkipped: string[];
+  assetTab: AssetTab;
+  flow: FlowKind | null;
+  /** Files dropped on the window, waiting for the import flow. */
+  importSeed: File[] | null;
+  /** Library filter for the favourites tab. */
+  libraryTab: 'jello' | 'mine' | 'favorites';
+  /** Right panel of the material workspace. */
+  panelTab: 'params' | 'rendering';
+  confirm: Confirm | null;
 }
+
+/** Destructive actions wait for an explicit answer. */
+export type Confirm =
+  | { kind: 'delete-project'; id: string }
+  | { kind: 'delete-material'; id: string }
+  | { kind: 'delete-component'; id: string };
 
 type Listener = () => void;
 

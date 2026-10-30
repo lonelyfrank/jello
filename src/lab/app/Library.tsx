@@ -6,6 +6,7 @@ import { PHOTO } from '../../stage/scenes';
 import type { LabSession } from '../session';
 import { useLab, type LibraryItem } from '../store';
 import { Icon } from './icons';
+import { EmptyState, Ic } from './ui';
 
 /** A sphere that hints at the material: tint and opacity in the body, light in the highlight, refraction in the rim. */
 export function sphereStyle(item: LibraryItem['doc']): React.CSSProperties {
@@ -29,6 +30,8 @@ const OBJECT_ICONS: Record<ObjectKind, string> = {
   dialog: 'M4 5h16v14H4zM4 9h16M16 7h1',
 };
 
+const NO_FAVORITES: readonly string[] = [];
+
 export function Library({ session }: { session: LabSession }) {
   const library = useLab((s) => s.library);
   const materialId = useLab((s) => s.materialId);
@@ -41,12 +44,15 @@ export function Library({ session }: { session: LabSession }) {
   const builder = useLab((s) => s.builder);
   const [query, setQuery] = useState('');
   const [renaming, setRenaming] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const tab = useLab((s) => s.libraryTab);
+  const favorites = useLab((s) => s.projects.find((p) => p.id === s.projectId)?.favorites ?? NO_FAVORITES);
 
   const q = query.trim().toLowerCase();
   const visible = useMemo(() => library.filter((i) => !q || i.name.toLowerCase().includes(q) || 'glass'.includes(q)), [library, q]);
   const builtins = visible.filter((i) => i.origin === 'builtin');
   const personal = visible.filter((i) => i.origin === 'user');
+  const favs = visible.filter((i) => favorites.includes(i.id));
+  const shown = tab === 'jello' ? builtins : tab === 'mine' ? personal : favs;
   const reducedMotion = useLab((s) => s.report?.main.motionReduced ?? false);
   const scene = options.mode === 'scene';
   const usedBy = useMemo(() => session.componentsUsing(materialId).length, [session, materialId, components, builder]);
@@ -54,9 +60,10 @@ export function Library({ session }: { session: LabSession }) {
   const card = (i: LibraryItem) => {
     const active = i.id === materialId;
     const name = i.approximation ? `≈ ${i.name.replace(/\s*\(approssimazione\)$/, '')}` : i.name;
+    const fav = favorites.includes(i.id);
     return (
+      <div key={i.id} className="preset-wrap">
       <button
-        key={i.id}
         type="button"
         className="preset-card"
         aria-pressed={active}
@@ -71,6 +78,17 @@ export function Library({ session }: { session: LabSession }) {
           {active && i.origin === 'user' ? doc.name : name}
         </span>
       </button>
+      <button
+        type="button"
+        className="fav-btn"
+        aria-pressed={fav}
+        aria-label={fav ? `Rimuovi «${i.name}» dai preferiti` : `Aggiungi «${i.name}» ai preferiti`}
+        title={fav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+        onClick={() => session.projects.toggleFavorite(i.id)}
+      >
+        <Ic name="heart" size={14} />
+      </button>
+      </div>
     );
   };
 
@@ -144,43 +162,45 @@ export function Library({ session }: { session: LabSession }) {
           >
             <Icon name="pencil" /> Rinomina
           </button>
-          {origin === 'user' &&
-            (confirmDelete === materialId ? (
-              <span className="confirm">
-                <button
-                  type="button"
-                  className="button small danger"
-                  id="libDeleteConfirm"
-                  onClick={() => {
-                    setConfirmDelete(null);
-                    void session.deleteMaterial(materialId);
-                  }}
-                >
-                  Elimina davvero
-                </button>
-                <button type="button" className="button small" onClick={() => setConfirmDelete(null)}>
-                  Annulla
-                </button>
-              </span>
-            ) : (
-              <button type="button" className="button small" id="libDelete" onClick={() => setConfirmDelete(materialId)}>
-                <Icon name="trash" /> Elimina
-              </button>
-            ))}
+          {origin === 'user' && (
+            <button type="button" className="button small" id="libDelete" onClick={() => session.openConfirm({ kind: 'delete-material', id: materialId })}>
+              <Icon name="trash" /> Elimina
+            </button>
+          )}
         </div>
-        <h3 className="side-sub">Preset inclusi</h3>
-        <div className="preset-grid" role="group" aria-label="Preset inclusi Glass">
-          {builtins.map(card)}
+        <div className="lib-tabs" role="tablist" aria-label="Raccolte">
+          {(
+            [
+              ['jello', 'Jello', builtins.length],
+              ['mine', 'I miei', personal.length],
+              ['favorites', 'Preferiti', favs.length],
+            ] as const
+          ).map(([id, label, n]) => (
+            <button key={id} type="button" role="tab" className="lib-tab" id={`libTab-${id}`} aria-selected={tab === id} aria-controls="libPanel" onClick={() => session.setLibraryTab(id)}>
+              {label}
+              <span className="count-badge">{n}</span>
+            </button>
+          ))}
         </div>
-        <h3 className="side-sub">Personali</h3>
-        {personal.length ? (
-          <div className="preset-grid" role="group" aria-label="Materiali personali" id="personalGrid">
-            {personal.map(card)}
-          </div>
-        ) : (
-          <p className="hint">{q ? 'Nessun materiale personale trovato.' : 'Nessuno ancora: duplica un preset o creane uno nuovo.'}</p>
-        )}
-        {!builtins.length && !personal.length && <p className="hint">Nessun materiale trovato.</p>}
+        <div id="libPanel" role="tabpanel" aria-labelledby={`libTab-${tab}`}>
+          {shown.length ? (
+            <div className="preset-grid" role="group" aria-label={tab === 'jello' ? 'Preset ufficiali Jello · Glass' : tab === 'mine' ? 'Materiali personali' : 'Materiali preferiti'} id={tab === 'mine' ? 'personalGrid' : undefined}>
+              {shown.map(card)}
+            </div>
+          ) : q ? (
+            <EmptyState icon="search" title={`Nessun risultato per “${query}”`}>
+              Prova un altro nome o cambia raccolta.
+            </EmptyState>
+          ) : tab === 'favorites' ? (
+            <EmptyState icon="heart" title="Nessun preferito">
+              Usa il cuore su un materiale per aggiungerlo qui.
+            </EmptyState>
+          ) : tab === 'mine' ? (
+            <EmptyState icon="drop" title="Nessun materiale personale" action={<button type="button" className="button small" onClick={() => void session.newMaterial()}>Nuovo materiale</button>}>
+              Duplica un preset Jello o creane uno nuovo.
+            </EmptyState>
+          ) : null}
+        </div>
         {skipped.length > 0 && <p className="param-note">Non leggibili: {skipped.join('; ')}</p>}
         <p className="side-caption">Altre famiglie · in sviluppo, non utilizzabili</p>
         <ul className="soon-grid" aria-label="Famiglie in sviluppo">
@@ -308,20 +328,6 @@ export function Library({ session }: { session: LabSession }) {
               <option value="dark">Scuro</option>
             </select>
           </label>
-        </div>
-        <div className="option">
-          <label className="check" htmlFor="opt-reduceMotion">
-            <input id="opt-reduceMotion" type="checkbox" checked={options.reduceMotion} onChange={(e) => session.setOption('reduceMotion', e.target.checked)} />
-            <span>Riduci effetti e movimento</span>
-          </label>
-          <p className="hint">Disattiva molla, elasticità, scala e animazione dello sfondo.</p>
-        </div>
-        <div className="option">
-          <label className="check" htmlFor="opt-reduceTransparency">
-            <input id="opt-reduceTransparency" type="checkbox" checked={options.reduceTransparency} onChange={(e) => session.setOption('reduceTransparency', e.target.checked)} />
-            <span>Riduci trasparenza</span>
-          </label>
-          <p className="hint">Forza il materiale opaco, come prefers-reduced-transparency.</p>
         </div>
       </section>
     </>

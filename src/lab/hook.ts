@@ -127,6 +127,7 @@ export function installHook(session: LabSession): void {
       open: (id: string) => session.openComponent(id),
       save: () => session.saveComponent(),
       json: () => session.componentJson(),
+      importComponent: (text: string) => session.importComponentText(text),
       exportWith: (id: string) => session.exportWith(id),
     },
     report: () => c().report(),

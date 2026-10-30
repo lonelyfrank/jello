@@ -17,7 +17,7 @@
     "test:perf": "npm run build && node scripts/perf.mjs",
     "relay": "node tools/relay/relay.mjs",
     "example:prepare": "npm run build:lib && node scripts/prepare-example.mjs",
-    "example:serve": "node scripts/serve-static.mjs examples/navbar-bt 4175",
+    "example:serve": "node scripts/serve-static.mjs examples/navbar 4175",
     "android:sync": "npm --prefix apps/android-preview run sync",
     "geometry:cases": "node --experimental-strip-types --no-warnings scripts/geometry-cases.mjs",
     "verify": "npm run typecheck && npm run test && npm run build && npm run test:e2e:local",

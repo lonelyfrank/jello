@@ -18,11 +18,11 @@ export const OBJECTS: readonly { id: ObjectKind; label: string }[] = [
   { id: 'dialog', label: 'Pannello' },
 ];
 
+/** Tabs of the demo navbar: the generic Bottom Navigation template (src/components/document.ts). */
 export const NAV_ITEMS = [
   { id: 'home', label: 'Home' },
-  { id: 'live', label: 'Live' },
-  { id: 'matrix', label: 'Matrice' },
-  { id: 'results', label: 'Risultati' },
+  { id: 'explore', label: 'Explore' },
+  { id: 'profile', label: 'Profile' },
 ] as const;
 
 export type NavId = (typeof NAV_ITEMS)[number]['id'];

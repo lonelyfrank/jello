@@ -67,11 +67,11 @@ describe('IndexedDB repository', () => {
     await repo.putAsset({ hash: 'a'.repeat(64), type: 'image/png', blob: new Blob(['x']), name: 'x.png' });
     expect((await repo.getAsset('a'.repeat(64)))?.name).toBe('x.png');
     // Version 3 added the components store; materials of version 1 are still there.
-    const bt = componentTemplate('bt-darts')!.create();
-    await repo.putComponent({ id: 'cmp-1', doc: { ...bt, id: 'cmp-1' }, createdAt: iso, updatedAt: iso });
+    const demo = componentTemplate('bottom-navigation')!.create();
+    await repo.putComponent({ id: 'cmp-1', doc: { ...demo, id: 'cmp-1' }, createdAt: iso, updatedAt: iso });
     expect((await repo.listComponents()).items.map((c) => c.id)).toEqual(['cmp-1']);
     expect((await repo.listMaterials()).items).toHaveLength(1);
-    expect(DB_VERSION).toBe(3);
+    expect(DB_VERSION).toBe(4);
   });
 
   it('falls back to a memory repository that says it is not persistent', async () => {
@@ -142,5 +142,25 @@ describe('autosave', () => {
   it('StorageError keeps its kind', () => {
     expect(new StorageError('blocked', 'x').kind).toBe('blocked');
     expect(serializeMaterial(doc)).toContain('"user-abc"');
+  });
+
+  it('stores project documents apart from materials, and keeps the owner of a record', async () => {
+    const { createProject } = await import('../../src/project/document');
+    const { kitAssets } = await import('../../src/project/defaults');
+    const repo = await openRepository(new IDBFactory(), 'projects-db');
+    const p = createProject({ id: 'prj-1', name: 'Kit', assets: kitAssets(), at: iso });
+    await repo.putProjectDoc(p);
+    await repo.putProjectDoc({ ...p, id: 'prj-2', name: 'Altro' });
+    expect((await repo.listProjectDocs()).items.map((x) => x.id)).toEqual(['prj-1', 'prj-2']);
+    await repo.deleteProjectDoc('prj-2');
+    expect((await repo.listProjectDocs()).items.map((x) => x.id)).toEqual(['prj-1']);
+    // A record with a wrong shape is reported, never swallowed.
+    const mem = new MemoryRepository('test');
+    await mem.putProjectDoc(p);
+    expect((await mem.listProjectDocs()).items).toHaveLength(1);
+    const doc = createGlassDocument({ id: 'user-a', name: 'A' });
+    await repo.putMaterial({ id: 'user-a', doc, projectId: 'prj-1', createdAt: iso, updatedAt: iso });
+    expect((await repo.listMaterials()).items[0]!.projectId).toBe('prj-1');
+    repo.close();
   });
 });

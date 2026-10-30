@@ -30,7 +30,6 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
   const library = useLab((s) => s.library);
   const skipped = useLab((s) => s.componentsSkipped);
   const [renaming, setRenaming] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const templates = components.filter((c) => c.origin === 'template');
   const saved = components.filter((c) => c.origin === 'user');
   const personal = library.filter((i) => i.origin === 'user');
@@ -76,15 +75,13 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
         {COMPONENT_TYPES.map((t) =>
           t.status === 'available' ? (
             <div key={t.type} className="bl-group">
-              <h3 className="side-sub">{t.label}</h3>
-              <div className="bl-list" role="group" aria-label={`Template ${t.label}`}>
+              <h3 className="side-sub">Template ufficiali Jello</h3>
+              <div className="bl-list" role="group" aria-label={`Template ufficiali Jello · ${t.label}`}>
                 {templates.map((c) => (
                   <button key={c.id} type="button" className="bl-item" data-template={c.id} aria-pressed={b.componentId === c.id} title={c.description} onClick={() => session.openComponent(c.id)}>
                     <TemplateGlyph />
                     <span>
-                      <strong>
-                        {t.label} · {c.name}
-                      </strong>
+                      <strong>{c.name}</strong>
                       <span className="bl-sub">{c.description}</span>
                     </span>
                   </button>
@@ -145,31 +142,13 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
           <button type="button" className="button small" id="cmpRename" disabled={b.origin !== 'user'} title={b.origin !== 'user' ? 'I template non si rinominano: salvali nella libreria' : undefined} onClick={() => setRenaming(b.doc.name)}>
             <Icon name="pencil" /> Rinomina
           </button>
-          {b.origin === 'user' &&
-            (confirmDelete ? (
-              <span className="confirm">
-                <button
-                  type="button"
-                  className="button small danger"
-                  id="cmpDeleteConfirm"
-                  onClick={() => {
-                    setConfirmDelete(false);
-                    void session.deleteComponent(b.componentId);
-                  }}
-                >
-                  Elimina davvero
-                </button>
-                <button type="button" className="button small" onClick={() => setConfirmDelete(false)}>
-                  Annulla
-                </button>
-              </span>
-            ) : (
-              <button type="button" className="button small" id="cmpDelete" onClick={() => setConfirmDelete(true)}>
-                <Icon name="trash" /> Elimina
-              </button>
-            ))}
+          {b.origin === 'user' && (
+            <button type="button" className="button small" id="cmpDelete" onClick={() => session.openConfirm({ kind: 'delete-component', id: b.componentId })}>
+              <Icon name="trash" /> Elimina
+            </button>
+          )}
         </div>
-        <h3 className="side-sub">Componenti salvate</h3>
+        <h3 className="side-sub">Componenti salvate (personali)</h3>
         {saved.length ? (
           <div className="bl-list" role="group" aria-label="Componenti salvate" id="savedComponents">
             {saved.map((c) => (
@@ -207,7 +186,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
             <Icon name="download" /> JSON
           </button>
         </div>
-        <h3 className="side-sub">Preset materiali salvati</h3>
+        <h3 className="side-sub">Preset materiali personali</h3>
         {personal.length ? (
           <div className="bl-list" role="group" aria-label="Preset materiali personali" id="savedPresets">
             {personal.map((m) => (

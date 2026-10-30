@@ -73,12 +73,12 @@ jello-<nome>-react/
 ```
 
 ```tsx
-import { BtDartsNavigation, type BtDartsTabId } from '@jello-export/bt-darts';
-import '@jello-export/bt-darts/style.css';
+import { BottomNavigation, type BottomNavigationTabId } from '@jello-export/bottom-navigation';
+import '@jello-export/bottom-navigation/style.css';
 
-const [tab, setTab] = useState<BtDartsTabId>('home');
+const [tab, setTab] = useState<BottomNavigationTabId>('home');
 <main ref={content}>…</main>   {/* GlassSource: dietro la barra, non la contiene */}
-<BtDartsNavigation sourceRef={content} activeTab={tab} onChange={setTab} onReselect={…} />
+<BottomNavigation sourceRef={content} activeTab={tab} onChange={setTab} onReselect={…} />
 ```
 
 - Il componente è un involucro sottile del `BottomNavigation` del runtime: **lo stesso codice**
@@ -88,22 +88,24 @@ const [tab, setTab] = useState<BtDartsTabId>('home');
   `onReselect`; `sourceRef`, `scrollerRef`, `anchor`, `backend`, `className`, `aria-label`.
 - React possiede solo un contenitore `display: contents` senza figli React: la `<nav>` vive lì
   dentro, quindi StrictMode, ri-render e smontaggio non lasciano nodi, listener o lenti.
-- Il nome del pacchetto viene dal nome della componente («BT Darts» → `@jello-export/bt-darts`).
+- Il nome del pacchetto viene dal nome della componente («Bottom Navigation» →
+  `@jello-export/bottom-navigation`, «La mia app» → `@jello-export/la-mia-app`, componente
+  `LaMiaAppNavigation`, tipo `LaMiaAppTabId`).
 
 ### Progetto esterno di prova
 
 `examples/react-consumer/` è un’app Vite + React + TypeScript indipendente (proprio
 `package.json`, propri `node_modules`): `npm run consumer:prepare` esporta con l’adapter del
-laboratorio il template BT Darts modificato come nel flusso del builder (tab in più, icona SVG,
-altezza), lo installa con `npm install ./vendor/…`, esegue `tsc --noEmit` (tipi del pacchetto e
+laboratorio la demo Bottom Navigation modificata come nel flusso del builder (quarta tab, icona
+SVG, altezza), lo installa con `npm install ./vendor/…`, esegue `tsc --noEmit` (tipi del pacchetto e
 sorgente TSX, con `noUncheckedSideEffectImports`) e `vite build`. I test e2e lo servono su :4176.
 
 ## Da riga di comando
 
 ```sh
-npm run example:prepare                                   # preset "navbar" → examples/navbar-bt/jello/
+npm run example:prepare                                   # preset "navbar" → examples/navbar/jello/
 node scripts/prepare-example.mjs --material mio.json --out /tmp/pkg --zip /tmp/pkg.zip
-node scripts/prepare-example.mjs --builtin bt --kind css-only --out /tmp/css
+node scripts/prepare-example.mjs --builtin satin --kind css-only --out /tmp/css
 ```
 
 Lo script usa lo stesso `buildPackage` del laboratorio (caricato con `runnerImport` di Vite).

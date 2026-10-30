@@ -23,6 +23,8 @@ import {
   createGlassDocument,
   glassParams,
   isBuiltinId,
+  LEGACY_TEMPLATES,
+  legacyPreset,
   parseMaterialText,
   serializeMaterial,
   toLegacyV1,
@@ -63,15 +65,20 @@ import type { PreviewState } from '../runtime/bottom-navigation';
 import { ComponentOverlay } from '../stage/component-overlay';
 import { PreviewController, type PreviewRequest } from '../stage/controller';
 import { PHOTO } from '../stage/scenes';
-import type { ViewOptions } from '../stage/view';
+import { isNav, type ViewOptions } from '../stage/view';
 import { optionsFromQuery, queryFromOptions } from './state';
 import { Autosaver, type SaveState } from './storage/autosave';
 import { openRepository, type Repository, type StoredAsset, type StoredComponent, type StoredMaterial } from './storage/repository';
-import { bindStore, Store, type BuilderState, type ComponentItem, type LabState, type LibraryItem, type Workspace } from './store';
+import { bindStore, Store, type BuilderState, type ComponentItem, type LabState, type LibraryItem, type Page, type Workspace } from './store';
 import { sha256, SyncSender } from './sync-sender';
 import { newToken } from '../sync/protocol';
+import { createProject } from '../project/document';
+import { kitAssets } from '../project/defaults';
+import type { ProjectDoc } from '../project/types';
+import { ProjectActions, projectDocId } from './projects';
 
 const now = () => new Date().toISOString();
+const PAGES: readonly Page[] = ['home', 'lab', 'assets', 'settings'];
 
 function userId(): string {
   return `user-${newToken().slice(0, 10).toLowerCase()}`;
@@ -115,15 +122,20 @@ const BACKEND_OF_PATH: Record<ViewOptions['path'], BackendRequest | null> = { au
 export class LabSession {
   readonly store: Store;
   controller: PreviewController | null = null;
-  private readonly repo: Repository;
+  /** @internal shared with ProjectActions */
+  readonly repo: Repository;
   private readonly autosaver: Autosaver;
   private readonly sync: SyncSender;
-  private userMaterials = new Map<string, StoredMaterial>();
-  private userComponents = new Map<string, StoredComponent>();
+  /** @internal every stored record, of all projects; the store holds the active project's. */
+  userMaterials = new Map<string, StoredMaterial>();
+  /** @internal */
+  userComponents = new Map<string, StoredComponent>();
+  readonly projects: ProjectActions;
   private overlay: ComponentOverlay | null = null;
   private discarded: Pick<LabState, 'doc' | 'materialId' | 'origin' | 'modified'> | null = null;
   private image: { hash: string; blob: Blob; url: string } | null = null;
   private urlTimer = 0;
+  private centreOnShow = false;
   private noticeTimer = 0;
   private readonly readyListeners: (() => void)[] = [];
 
@@ -131,6 +143,7 @@ export class LabSession {
     this.repo = repo;
     this.store = new Store(state);
     bindStore(this.store);
+    this.projects = new ProjectActions(this);
     this.autosaver = new Autosaver(() => this.write(), (s) => this.store.set({ save: s }), 600, repo.persistent ? null : repo.reason);
     this.sync = new SyncSender(
       () => ({ material: this.state.doc, view: this.state.options, image: this.image?.blob ?? null }),
@@ -149,14 +162,45 @@ export class LabSession {
     const query = new URLSearchParams(location.search);
     const ws = query.get('workspace');
     const workspace: Workspace = ws === 'builder' || ws === 'material' ? ws : (project?.workspace ?? 'material');
-    const userComps = new Map(comps.items.map((c) => [c.id, c]));
-    const wantedComponent = query.get('component') ?? project?.componentId ?? 'bt-darts';
+    const pdocs = await repo.listProjectDocs().catch(() => ({ items: [] as ProjectDoc[], skipped: ['lettura dei progetti non riuscita'] }));
+    const projects = [...pdocs.items];
+    // Records written before projects existed belong to the first project (made now if there is none and something to adopt).
+    const hasOrphans = lib.items.some((m) => !m.projectId) || comps.items.some((c) => !c.projectId);
+    const hasQuery = [...query.keys()].length > 0;
+    if (!projects.length && (hasOrphans || hasQuery)) {
+      const first = createProject({ id: projectDocId(), name: 'Il mio progetto', assets: kitAssets() });
+      await repo.putProjectDoc(first).catch(() => undefined);
+      projects.push(first);
+    }
+    const wantedProject = /^[A-Za-z0-9._-]{1,64}$/.test(query.get('project') ?? '') ? query.get('project') : (project?.projectId ?? null);
+    const projectId = projects.find((p) => p.id === wantedProject)?.id ?? projects[0]?.id ?? null;
+    const adopt = <T extends { projectId?: string }>(r: T): T => (r.projectId || !projects[0] ? r : { ...r, projectId: projects[0].id });
+    const allMaterials = lib.items.map((m) => adopt(m));
+    const allComponents = comps.items.map((c) => adopt(c));
+    await Promise.all([
+      ...allMaterials.filter((m, i) => m.projectId !== lib.items[i]!.projectId).map((m) => repo.putMaterial(m).catch(() => undefined)),
+      ...allComponents.filter((c, i) => c.projectId !== comps.items[i]!.projectId).map((c) => repo.putComponent(c).catch(() => undefined)),
+    ]);
+    const scopedMaterials = allMaterials.filter((m) => m.projectId === projectId);
+    const scopedComponents = allComponents.filter((c) => c.projectId === projectId);
+    const userComps = new Map(scopedComponents.map((c) => [c.id, c]));
+    const notes: string[] = [];
+    const wantedComponent = query.get('component') ?? project?.componentId ?? 'bottom-navigation';
     let builder: BuilderState;
     if (userComps.has(wantedComponent)) builder = builderState(userComps.get(wantedComponent)!.doc, wantedComponent, 'user', false);
     else {
-      const t = componentTemplate(wantedComponent) ?? componentTemplate('bt-darts')!;
-      const draft = project?.componentDraft && project.componentId === t.id ? project.componentDraft : null;
-      builder = builderState(draft ?? t.create(), t.id, 'template', draft !== null);
+      // A template that is no longer official opens as the generic one; an unsaved draft of it is kept.
+      const legacyTemplate = LEGACY_TEMPLATES[wantedComponent];
+      const t = componentTemplate(legacyTemplate ?? wantedComponent) ?? componentTemplate('bottom-navigation')!;
+      const draft = project?.componentDraft && project.componentId === wantedComponent ? project.componentDraft : null;
+      builder = builderState(draft ? { ...draft, id: t.id } : t.create(), t.id, 'template', draft !== null);
+      if (legacyTemplate) {
+        notes.push(
+          draft
+            ? `Il template «${wantedComponent}» non è più incluso: la tua bozza resta aperta, salvala nella libreria per tenerla.`
+            : `Il template «${wantedComponent}» non è più incluso: aperto «${t.label}».`,
+        );
+      }
     }
 
     let doc: MaterialDocument = builtinMaterial(boot.preset)!.doc;
@@ -164,23 +208,36 @@ export class LabSession {
     let origin: 'builtin' | 'user' = 'builtin';
     let modified = false;
     let options = boot.options;
-    const user = new Map(lib.items.map((m) => [m.id, m]));
-    const wanted = boot.material ?? project?.materialId ?? null;
+    const user = new Map(scopedMaterials.map((m) => [m.id, m]));
+    const rawPreset = query.get('preset');
+    const wanted = boot.material ?? project?.materialId ?? (legacyPreset(rawPreset) ? rawPreset : null);
+    const legacy = wanted && !user.has(wanted) ? legacyPreset(wanted) : undefined;
     if (wanted && user.has(wanted)) {
       doc = user.get(wanted)!.doc;
       materialId = wanted;
       origin = 'user';
+    } else if (legacy) {
+      // A preset that is no longer official: its parameters (or the user's draft of it) open as an
+      // unsaved draft of the replacement. Nothing is written until the user saves a copy.
+      const base = builtinMaterial(legacy.replacement)!.doc;
+      const draft = project?.draft && project.materialId === wanted ? project.draft : null;
+      doc = draft ? { ...draft, id: base.id, name: legacy.name } : withGlassParams({ ...base, name: legacy.name }, legacy.params);
+      materialId = base.id;
+      modified = true;
+      notes.push(`«${wanted}» non è più un preset incluso: i suoi parametri sono aperti come bozza di «${base.name}». Usa «Salva come copia» per tenerli.`);
     } else if (wanted && isBuiltinId(wanted)) {
       doc = builtinMaterial(wanted)!.doc;
       materialId = wanted;
     }
     if (project) {
       options = { ...options, ...project.options };
-      if (project.draft && project.materialId === materialId) {
+      if (!legacy && project.draft && project.materialId === materialId) {
         doc = project.draft;
         modified = origin === 'builtin';
       }
     }
+    // Tabs of the demo navbar changed: an id that no longer exists goes back to the first one.
+    if (!isNav(options.nav)) options = { ...options, nav: 'home' };
     if (boot.quality) doc = { ...doc, quality: { ...doc.quality, profile: boot.quality } };
     // A document that targets a DOM backend sets the path unless the URL chose one.
     if (!new URLSearchParams(location.search).has('path')) {
@@ -194,7 +251,7 @@ export class LabSession {
       origin,
       modified,
       options,
-      library: [...builtinItems(), ...lib.items.map(userItem)],
+      library: [...builtinItems(), ...scopedMaterials.map(userItem)],
       librarySkipped: lib.skipped,
       save: repo.persistent ? { kind: 'idle' } : { kind: 'memory', message: repo.reason ?? '' },
       persistent: repo.persistent,
@@ -207,12 +264,24 @@ export class LabSession {
       layout: { left: true, right: true, drawer: false },
       workspace,
       builder,
-      components: [...templateItems(), ...comps.items.map(componentItem)],
+      components: [...templateItems(), ...scopedComponents.map(componentItem)],
       componentsSkipped: comps.skipped,
       exportOpen: false,
+      page: !projectId ? 'home' : (PAGES.find((x) => x === query.get('page')) ?? (hasQuery ? 'lab' : (project?.page ?? 'home'))),
+      projects,
+      projectId,
+      projectsSkipped: pdocs.skipped,
+      assetTab: 'colors',
+      flow: null,
+      importSeed: null,
+      libraryTab: origin === 'user' ? 'mine' : 'jello',
+      panelTab: 'params',
+      confirm: null,
     });
-    session.userMaterials = user;
-    session.userComponents = userComps;
+    session.centreOnShow = session.state.page !== 'lab';
+    session.userMaterials = new Map(allMaterials.map((m) => [m.id, m]));
+    session.userComponents = new Map(allComponents.map((c) => [c.id, c]));
+    if (notes.length) session.notify(notes.join(' '), false, 12000);
     const imageHash = project?.imageHash;
     if (imageHash) await session.restoreImage(imageHash);
     return session;
@@ -364,7 +433,7 @@ export class LabSession {
       this.discarded = { doc: s.doc, materialId: s.materialId, origin: s.origin, modified: true };
       this.notify(`Modifiche a «${s.doc.name}» scartate.`, true);
     }
-    this.store.set({ materialId: id, origin: item.origin, modified: false });
+    this.store.set({ materialId: id, origin: item.origin, modified: false, ...(s.libraryTab === 'favorites' ? {} : { libraryTab: item.origin === 'user' ? 'mine' : 'jello' }) });
     this.loadDocIntoView(item.doc);
   }
 
@@ -412,6 +481,11 @@ export class LabSession {
     await this.autosaver.flush();
   }
 
+  /** @internal Something outside the material/component documents changed: schedule a save. */
+  touch(): void {
+    this.autosaver.schedule();
+  }
+
   rename(name: string): void {
     const clean = name.trim().slice(0, 80);
     if (!clean || this.state.origin !== 'user') return;
@@ -438,13 +512,19 @@ export class LabSession {
   }
 
   private async addUser(doc: MaterialDocument, message: string) {
-    const rec: StoredMaterial = { id: doc.id, doc, createdAt: now(), updatedAt: now() };
+    const rec: StoredMaterial = { id: doc.id, doc, ...this.owner(), createdAt: now(), updatedAt: now() };
     this.userMaterials.set(doc.id, rec);
-    this.store.set({ library: [...this.state.library, userItem(rec)], materialId: doc.id, origin: 'user', modified: false });
+    this.store.set({ library: [...this.state.library, userItem(rec)], materialId: doc.id, origin: 'user', modified: false, libraryTab: 'mine' });
     this.applyDoc(doc, { dirty: false });
     await this.autosaver.flush();
     const s = this.state.save;
     this.notify(s.kind === 'error' ? `${message} ${s.message}` : message);
+  }
+
+  /** `projectId` of a record: its own, else the active project's. */
+  owner(prev?: { projectId?: string }): { projectId?: string } {
+    const id = prev?.projectId ?? this.state.projectId;
+    return id ? { projectId: id } : {};
   }
 
   /** The only place that writes: project + the personal material being edited. */
@@ -455,6 +535,7 @@ export class LabSession {
       const rec: StoredMaterial = {
         id: s.materialId,
         doc: { ...s.doc, meta: { ...s.doc.meta, updatedAt: now() } },
+        ...this.owner(prev),
         createdAt: prev?.createdAt ?? now(),
         updatedAt: now(),
       };
@@ -469,12 +550,14 @@ export class LabSession {
       const rec: StoredComponent = {
         id: b.componentId,
         doc: b.doc,
+        ...this.owner(prev),
         createdAt: prev?.createdAt ?? now(),
         updatedAt: now(),
       };
       await this.repo.putComponent(rec);
       this.userComponents.set(rec.id, rec);
     }
+    await this.projects.flush();
     await this.repo.putProject({
       id: 'last',
       materialId: s.materialId,
@@ -485,6 +568,8 @@ export class LabSession {
       workspace: s.workspace,
       componentId: b.componentId,
       componentDraft: b.origin === 'template' && b.modified ? b.doc : null,
+      projectId: s.projectId,
+      page: s.page,
     });
   }
 
@@ -616,10 +701,10 @@ export class LabSession {
     });
   }
 
-  notify(text: string, undo = false): void {
-    this.store.set({ notice: { text, undo } });
+  notify(text: string, undo = false, ms = undo ? 8000 : 4000, action?: { label: string; run: () => void }): void {
+    this.store.set({ notice: { text, undo, ...(action ? { action } : {}) } });
     clearTimeout(this.noticeTimer);
-    this.noticeTimer = window.setTimeout(() => this.store.set({ notice: null }), undo ? 8000 : 4000);
+    this.noticeTimer = window.setTimeout(() => this.store.set({ notice: null }), ms);
   }
 
   get saveState(): SaveState {
@@ -633,6 +718,8 @@ export class LabSession {
       q.set('workspace', 'builder');
       q.set('component', s.builder.componentId);
     }
+    if (s.projectId) q.set('project', s.projectId);
+    if (s.page !== 'lab') q.set('page', s.page);
     return `${location.origin}${location.pathname}?${q}`;
   }
 
@@ -642,6 +729,67 @@ export class LabSession {
       history.replaceState(null, '', this.scenarioUrl());
     }, 400);
   }
+  // ---------- pages and projects ----------
+
+  /** Home, Asset or Impostazioni; `lab` shows the preview workspace chosen by `ws`. */
+  setPage(page: Page, ws?: Workspace): void {
+    if (ws) this.setWorkspace(ws);
+    if (page === this.state.page && !this.state.flow) return;
+    this.store.set({ page, flow: null });
+    // The preview was laid out while hidden (first load on another page): centre once it has a size.
+    if (page === 'lab' && this.centreOnShow) {
+      this.centreOnShow = false;
+      requestAnimationFrame(() => requestAnimationFrame(() => this.controller?.centreCapsule()));
+    }
+    this.autosaver.schedule();
+    this.scheduleUrl();
+  }
+
+  setAssetTab(tab: LabState['assetTab']): void {
+    this.store.set({ assetTab: tab, page: 'assets', flow: null });
+    this.scheduleUrl();
+  }
+
+  setLibraryTab(tab: LabState['libraryTab']): void {
+    this.store.set({ libraryTab: tab });
+  }
+
+  setPanelTab(tab: LabState['panelTab']): void {
+    this.store.set({ panelTab: tab });
+  }
+
+  openConfirm(confirm: LabState['confirm']): void {
+    this.store.set({ confirm });
+  }
+
+  openFlow(flow: LabState['flow'], seed: File[] | null = null): void {
+    this.store.set({ flow, importSeed: seed });
+  }
+
+  /** The active project's materials and components, in the library lists. */
+  rescope(): void {
+    const id = this.state.projectId;
+    const mats = [...this.userMaterials.values()].filter((m) => m.projectId === id);
+    const comps = [...this.userComponents.values()].filter((c) => c.projectId === id);
+    this.store.set({ library: [...builtinItems(), ...mats.map(userItem)], components: [...templateItems(), ...comps.map(componentItem)] });
+  }
+
+  /** Switches the active project; what is open from another project falls back to the built-ins. */
+  switchProject(id: string): void {
+    if (id === this.state.projectId || !this.state.projects.some((p) => p.id === id)) return;
+    this.store.set({ projectId: id });
+    this.rescope();
+    const s = this.state;
+    if (s.origin === 'user' && !s.library.some((i) => i.id === s.materialId)) {
+      this.store.set({ materialId: 'jello', origin: 'builtin', modified: false });
+      this.loadDocIntoView(builtinMaterial('jello')!.doc);
+    }
+    const b = s.builder;
+    if (b.origin === 'user' && !s.components.some((i) => i.id === b.componentId)) this.openComponent('bottom-navigation');
+    this.autosaver.schedule();
+    this.scheduleUrl();
+  }
+
   // ---------- workspace ----------
 
   setWorkspace(ws: Workspace): void {
@@ -919,7 +1067,7 @@ export class LabSession {
     const doc = this.state.builder.doc;
     const src = doc.material.document;
     const m: MaterialDocument = { ...src, id: userId(), name: clean, meta: { ...src.meta, basedOn: doc.material.preset ?? src.meta.basedOn, createdAt: now(), updatedAt: now() } };
-    const rec: StoredMaterial = { id: m.id, doc: m, createdAt: now(), updatedAt: now() };
+    const rec: StoredMaterial = { id: m.id, doc: m, ...this.owner(), createdAt: now(), updatedAt: now() };
     try {
       await this.repo.putMaterial(rec);
     } catch (e) {
@@ -986,7 +1134,7 @@ export class LabSession {
     }
     this.userComponents.delete(id);
     this.store.set({ components: this.state.components.filter((i) => i.id !== id) });
-    if (this.state.builder.componentId === id) this.openComponent('bt-darts');
+    if (this.state.builder.componentId === id) this.openComponent('bottom-navigation');
     this.notify('Componente eliminata dalla libreria.');
   }
 
@@ -1008,7 +1156,7 @@ export class LabSession {
   }
 
   private async addUserComponent(doc: ComponentDocument, message: string) {
-    const rec: StoredComponent = { id: doc.id, doc, createdAt: now(), updatedAt: now() };
+    const rec: StoredComponent = { id: doc.id, doc, ...this.owner(), createdAt: now(), updatedAt: now() };
     this.userComponents.set(doc.id, rec);
     this.store.set({ components: [...this.state.components, componentItem(rec)], builder: { ...builderState(doc, doc.id, 'user', false), selection: this.state.builder.selection, pick: this.state.builder.pick } });
     if (this.state.workspace === 'builder') this.controller?.updateComponent(doc);

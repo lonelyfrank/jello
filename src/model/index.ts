@@ -8,3 +8,4 @@ export * from './document';
 export * from './migrate';
 export * from './builtins';
 export * from './registry';
+export * from './legacy';

@@ -11,7 +11,7 @@
   top: 8px;
 }
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-hi);
   outline-offset: 2px;
 }
 
@@ -45,10 +45,13 @@
   white-space: nowrap;
 }
 .brand-sub {
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: 0;
+  /* The wordmark stands alone, as in the design; the product name stays in the accessible title. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .crumbs {
   display: flex;
@@ -83,10 +86,13 @@
   min-height: 36px;
   padding: 0 14px;
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: 9px;
   background: var(--surface-2);
   font-weight: 500;
   cursor: pointer;
+}
+.header-button {
+  min-height: 40px;
 }
 .header-button.primary {
   border-color: var(--accent);
@@ -132,10 +138,14 @@
 }
 .chip[data-kind='ok'],
 .chip[data-kind='refraction'] {
+  border-color: transparent;
+  background: var(--ok-bg);
   color: var(--ok);
 }
 .chip[data-kind='warn'],
 .chip[data-kind='opaque'] {
+  border-color: transparent;
+  background: var(--warn-bg);
   color: var(--warn);
 }
 .chip-accent {
@@ -232,7 +242,7 @@
 }
 .tb-seg[aria-pressed='true'],
 .tab[aria-selected='true'] {
-  border-color: var(--accent);
+  border-color: var(--accent-hi);
   background: var(--accent-soft);
   color: var(--accent-text);
 }
@@ -252,7 +262,7 @@
   cursor: pointer;
 }
 .tb-icon-button[aria-pressed='true'] {
-  border-color: var(--accent);
+  border-color: var(--accent-hi);
   color: var(--accent-text);
 }
 .tb-icon {
@@ -348,7 +358,8 @@
   cursor: pointer;
 }
 .preset-card[aria-pressed='true'] {
-  border-color: var(--accent);
+  border-color: var(--accent-hi);
+  background: var(--accent-soft);
 }
 .preset-card[aria-pressed='true'] .preset-name {
   font-weight: 600;
@@ -1011,9 +1022,12 @@ textarea {
 
 /* ---------- Material Lab additions ---------- */
 .brand-name {
-  color: var(--accent-text);
+  /* Fredoka only when installed: nothing is fetched. */
+  color: var(--text);
+  font-family: Fredoka, 'Nunito', 'Varela Round', system-ui, sans-serif;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 #app {
   display: contents;
@@ -1277,10 +1291,26 @@ code {
 }
 .workspace-switch {
   flex: none;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--surface-2);
 }
 .workspace-switch .tb-seg {
-  padding: 0 14px;
+  min-height: 36px;
+  padding: 0 18px;
+  border-radius: 7px;
+  color: var(--text-2);
   white-space: nowrap;
+}
+.workspace-switch .tb-seg:hover {
+  background: var(--accent-soft);
+}
+.workspace-switch .tb-seg[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 600;
 }
 .ws-short {
   display: none;

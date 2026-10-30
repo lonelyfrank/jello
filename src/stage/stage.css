@@ -293,7 +293,7 @@
   outline-offset: 2px;
 }
 
-/* ---------- navbar: BT Darts template of BottomNavigation, in the lab's theme ----------
+/* ---------- navbar: the Bottom Navigation template, in the lab's theme ----------
  * Layout, states and indicator come from the component (runtime/bottom-navigation.css);
  * the lab only maps its light/dark tokens onto the component's custom properties. */
 .stage .navbar.jello-bnav {

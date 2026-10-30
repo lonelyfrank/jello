@@ -26,7 +26,7 @@ Macchina: ThinkPad T14 Gen1, Intel i7-10510U, 31 GB RAM, grafica integrata Intel
 | Raster WebGL2 (correttezza ottica) | — | **non verificato**: c’è il confronto anteprima ↔ pacchetto, non un controllo raster dedicato |
 | Preview ↔ pacchetto esportato, DOM/SVG, 480×320, DPR 1 | Chromium, Firefox, mobile emulato | **superato**: differenza media 0,0000 livelli (identici) su tutti e tre |
 | Preview ↔ pacchetto esportato, WebGL2 a t = 0 | Chromium (SwiftShader), Firefox (GPU Intel), mobile emulato | **superato**: differenza media 0,0000 livelli su tutti e tre |
-| Esempio consumatore `examples/navbar-bt` dal runtime costruito | Chromium, Firefox, mobile emulato | **superato** (4 test per progetto; backend effettivo SVG su Chromium) |
+| Esempio consumatore `examples/navbar` dal runtime costruito | Chromium, Firefox, mobile emulato | **superato** (4 test per progetto; backend effettivo SVG su Chromium) |
 | Sincronizzazione lab → relay → anteprima (stesso computer, 127.0.0.1) | Chromium, Firefox, mobile emulato | **superato** (4 test per progetto) |
 | Telefono fisico sulla LAN | — | **non verificato** (nessun dispositivo collegato, `adb devices` vuoto) |
 | Chrome Android su emulatore | AVD `medium_phone`, Android 16 (API 36), x86_64 Play Store | **non eseguibile**: con `-gpu swiftshader_indirect` l’emulatore headless termina con segmentation fault al primo avvio a freddo; con `-gpu swangle_indirect` si avvia ma adb resta *unauthorized* (l’immagine Play Store chiede di confermare la chiave sullo schermo, assente in modalità headless) |

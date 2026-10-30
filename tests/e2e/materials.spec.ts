@@ -22,14 +22,14 @@ test.describe('library and local persistence', () => {
     await saved(page);
     // Rename (personal materials only).
     await page.locator('#libRename').click();
-    await page.locator('#renameInput').fill('Navbar BT chiara');
+    await page.locator('#renameInput').fill('Navbar chiara');
     await page.locator('#renameInput').press('Enter');
-    await expect(page.locator('#crumbPreset')).toHaveText('Navbar BT chiara');
+    await expect(page.locator('#crumbPreset')).toHaveText('Navbar chiara');
     await saved(page);
     await reopen(page);
     expect(await lab<string>(page, `return h.materialId()`)).toBe(id);
     expect(await lab<number>(page, `return h.params.refraction`)).toBe(17.5);
-    await expect(page.locator('#crumbPreset')).toHaveText('Navbar BT chiara');
+    await expect(page.locator('#crumbPreset')).toHaveText('Navbar chiara');
     expect(await lab<string>(page, `return h.options().object`)).toBe('navbar');
     // Built-in and personal materials stay distinguishable.
     const lib = await lab<{ id: string; origin: string }[]>(page, `return h.library()`);
@@ -68,7 +68,7 @@ test.describe('library and local persistence', () => {
     const id = await lab<string>(page, `return h.materialId()`);
     expect(await lab<number>(page, `return h.params.band`)).toBe(30);
     await page.locator('#libDelete').click();
-    await page.locator('#libDeleteConfirm').click();
+    await page.locator('#confirmDelete').click();
     expect(await lab<string>(page, `return h.materialId()`)).toBe('jello');
     await reopen(page);
     const lib = await lab<{ id: string }[]>(page, `return h.library()`);
@@ -119,17 +119,55 @@ test.describe('library and local persistence', () => {
   });
 
   test('scenario URLs are kept reproducible', async ({ page }) => {
-    await openLab(page, 'preset=bt&object=navbar&nav=live&scene=app&animate=0&quality=economy');
+    await openLab(page, 'preset=deep&object=navbar&nav=explore&scene=app&animate=0&quality=economy');
     expect(await lab<string>(page, `return h.material().quality.profile`)).toBe('economy');
-    await expect.poll(() => page.evaluate(() => location.search)).toContain('material=bt');
+    await expect.poll(() => page.evaluate(() => location.search)).toContain('material=deep');
     const url = await lab<string>(page, `return h.scenarioUrl()`);
     expect(url).toContain('object=navbar');
-    expect(url).toContain('nav=live');
+    expect(url).toContain('nav=explore');
     expect(url).toContain('quality=economy');
     const other = await page.context().newPage();
     await other.goto(url);
     await other.waitForSelector('html[data-ready=true]');
-    expect(await other.evaluate(() => (window.__jello as { options(): { nav: string } }).options().nav)).toBe('live');
+    expect(await other.evaluate(() => (window.__jello as { options(): { nav: string } }).options().nav)).toBe('explore');
+  });
+});
+
+test.describe('removed presets', () => {
+  test('are not in the official library', async ({ page }) => {
+    await openLab(page, 'scene=app&animate=0');
+    await showPanel(page);
+    const ids = await page.locator('#preset option').evaluateAll((o) => (o as HTMLOptionElement[]).map((x) => x.value).filter(Boolean));
+    expect(ids).toEqual(['jello', 'optics', 'satin', 'deep', 'navbar']);
+    await expect(page.locator('#sidebar')).not.toContainText(/cable|\bBT\b|darts/i);
+    expect((await lab<{ id: string }[]>(page, 'return h.library()')).map((i) => i.id)).toEqual(ids);
+  });
+
+  test('an old URL opens the replacement as a draft that keeps the original parameters', async ({ page }) => {
+    await openLab(page, 'preset=bt&object=navbar&scene=app&animate=0');
+    await expect(page.locator('#notice')).toContainText('non è più un preset incluso');
+    expect(await lab(page, 'return h.materialId()')).toBe('navbar');
+    expect(await lab(page, 'return h.modified()')).toBe(true);
+    expect(await lab(page, 'return h.params')).toMatchObject({ band: 12, refraction: 5, profile: 'bump', blur: 10 });
+    expect(await lab<string>(page, 'return h.material().name')).not.toMatch(/\bBT\b/);
+    // «Salva come copia» keeps them as a personal material.
+    await showPanel(page);
+    await page.locator('#libDuplicate').click();
+    await expect(page.locator('#activeOrigin')).toHaveAttribute('data-origin', 'user');
+    expect(await lab(page, 'return h.params.profile')).toBe('bump');
+  });
+
+  test('a personal material with an old id stays the user’s own', async ({ page }) => {
+    await openLab(page, 'scene=app&animate=0');
+    const doc = JSON.parse(await lab<string>(page, 'return h.exportJson()'));
+    await lab(page, `h.importText(${JSON.stringify(JSON.stringify({ ...doc, id: 'bt', name: 'Mio materiale', material: { ...doc.material, blur: 17 } }))})`);
+    await expect.poll(() => lab(page, 'return h.materialId()')).toBe('bt');
+    await lab(page, 'await h.flush()');
+    await page.goto('./?material=bt&scene=app&animate=0');
+    await page.waitForSelector('html[data-ready=true]');
+    expect(await lab(page, 'return h.origin()')).toBe('user');
+    expect(await lab(page, 'return h.params.blur')).toBe(17);
+    await expect(page.locator('#notice')).toHaveCount(0);
   });
 });
 

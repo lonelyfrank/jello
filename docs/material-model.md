@@ -76,8 +76,7 @@ P' = P + refraction · v(P)
   `−dome · (x / hw, y / hh) · clamp(depth / band, 0, 1)` (ingrandimento verso il centro,
   nullo sul bordo).
 - Profili: `circle` = `1 − √(1 − t²)` (bordo convesso, transizione piatta verso il centro),
-  `smooth` = `t²(3 − 2t)`, `linear` = `t`, `bump` = `sin²(πt)` (massimo a metà fascia,
-  lo stesso andamento usato da BT).
+  `smooth` = `t²(3 − 2t)`, `linear` = `t`, `bump` = `sin²(πt)` (massimo a metà fascia).
 - La normale è calcolata su un rettangolo con raggio `max(radius, 1,25 · band)` (limitato a
   metà del lato corto): evita la piega lungo la diagonale degli angoli quando la fascia è
   più ampia del raggio. Il contorno usa il raggio reale.
@@ -177,8 +176,21 @@ non fanno mai parte della chiave della mappa.
 
 ## Preset
 
-`jello`, `optics`, `satin`, `deep`, `cable` e `bt` sono invariati dalla milestone 1. `navbar`
-è nuovo: `band` 16, `refraction` 10, `profile` smooth, `blur` 4, `saturation` 160, `tint`
+Preset ufficiali: `jello` (Jello · iniziale), `optics` (Ottica nuda), `satin` (Satinato), `deep`
+(Lente marcata) e `navbar` (Jello · navbar). I primi quattro sono invariati dalla milestone 1. `navbar`: `band` 16, `refraction` 10, `profile` smooth, `blur` 4, `saturation` 160, `tint`
 #ffffff a 0,14, `light` 0,65 a 330°, `shadow` 0,2 / 26 px / 8 px, `damping` 0,8, `stretch` 0,
 `pressScale` 1,02, `pressRefraction` 0,4, `pressLight` 0,45. È una calibrazione a vista sulla
 navbar del laboratorio, non la copia di un altro materiale.
+
+### Preset rimossi
+
+`cable` e `bt` erano approssimazioni di materiali di altri progetti, distribuite durante la fase
+sperimentale: non fanno più parte della libreria ufficiale. `src/model/legacy.ts` conserva solo
+i loro id e parametri, per compatibilità:
+
+- un URL con `preset=` o `material=` uno di questi id, o un progetto salvato che l’aveva aperto,
+  apre il sostituto (`satin`, `navbar`) come **bozza non salvata con i parametri originali** e lo
+  dice; «Salva come copia» la conserva come materiale personale. Nulla viene scritto da solo;
+- un materiale personale che ha proprio quell’id resta dell’utente: ha la precedenza;
+- le componenti che li usavano tengono la propria copia del materiale (stato «incluso»).
+

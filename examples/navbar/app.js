@@ -18,16 +18,13 @@ if (!parsed.ok) {
 }
 
 // ---- content (sample data, fixed) ----
-const TEAMS = ['Aironi', 'Basilischi', 'Cometa', 'Delfini', 'Estuario', 'Falchi', 'Gelsomini', 'Ibis'];
 const COLORS = ['#0a84ff', '#ff453a', '#30d158', '#ff9f0a', '#bf5af2', '#64d2ff'];
 const list = document.getElementById('list');
 for (let i = 0; i < 18; i++) {
-  const a = TEAMS[i % TEAMS.length];
-  const b = TEAMS[(i * 3 + 1) % TEAMS.length];
   const row = document.createElement('article');
   row.className = 'match';
   row.style.setProperty('--team', COLORS[i % COLORS.length]);
-  row.innerHTML = `<span class="time">${String(9 + (i % 10)).padStart(2, '0')}:${i % 2 ? '30' : '00'}</span><span class="teams">${a} – ${b}</span><strong class="score">${40 + ((i * 7) % 35)}–${38 + ((i * 11) % 33)}</strong>`;
+  row.innerHTML = `<span class="time">${String(9 + (i % 10)).padStart(2, '0')}:${i % 2 ? '30' : '00'}</span><span class="teams">Elemento ${i + 1}</span><strong class="score">${40 + ((i * 7) % 35)}</strong>`;
   list.append(row);
 }
 

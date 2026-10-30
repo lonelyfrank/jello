@@ -4,6 +4,7 @@ import { CUSTOM_LIMITS } from '../../stage/view';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
 import { Icon } from './icons';
+import { Ic } from './ui';
 
 const fmt = (s: { median: number; p95: number } | null, unit = 'ms') => (s ? `${s.median} ${unit} (p95 ${s.p95})` : '—');
 
@@ -23,8 +24,24 @@ export function Preview({ session }: { session: LabSession }) {
   const loops = report?.loops ?? [];
   const sceneStatus = report?.scene ?? null;
 
+  const forcedOpaque = !scene && report?.main.effective === 'opaque' && report.main.configured !== 'opaque';
+  const manualTransparency = options.reduceTransparency;
   return (
     <section className="preview" aria-labelledby="previewTitle">
+      {forcedOpaque && (
+        <div className="opaque-banner" role="status" id="opaqueBanner">
+          <Ic name="eye" />
+          <span className="opaque-text">
+            <strong>Trasparenza ridotta attiva.</strong> Il materiale usa il percorso Opaco: superficie piena e bordo, senza blur né rifrazione.
+          </span>
+          <span className="opaque-origin">{manualTransparency ? 'Origine: impostazione “Riduci trasparenza”' : (report?.main.reasons[0] ?? 'Origine: preferenza del sistema')}</span>
+          {manualTransparency && (
+            <button type="button" className="button small" id="opaqueOff" onClick={() => session.setOption('reduceTransparency', false)}>
+              Disattiva
+            </button>
+          )}
+        </div>
+      )}
       <div className="preview-head">
         <h2 className="preview-title" id="previewTitle">
           {builder ? 'Anteprima della componente' : 'Anteprima'}
@@ -51,6 +68,18 @@ export function Preview({ session }: { session: LabSession }) {
                 </select>
               </label>
             </>
+          )}
+          {!builder && !scene && (
+            <label className="tb-select tb-bg-lab" htmlFor="tb-background-lab">
+              <span className="visually-hidden">Sfondo di prova</span>
+              <select id="tb-background-lab" value={options.scene} onChange={(e) => session.setOption('scene', e.target.value as never)} title="Sfondo di prova: trasparenza, rifrazione e contrasto">
+                {SCENES.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    Sfondo: {s.short}
+                  </option>
+                ))}
+              </select>
+            </label>
           )}
           <div className="tb-segmented" role="group" aria-label="Modalità di anteprima" hidden={builder}>
             <button type="button" className="tb-seg" id="tb-mode-components" aria-pressed={!scene} onClick={() => session.setOption('mode', 'components')} title="Vere componenti HTML (backend CSS o SVG)">

@@ -453,41 +453,29 @@ export interface ComponentTemplate {
   create(): ComponentDocument;
 }
 
-const bt = (): ComponentDocument => {
+/**
+ * The official demo: a generic bar with three destinations, every property
+ * at its descriptor default and Jello's own navbar material. Nothing in it
+ * belongs to a specific product: it is a starting point to edit.
+ */
+const bottomNavigation = (): ComponentDocument => {
   const tabs: BnTab[] = [
     createTab('home', 'Home', { kind: 'builtin', name: 'home' }),
-    createTab('live', 'Live', { kind: 'builtin', name: 'live' }),
-    createTab('matrix', 'Matrice', { kind: 'builtin', name: 'matrix' }),
-    createTab('results', 'Risultati', { kind: 'builtin', name: 'results' }),
+    createTab('explore', 'Explore', { kind: 'builtin', name: 'compass' }),
+    createTab('profile', 'Profile', { kind: 'builtin', name: 'user' }),
   ];
-  return createComponentDocument({
-    id: 'bt-darts',
-    name: 'BT Darts',
-    root: createRoot(tabs, { label: 'Navigazione principale', defaultTab: 'home' }),
-    material: bindMaterial(builtinMaterial('navbar')!.doc, 'navbar'),
-    meta: { basedOn: 'bt-darts', notes: 'Template ricavato dalla navbar dimostrativa del laboratorio (caso d’uso BT Darts): quattro tab, una superficie glass, indicatore come strato visivo.' },
-  });
-};
-
-const basic = (): ComponentDocument => {
-  const tabs: BnTab[] = [
-    createTab('home', 'Home', { kind: 'builtin', name: 'home' }),
-    createTab('search', 'Cerca', { kind: 'builtin', name: 'search' }),
-    createTab('profile', 'Profilo', { kind: 'builtin', name: 'user' }),
-  ];
-  const root = createRoot(tabs, { label: 'Navigazione', defaultTab: 'home' });
   return createComponentDocument({
     id: 'bottom-navigation',
     name: 'Bottom Navigation',
-    root: { ...root, layout: { ...root.layout, maxWidth: 380 }, responsive: { ...root.responsive, breakpoints: [{ id: 'compact', maxWidth: 360, overrides: { 'layout.labels': 'active', 'layout.height': 58 } }] } },
-    material: bindMaterial(builtinMaterial('jello')!.doc, 'jello'),
-    meta: { basedOn: 'bottom-navigation', notes: 'Punto di partenza generico: tre tab, etichette compatte sotto i 360 px.' },
+    root: createRoot(tabs, { label: 'Navigazione principale', defaultTab: 'home' }),
+    material: bindMaterial(builtinMaterial('navbar')!.doc, 'navbar'),
+    meta: { basedOn: 'bottom-navigation', notes: 'Demo iniziale di Jello: tre tab modificabili, una superficie di materiale, indicatore come strato visivo.' },
   });
 };
 
+/** Official Jello templates (read-only). User components live in the personal library. */
 export const COMPONENT_TEMPLATES: readonly ComponentTemplate[] = [
-  { id: 'bt-darts', label: 'BT Darts', description: 'La navbar dimostrativa del laboratorio come template: Home, Live, Matrice, Risultati.', create: bt },
-  { id: 'bottom-navigation', label: 'Base', description: 'Tre tab con etichette compatte su schermi stretti.', create: basic },
+  { id: 'bottom-navigation', label: 'Bottom Navigation', description: 'Demo generica: Home, Explore, Profile. Aggiungi, riordina e personalizza le tab.', create: bottomNavigation },
 ];
 
 export function componentTemplate(id: string): ComponentTemplate | undefined {

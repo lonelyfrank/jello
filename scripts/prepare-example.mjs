@@ -4,7 +4,7 @@
  * (src/export/package.ts) and the built library (dist-lib), then unpacks it
  * where a consumer would put it:
  *
- *   node scripts/prepare-example.mjs                         → examples/navbar-bt/jello/  (built-in "navbar")
+ *   node scripts/prepare-example.mjs                         → examples/navbar/jello/  (built-in "navbar")
  *   node scripts/prepare-example.mjs --material file.json --out dir [--kind css-only] [--zip out.zip]
  *
  * The example then imports ./jello/runtime/jello.js: the built artifact, not
@@ -47,7 +47,7 @@ const result = await pkg.buildPackage({
       : null,
 });
 
-const out = resolve(opt('out', join(repo, 'examples/navbar-bt/jello')));
+const out = resolve(opt('out', join(repo, 'examples/navbar/jello')));
 rmSync(out, { recursive: true, force: true });
 for (const f of result.files) {
   const p = join(out, f.path.slice(result.root.length + 1));

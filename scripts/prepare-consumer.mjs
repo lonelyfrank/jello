@@ -5,7 +5,7 @@
  * independent consumer project examples/react-consumer, then typechecks and
  * builds that project with its own toolchain.
  *
- *   node scripts/prepare-consumer.mjs                     BT Darts template + a tab added "in the builder"
+ *   node scripts/prepare-consumer.mjs                     Bottom Navigation template + a fourth tab added "in the builder"
  *   node scripts/prepare-consumer.mjs --component x.json  a component exported from the builder
  *   --skip-build                                          export and install only
  *
@@ -36,12 +36,12 @@ if (file) {
   if (!r.ok) throw new Error(`Componente non valida:\n${r.errors.join('\n')}`);
   component = r.doc;
 } else {
-  // The edits of the builder walkthrough: a new tab with its own icon and value, a taller bar.
-  const doc = c.componentTemplate('bt-darts').create();
-  const added = c.addTab(doc.root, { label: 'Classifica', icon: { kind: 'builtin', name: 'chart' } });
-  let root = c.updateTab(added.root, added.id, { value: '/classifica' });
-  const icon = c.iconFromSvg('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>', 'punto.svg');
-  root = c.updateTab(root, 'live', { icon: icon.icon });
+  // The edits of the builder walkthrough: a fourth tab with its own icon and value, a custom SVG icon, a taller bar.
+  const doc = c.componentTemplate('bottom-navigation').create();
+  const added = c.addTab(doc.root, { label: 'Settings', icon: { kind: 'builtin', name: 'settings' } });
+  let root = c.updateTab(added.root, added.id, { value: '/settings' });
+  const icon = c.iconFromSvg('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>', 'dot.svg');
+  root = c.updateTab(root, 'explore', { icon: icon.icon });
   root = c.setRootField(root, 'layout.height', 66);
   component = { ...doc, root };
 }

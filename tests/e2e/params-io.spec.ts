@@ -53,12 +53,11 @@ test('partial imports fill defaults and report warnings', async ({ page }) => {
   expect(await lab<number>(page, `return h.params.blur`)).toBe(7);
 });
 
-test('presets apply and approximations are labelled as such', async ({ page }) => {
-  await page.locator('#preset').selectOption('bt');
-  await expect(page.locator('#presetNote')).toHaveAttribute('data-approximation', 'true');
-  await expect(page.locator('#presetNote')).toContainText('Non è una copia');
-  expect(await lab<number>(page, `return h.params.band`)).toBe(12);
-  await page.locator('#preset').selectOption('cable');
+test('official presets apply and none is labelled as an approximation', async ({ page }) => {
+  await page.locator('#preset').selectOption('deep');
+  await expect(page.locator('#presetNote')).toHaveAttribute('data-approximation', 'false');
+  expect(await lab<number>(page, `return h.params.band`)).toBe(36);
+  await page.locator('#preset').selectOption('satin');
   expect(await lab<number>(page, `return h.params.refraction`)).toBe(0);
   await page.locator('#param-blur').fill('12');
   await expect(page.locator('#preset')).toHaveValue('');

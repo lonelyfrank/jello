@@ -102,27 +102,15 @@ alla geometria e alle interazioni; il tocco "illumina dall'interno"; l'ombra sep
 solo per enfasi; riduzione trasparenza → più satinato, contrasto elevato → bianco/nero con
 bordo, movimento ridotto → niente elasticità. Jello non riproduce lo shader né i valori di Apple.
 
-## Progetti dell'autore (solo consultazione)
+## Progetti personali consultati nella fase sperimentale
 
-Nessuna modifica è stata fatta a questi repository; nessuna funzionalità, branding, routing o
-logica applicativa è stata importata.
-
-### Cable — `ui/index.html`, materiale `.vetro`
-Clone locale, revisione `68f5e2052f54110f98f5d3972cdbcffde031d1df` (27 ottobre 2026).
-`backdrop-filter: blur(30px) saturate(185%)`, bianco `0,20 + tint·0,52` (tint = 0,45 → ≈ 0,43),
-raggio 28 px, highlight interno, `::before` con gradiente in `soft-light`. Nessuna rifrazione.
-→ preset "Cable .vetro (approssimazione)".
-
-### BT Score Board — navbar
-Clone locale, branch `main`, revisione `ca07af2cc42a2dfdb7d3bf454c2ba122dea94c34`
-(28 ottobre 2026). File: `apps/web/src/components/BottomNavigation.tsx`, `glass-map.ts`,
-`apps/web/src/styles/bottom-navigation.css`, `tokens.css`, `docs/navbar-refinement/README.md`.
-Mappa sin² su fascia 12 px, picco 5 px, applicata con `backdrop-filter: url()` e limitata a
-Chromium 156 desktop verificato; blur 10 px, saturazione 150%, tinta rgb(18,18,22) al 14%;
-pressione come sola luce, nessuna scala. → preset "BT navbar (approssimazione)" e profilo `bump`.
+Durante la fase sperimentale due progetti personali dell’autore sono serviti come riferimento per
+due preset di approssimazione. Quei preset sono stati rimossi dalla libreria ufficiale (vedi
+[material-model.md](material-model.md), «Preset rimossi»); nessun codice, branding, dato o
+logica di quei progetti è mai stato importato in Jello, e i repository non sono stati modificati.
 
 ## Asset
 
 Fotografia di prova CC0: vedi [../public/assets/ATTRIBUTION.md](../public/assets/ATTRIBUTION.md).
 Le altre scene (griglia, testo, blocchi, coordinate) sono generate dal codice del laboratorio.
-Nessun asset dimostrativo dei progetti di riferimento è stato importato.
+Nessun asset dimostrativo di progetti esterni è stato importato.

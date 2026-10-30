@@ -2,6 +2,7 @@ import '../stage/theme.css';
 import '../core/glass.css';
 import '../stage/stage.css';
 import './lab.css';
+import './design.css';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
 import { installHook } from './hook';

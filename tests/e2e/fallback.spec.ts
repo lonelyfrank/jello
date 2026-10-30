@@ -43,6 +43,7 @@ test('manual "reduce transparency" switches to opaque and back', async ({ page }
   await openLab(page, OPTICS);
   await showPanel(page);
   expect((await status(page)).effective).toBe('refraction');
+  await page.locator('#panelTab-rendering').click();
   await page.locator('#opt-reduceTransparency').check();
   await settle(page);
   const s = await status(page);
@@ -103,6 +104,7 @@ test('manual "reduce effects" stops background animation and elasticity', async 
   await openLab(page, 'preset=jello&scene=blocks&animate=1');
   await showPanel(page);
   await expect(page.locator('#stages')).toHaveClass(/is-animated/);
+  await page.locator('#panelTab-rendering').click();
   await page.locator('#opt-reduceMotion').check();
   await settle(page);
   expect((await status(page)).motionReduced).toBe(true);

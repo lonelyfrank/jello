@@ -132,6 +132,19 @@ export function ExportDialog({ session }: { session: LabSession }) {
             ))}
           </ul>
         )}
+        <p className="export-project">
+          <button
+            type="button"
+            className="link"
+            id="exportProjectLink"
+            onClick={() => {
+              session.setExportOpen(false);
+              session.openFlow('export');
+            }}
+          >
+            Esportazione guidata del progetto →
+          </button>
+        </p>
         <div className="button-row export-actions">
           <button type="button" className="button" onClick={() => session.setExportOpen(false)}>
             Chiudi

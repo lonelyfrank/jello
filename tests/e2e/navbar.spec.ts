@@ -26,11 +26,11 @@ test.describe('navbar', () => {
     await openLab(page, NAVBAR);
   });
 
-  test('is anchored at the bottom with four labelled, touch-sized items', async ({ page }) => {
+  test('is anchored at the bottom with three labelled, touch-sized items', async ({ page }) => {
     const nav = page.locator('#stageMain .navbar');
     await expect(nav).toBeVisible();
     await expect(nav).toHaveAttribute('aria-label', /Navigazione/);
-    await expect(page.locator('#stageMain .nav-item')).toHaveText(['Home', 'Live', 'Matrice', 'Risultati']);
+    await expect(page.locator('#stageMain .nav-item')).toHaveText(['Home', 'Explore', 'Profile']);
     await expect(page.locator('#capsuleMain')).toBeHidden();
     const stage = (await page.locator('#stageMain').boundingBox())!;
     const box = (await nav.boundingBox())!;
@@ -74,26 +74,26 @@ test.describe('navbar', () => {
 
   test('press is transient and never replaces the selection', async ({ page }) => {
     await expect(selected(page)).toHaveText('Home');
-    const target = (await item(page, 'Matrice').boundingBox())!;
+    const target = (await item(page, 'Profile').boundingBox())!;
     await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2);
     await page.mouse.down();
-    await expect(item(page, 'Matrice')).toHaveAttribute('data-pressed', '');
+    await expect(item(page, 'Profile')).toHaveAttribute('data-pressed', '');
     await expect(page.locator('#stageMain .navbar')).toHaveAttribute('data-pressed', '');
-    expect(await lab(page, `return h.navbar.pressedItem`)).toBe('matrix');
+    expect(await lab(page, `return h.navbar.pressedItem`)).toBe('profile');
     // Still the old selection while pressed.
     await expect(selected(page)).toHaveText('Home');
     await page.mouse.up();
-    await expect(selected(page)).toHaveText('Matrice');
-    await expect(item(page, 'Matrice')).not.toHaveAttribute('data-pressed', '');
+    await expect(selected(page)).toHaveText('Profile');
+    await expect(item(page, 'Profile')).not.toHaveAttribute('data-pressed', '');
     await expect(page.locator('#stageMain .navbar')).not.toHaveAttribute('data-pressed', '');
     // Pressing and leaving before release does not select.
-    const live = (await item(page, 'Live').boundingBox())!;
+    const live = (await item(page, 'Explore').boundingBox())!;
     await page.mouse.move(live.x + live.width / 2, live.y + live.height / 2);
     await page.mouse.down();
     await page.mouse.move(live.x + live.width / 2, live.y - 80, { steps: 4 });
-    await expect(item(page, 'Live')).not.toHaveAttribute('data-pressed', '');
+    await expect(item(page, 'Explore')).not.toHaveAttribute('data-pressed', '');
     await page.mouse.up();
-    await expect(selected(page)).toHaveText('Matrice');
+    await expect(selected(page)).toHaveText('Profile');
     await settle(page);
     expect((await lab<{ animating: number }>(page, `return h.stats()`)).animating).toBe(0);
   });
@@ -101,34 +101,34 @@ test.describe('navbar', () => {
   test('works with the keyboard and shows a visible focus ring', async ({ page }) => {
     await item(page, 'Home').focus();
     await page.keyboard.press('ArrowRight');
-    await expect(item(page, 'Live')).toBeFocused();
+    await expect(item(page, 'Explore')).toBeFocused();
     // Arrow keys move focus only; selection is still Home.
     await expect(selected(page)).toHaveText('Home');
-    const ring = await item(page, 'Live').evaluate((el) => getComputedStyle(el).outlineStyle);
+    const ring = await item(page, 'Explore').evaluate((el) => getComputedStyle(el).outlineStyle);
     expect(ring).not.toBe('none');
     await page.keyboard.down(' ');
-    await expect(item(page, 'Live')).toHaveAttribute('data-pressed', '');
+    await expect(item(page, 'Explore')).toHaveAttribute('data-pressed', '');
     await expect(selected(page)).toHaveText('Home');
     await page.keyboard.up(' ');
-    await expect(selected(page)).toHaveText('Live');
+    await expect(selected(page)).toHaveText('Explore');
     await page.keyboard.press('End');
-    await expect(item(page, 'Risultati')).toBeFocused();
+    await expect(item(page, 'Profile')).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(selected(page)).toHaveText('Risultati');
+    await expect(selected(page)).toHaveText('Profile');
     await page.keyboard.press('ArrowRight');
     await expect(item(page, 'Home')).toBeFocused();
     // The panel reflects the same state.
-    await expect(page.locator('#opt-nav')).toHaveValue('results');
+    await expect(page.locator('#opt-nav')).toHaveValue('profile');
   });
 
   test('indicator follows the selection as a visual layer, not a lens', async ({ page }) => {
     const ind = page.locator('#stageMain .nav-indicator');
     const x0 = (await ind.boundingBox())!.x;
-    await item(page, 'Risultati').click();
+    await item(page, 'Profile').click();
     await settle(page);
     await page.waitForTimeout(400);
     const r = (await ind.boundingBox())!;
-    const it = (await item(page, 'Risultati').boundingBox())!;
+    const it = (await item(page, 'Profile').boundingBox())!;
     expect(r.x).toBeGreaterThan(x0);
     expect(Math.abs(r.x - it.x)).toBeLessThan(1.5);
     expect(Math.abs(r.width - it.width)).toBeLessThan(1.5);
@@ -173,11 +173,11 @@ test.describe('compare', () => {
     await openLab(page, `${NAVBAR}&compare=1`);
     await expect(page.locator('#stageCompare .navbar')).toBeVisible();
     await expect(page.locator('#capsuleCompare')).toBeHidden();
-    await item(page, 'Live').click();
-    await expect(selected(page, '#stageCompare')).toHaveText('Live');
-    await item(page, 'Risultati', '#stageCompare').click();
-    await expect(selected(page)).toHaveText('Risultati');
-    expect(await lab(page, `return h.navbar.compareSelected`)).toBe('results');
+    await item(page, 'Explore').click();
+    await expect(selected(page, '#stageCompare')).toHaveText('Explore');
+    await item(page, 'Profile', '#stageCompare').click();
+    await expect(selected(page)).toHaveText('Profile');
+    expect(await lab(page, `return h.navbar.compareSelected`)).toBe('profile');
     await page.locator('#stageCompare .scroller').evaluate((el) => (el.scrollTop = 300));
     await expect.poll(() => page.locator('#stageMain .scroller').evaluate((el) => el.scrollTop)).toBe(300);
     await lab(page, `h.setOption('object', 'capsule')`);
@@ -190,7 +190,7 @@ test.describe('compare', () => {
     expect(l.activeCompare).not.toBeNull();
     // Selection survives the round trip.
     await lab(page, `h.setOption('object', 'navbar')`);
-    await expect(selected(page, '#stageCompare')).toHaveText('Risultati');
+    await expect(selected(page, '#stageCompare')).toHaveText('Profile');
   });
 
   test('compare label reports the path really used, including the opaque fallback', async ({ page }) => {
@@ -292,6 +292,8 @@ test.describe('diagnostic map', () => {
       const l = await lenses(page);
       expect(info.surface).toBe(l.active);
       expect(info.inUse).toBe(inUse);
+      await showPanel(page);
+      await page.locator('#panelTab-rendering').click();
       const size = await page.locator('#mapPreview').evaluate((img: HTMLImageElement) => ({ w: img.naturalWidth, h: img.naturalHeight }));
       return { info, size };
     };
@@ -385,13 +387,13 @@ test.describe('accessibility fallbacks', () => {
     await openLab(page, 'object=navbar&scene=app');
     await expect(page.locator('#stages')).not.toHaveClass(/is-animated/);
     expect(await page.locator('#stageMain .nav-indicator').evaluate((el) => getComputedStyle(el).transitionDuration)).toMatch(/^0s/);
-    const b = (await item(page, 'Live').boundingBox())!;
+    const b = (await item(page, 'Explore').boundingBox())!;
     await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
     await page.mouse.down();
     await page.waitForTimeout(150);
     expect(await page.locator('#stageMain .navbar .jello-surface').evaluate((el) => getComputedStyle(el).transform)).toBe('none');
     await page.mouse.up();
-    await expect(selected(page)).toHaveText('Live');
+    await expect(selected(page)).toHaveText('Explore');
   });
 
   test('forced colours and opaque path keep the navbar usable', async ({ page }) => {
@@ -400,7 +402,7 @@ test.describe('accessibility fallbacks', () => {
     expect((await lab<{ effective: string }>(page, `return h.status()`)).effective).toBe('opaque');
     expect(await page.locator('#sourceMain').evaluate((el) => getComputedStyle(el).filter)).toBe('none');
     expect((await lenses(page)).main).toEqual([]);
-    await item(page, 'Matrice').click();
-    await expect(selected(page)).toHaveText('Matrice');
+    await item(page, 'Profile').click();
+    await expect(selected(page)).toHaveText('Profile');
   });
 });

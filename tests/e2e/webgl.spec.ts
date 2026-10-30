@@ -36,7 +36,7 @@ test('the WebGL2 backend is loaded only when the controlled scene is shown', asy
 
 test.describe('controlled scene', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('./');
+    await page.goto('./?workspace=material');
     await requireWebGL2(page);
   });
 

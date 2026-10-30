@@ -79,8 +79,8 @@ stage (position: relative, overflow: hidden)
 È l'approccio descritto da Aave ("Building Glass for the Web") e implementato da
 liquid-glass-web-react: il filtro si applica con `filter: url(#…)` al contenuto delimitato,
 non con `backdrop-filter: url(#…)`. Quest'ultimo funziona solo in Chromium (lo dichiarano gli
-autori di kwlck/liquid-glass-web e rdev/liquid-glass-react, e BT lo limita a Chromium 156
-verificato) e non va confuso con questa tecnica.
+autori di kwlck/liquid-glass-web e rdev/liquid-glass-react) e non va confuso con questa
+tecnica.
 
 Un solo elemento `<filter>` per sorgente, in coordinate `userSpaceOnUse` (origine nel bordo
 della sorgente, regione = dimensioni della sorgente). Per ogni lente `n`:

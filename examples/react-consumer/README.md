@@ -1,11 +1,11 @@
 # Progetto esterno di prova (React + TypeScript)
 
 Un’app Vite + React che **non** conosce Jello Studio: installa il pacchetto React esportato
-(`vendor/jello-bt-darts-react`, uguale allo zip «Componente React + TypeScript» del laboratorio) con
+(`vendor/jello-bottom-navigation-react`, uguale allo zip «Componente React + TypeScript» del laboratorio) con
 `npm install` e lo usa come una dipendenza qualsiasi.
 
 ```sh
-npm run consumer:prepare   # dalla radice: build:lib, export del template BT Darts personalizzato, npm install, typecheck, build
+npm run consumer:prepare   # dalla radice: build:lib, export della demo Bottom Navigation con una quarta tab, npm install, typecheck, build
 npm run consumer:serve     # http://127.0.0.1:4176/
 ```
 

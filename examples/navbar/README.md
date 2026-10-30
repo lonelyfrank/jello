@@ -1,12 +1,11 @@
 # Esempio consumatore: navbar glass
 
-Una navbar in basso ispirata al caso d’uso BT (contenuto che scorre, tab attiva, pressione),
-costruita **solo** con il pacchetto esportato: runtime costruito e `material.json` in `./jello/`.
-Non importa sorgenti del laboratorio, React o il relay. Nessuna funzione di BT è implementata e la
-repository BT non è stata modificata; i dati sono di esempio.
+Una navbar in basso sopra contenuto che scorre (tab attiva, pressione, tastiera), costruita
+**solo** con il pacchetto esportato: runtime costruito e `material.json` in `./jello/`. Non importa
+sorgenti del laboratorio, React o il relay. I dati sono di esempio.
 
 ```sh
-npm run example:prepare   # build:lib + pacchetto del preset "navbar" in examples/navbar-bt/jello/
+npm run example:prepare   # build:lib + pacchetto del preset "navbar" in examples/navbar/jello/
 npm run example:serve     # http://127.0.0.1:4175/
 ```
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PARAM_INDEX, parseNumberInput, type NumberDescriptor } from '../../src/core/params';
 import { PRESETS } from '../../src/core/presets';
+import { isBuiltinId, legacyPreset } from '../../src/model';
 import { saturationMatrix } from '../../src/core/renderer/source-filter';
 import { applicability } from '../../src/lab/applicability';
 import { optionsFromQuery } from '../../src/lab/state';
@@ -84,7 +85,9 @@ describe('lab URL state', () => {
   it('object=navbar starts on the app scene with the navbar preset unless overridden', () => {
     expect(q('object=navbar')).toMatchObject({ preset: 'navbar', options: { object: 'navbar', scene: 'app' } });
     expect(q('object=navbar&scene=grid&preset=optics')).toMatchObject({ preset: 'optics', options: { scene: 'grid' } });
-    expect(q('object=navbar&nav=matrix').options.nav).toBe('matrix');
+    expect(q('object=navbar&nav=explore').options.nav).toBe('explore');
+    // Tabs of the earlier demo navbar are no longer valid: first tab.
+    expect(q('object=navbar&nav=matrix').options.nav).toBe('home');
   });
 
   it('unknown values fall back instead of breaking', () => {
@@ -109,10 +112,26 @@ describe('lab URL state', () => {
 });
 
 describe('presets', () => {
-  it('first-milestone presets are unchanged and the navbar preset is added', () => {
-    expect(PRESETS.map((p) => p.id)).toEqual(['jello', 'optics', 'satin', 'deep', 'cable', 'bt', 'navbar']);
-    const bt = PRESETS.find((p) => p.id === 'bt')!.params;
-    expect(bt).toMatchObject({ band: 12, refraction: 5, profile: 'bump', blur: 10, saturation: 150, tintOpacity: 0.14 });
+  it('the official presets are Jello’s own: no approximation of other projects', () => {
+    expect(PRESETS.map((p) => p.id)).toEqual(['jello', 'optics', 'satin', 'deep', 'navbar']);
+    expect(PRESETS.every((p) => !p.approximation)).toBe(true);
+    const text = JSON.stringify(PRESETS);
+    expect(text).not.toMatch(/cable|\bbt\b|score board|darts/i);
+  });
+
+  it('removed presets resolve through the compatibility table, with their original parameters', () => {
+    for (const id of ['cable', 'bt']) {
+      expect(PRESETS.some((p) => p.id === id)).toBe(false);
+      expect(isBuiltinId(id)).toBe(false);
+      const legacy = legacyPreset(id)!;
+      expect(isBuiltinId(legacy.replacement)).toBe(true);
+      expect(legacy.name).not.toMatch(/cable|\bbt\b/i);
+    }
+    expect(legacyPreset('bt')!.params).toMatchObject({ band: 12, refraction: 5, profile: 'bump', blur: 10, saturation: 150, tintOpacity: 0.14 });
+    expect(legacyPreset('cable')!.params).toMatchObject({ shape: 'rounded', radius: 28, refraction: 0, blur: 30, saturation: 185, tintOpacity: 0.43 });
+    expect(legacyPreset('jello')).toBeUndefined();
+    // URLs naming them fall back instead of breaking.
+    expect(optionsFromQuery(new URLSearchParams('preset=bt'), false).preset).toBe('jello');
   });
 });
 

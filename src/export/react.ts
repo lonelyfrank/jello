@@ -33,9 +33,9 @@ export interface ReactPackageInput {
 }
 
 export interface ReactNames {
-  /** Generated component, e.g. BtDartsNavigation. */
+  /** Generated component, e.g. BottomNavigation, MyAppNavigation. */
   component: string;
-  /** Union of tab ids, e.g. BtDartsTabId. */
+  /** Union of tab ids, e.g. BottomNavigationTabId, MyAppTabId. */
   tabType: string;
   packageName: string;
   root: string;
@@ -50,10 +50,10 @@ export function reactNames(doc: ComponentDocument): ReactNames {
   let base = words.map((w) => w[0]!.toUpperCase() + w.slice(1).toLowerCase()).join('') || 'Jello';
   if (/^\d/.test(base)) base = `Jello${base}`;
   const component = /Nav(igation|bar)?$/.test(base) ? base : `${base}Navigation`;
-  // Named after the component, not its storage id: "BT Darts" → @jello-export/bt-darts.
+  // Named after the component, not its storage id: "Bottom Navigation" → @jello-export/bottom-navigation.
   const slugOf = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   const slug = slugOf(doc.name) || slugOf(doc.id) || 'component';
-  return { component, tabType: `${base.replace(/Nav(igation|bar)?$/, '') || base}TabId`, packageName: `@jello-export/${slug}`, root: `jello-${slug}-react` };
+  return { component, tabType: `${base}TabId`, packageName: `@jello-export/${slug}`, root: `jello-${slug}-react` };
 }
 
 const enc = new TextEncoder();
@@ -265,7 +265,7 @@ import {
   createBottomNavigation,
   type BackendRequest,
   type BnLayout,
-  type BottomNavigation,
+  type BottomNavigation as BottomNavigationInstance,
   type BottomNavigationEvent,
   type BottomNavigationOptions,
   type ComponentDocument,
@@ -296,7 +296,7 @@ export function ${n.component}(props: ${n.component}Props): ReactElement {
   const { activeTab, defaultActiveTab, sourceRef, scrollerRef, backend, anchor, className } = props;
   const label = props['aria-label'];
   const slot = useRef<HTMLDivElement>(null);
-  const nav = useRef<BottomNavigation | null>(null);
+  const nav = useRef<BottomNavigationInstance | null>(null);
   const latest = useRef(props);
   latest.current = props;
   const controlled = activeTab !== undefined;

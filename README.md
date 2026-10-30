@@ -8,9 +8,10 @@ Jello è un laboratorio di materiali e componenti UI, riutilizzabili su web desk
 mobile e app Android basate su WebView. Due modalità condividono lo stesso motore di anteprima:
 
 - **Material Lab** — si creano, modificano, verificano, salvano ed esportano materiali; **Glass**
-  è il primo materiale funzionante, **Gel/Jelly** è in sviluppo e non è utilizzabile.
+  è il primo materiale funzionante (preset ufficiali: Jello · iniziale, Ottica nuda, Satinato,
+  Lente marcata, Jello · navbar), **Gel/Jelly** è in sviluppo e non è utilizzabile.
 - **Component Builder** — si configura una componente che usa un materiale (oggi **Bottom
-  Navigation**, con il template BT Darts), la si salva nella libreria e la si esporta come
+  Navigation**, dalla demo generica Home · Explore · Profile), la si salva nella libreria e la si esporta come
   componente **React + TypeScript** installabile, oppure si esporta il solo materiale.
   Vedi [Component Builder e componenti](docs/component-builder.md).
 
@@ -35,31 +36,36 @@ npm run dev          # laboratorio: http://localhost:5173 · anteprima leggera: 
 | `npm run test:e2e:local` | Playwright su Chromium, Firefox e viewport Pixel 7 emulato (avvia laboratorio, esempio, progetto React esterno e relay) |
 | `npm run test:e2e` | come sopra + WebKit (dipendenze di sistema necessarie) |
 | `npm run test:perf` / `node scripts/perf.mjs --suite navbar\|scene` | misure headless → `docs/perf/` |
-| `npm run example:prepare` · `npm run example:serve` | pacchetto del preset navbar → esempio consumatore su :4175 |
+| `npm run example:prepare` · `npm run example:serve` | pacchetto del preset `navbar` → esempio consumatore `examples/navbar` su :4175 |
 | `npm run consumer:prepare` · `npm run consumer:serve` | navbar React esportata → progetto esterno `examples/react-consumer` (npm install, typecheck, build) su :4176 |
 | `npm run relay` | relay locale per l’anteprima sul telefono (:5174) |
 | `npm run verify` | typecheck + unit + build + e2e locali |
 
 ## Il laboratorio
 
-Nell’intestazione: **Material Lab** / **Component Builder** e **Esporta…** (solo materiale,
+Il lavoro è organizzato in **progetti** ([Progetti, asset e flussi guidati](docs/projects.md)):
+**Home**, **Materiali**, **Componenti**, **Asset** e **Impostazioni**, con flussi guidati per
+nuovo progetto, importazione ed esportazione del progetto (`.jello`, JSON, variabili CSS).
+Nell’intestazione della pagina Materiali o Componenti: **Esporta…** (solo materiale,
 componente + materiale, configurazione JSON, con l’elenco di file e dipendenze).
 
-Material Lab: dashboard React a tre colonne (pannelli laterali richiudibili, scorrimento indipendente; sotto
+Materiali (Material Lab): dashboard React a tre colonne (pannelli laterali richiudibili, scorrimento indipendente; sotto
 900 px l’anteprima resta in alto e libreria e proprietà si aprono in un pannello inferiore).
 
-- **Sinistra** — libreria: preset inclusi (sola lettura) e materiali personali; nuovo, duplica,
-  rinomina, elimina, «Salva come copia»; famiglie in sviluppo mostrate disattivate. Componente
+- **Sinistra** — libreria in tre schede (Jello · I miei · Preferiti): preset inclusi (sola lettura)
+  e materiali personali del progetto; nuovo, duplica, rinomina, elimina (con conferma), «Salva come
+  copia»; famiglie in sviluppo mostrate disattivate. Componente
   (capsula, navbar, pulsante, card, pannello), sorgente e sfondo (scene di prova, immagine locale,
   texture della scena), ambiente (tema, movimento e trasparenza ridotti).
 - **Centro** — anteprima: «Componenti reali» (CSS/SVG su HTML vero) o «Scena controllata»
   (WebGL2 su texture), Singola/A·B, desktop / telefono 390 px / dimensioni personalizzate, pausa,
   ripristino, scroll in cima, metriche misurabili.
-- **Destra** — proprietà: materiale, geometria, comportamento (generati dalla tabella dei
-  parametri, con validazione dei campi numerici), profilo qualità, renderer richiesto ed
-  effettivo con motivi e livelli di supporto, compatibilità e diagnostica (mappa di displacement,
-  misura dei frame, risorse WebGL2, perdita del contesto simulata), import/export, anteprima sul
-  telefono.
+- **Destra** — due schede. *Parametri*: materiale, geometria, comportamento (generati dalla tabella
+  dei parametri, con validazione dei campi numerici), import/export, anteprima sul telefono.
+  *Rendering*: renderer richiesto ed effettivo con motivi e livelli di supporto, accessibilità
+  (movimento e trasparenza ridotti), profilo qualità, compatibilità e diagnostica (mappa di
+  displacement, misura dei frame, risorse WebGL2, perdita del contesto simulata). Con la
+  trasparenza ridotta un avviso sopra l’anteprima dice perché il materiale è opaco.
 
 Salvataggio automatico in IndexedDB con stato visibile («Salvato alle…», «Non salvato: spazio
 esaurito», «Non persistente: solo questa scheda»). Gli scenari restano riproducibili dall’URL; le
@@ -106,7 +112,7 @@ src/preview/       pagina leggera per telefono e WebView (senza editor)
 src/sync/          protocollo di sincronizzazione (versionato, validato)
 src/export/        adapter di export: materiale (runtime o solo CSS), componente React + TS, JSON; zip
 tools/relay/       relay di sviluppo (Node http)
-examples/navbar-bt esempio consumatore: navbar su contenuto che scorre, solo pacchetto esportato
+examples/navbar esempio consumatore: navbar su contenuto che scorre, solo pacchetto esportato
 examples/react-consumer progetto React + TS esterno che installa la navbar esportata
 apps/android-preview contenitore Capacitor che carica preview.html
 tests/unit, tests/e2e, verification/, docs/
@@ -139,6 +145,7 @@ nei browser headless. Dati in `docs/perf/`.
 ## Documenti
 
 - [Architettura e confini](docs/architecture.md) · [Component Builder e componenti](docs/component-builder.md)
+- [Progetti, asset e flussi guidati](docs/projects.md)
 - [Scelte di rendering](docs/rendering.md) · [Modello del materiale](docs/material-model.md)
 - [Esportazione](docs/export.md) · [Anteprima sul telefono e app Android](docs/phone-preview.md)
 - [Compatibilità ed evidenze](docs/compatibility.md) · [Prove su dispositivo](docs/device-testing.md)

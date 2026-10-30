@@ -263,12 +263,13 @@ export function iconFromSvg(text: string, name: string): IconImport {
 
 /** Built-in icons: Jello's own drawings, 24×24, stroke 1.8, round caps. */
 export const BUILTIN_ICONS: Readonly<Record<string, { label: string; body: string }>> = {
-  home: { label: 'Home', body: '<path d="M4 10.6 12 4l8 6.6"/><path d="M6.5 9.2V20h11V9.2"/><path d="M10 20v-5.2h4V20"/>' },
+  home: { label: 'Casa', body: '<path d="M4 10.6 12 4l8 6.6"/><path d="M6.5 9.2V20h11V9.2"/><path d="M10 20v-5.2h4V20"/>' },
+  compass: { label: 'Bussola', body: '<circle cx="12" cy="12" r="8.5"/><path d="m15.4 8.6-2.1 4.7-4.7 2.1 2.1-4.7Z"/>' },
   live: {
-    label: 'Live',
+    label: 'Diretta',
     body: '<circle cx="12" cy="12" r="2.1"/><path d="M8.3 8.3a5.2 5.2 0 0 0 0 7.4M15.7 8.3a5.2 5.2 0 0 1 0 7.4"/><path d="M5.5 5.5a9.2 9.2 0 0 0 0 13M18.5 5.5a9.2 9.2 0 0 1 0 13"/>',
   },
-  matrix: { label: 'Matrice', body: '<rect x="4" y="4" width="16" height="16" rx="2.6"/><path d="M9.4 4v16M14.6 4v16M4 9.4h16M4 14.6h16"/>' },
+  matrix: { label: 'Griglia', body: '<rect x="4" y="4" width="16" height="16" rx="2.6"/><path d="M9.4 4v16M14.6 4v16M4 9.4h16M4 14.6h16"/>' },
   results: {
     label: 'Coppa',
     body: '<path d="M8 4.5h8v4.8a4 4 0 0 1-8 0V4.5Z"/><path d="M8 6.2H5.2a3 3 0 0 0 2.9 3.6M16 6.2h2.8a3 3 0 0 1-2.9 3.6"/><path d="M12 13.3v3.4M9 20h6M10.2 16.7h3.6"/>',

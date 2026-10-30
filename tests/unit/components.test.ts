@@ -28,7 +28,7 @@ import {
 import { BUILTIN_MATERIALS, createGlassDocument, MATERIALS, materialDefinition, withGlassParams } from '../../src/model';
 import { defaultParams, serializeParams } from '../../src/core/params';
 
-const bt = () => componentTemplate('bt-darts')!.create();
+const demo = () => componentTemplate('bottom-navigation')!.create();
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 describe('material registry', () => {
@@ -65,21 +65,25 @@ describe('component document', () => {
     }
   });
 
-  it('the BT Darts template is the demo navbar: four stable ids, navbar material, its layout', () => {
-    const d = bt();
-    expect(d.root.children.map((t) => [t.id, t.label])).toEqual([
-      ['home', 'Home'],
-      ['live', 'Live'],
-      ['matrix', 'Matrice'],
-      ['results', 'Risultati'],
+  it('the only official template is the generic Bottom Navigation: Home, Explore, Profile', () => {
+    expect(COMPONENT_TEMPLATES.map((t) => [t.id, t.label])).toEqual([['bottom-navigation', 'Bottom Navigation']]);
+    expect(componentTemplate('bt-darts')).toBeUndefined();
+    expect(JSON.stringify(COMPONENT_TEMPLATES.map((t) => t.create()))).not.toMatch(/darts|\bbt\b|cable|matrice|risultati/i);
+    const d = demo();
+    expect(d.root.children.map((t) => [t.id, t.label, t.icon])).toEqual([
+      ['home', 'Home', { kind: 'builtin', name: 'home' }],
+      ['explore', 'Explore', { kind: 'builtin', name: 'compass' }],
+      ['profile', 'Profile', { kind: 'builtin', name: 'user' }],
     ]);
+    expect(d.root.children.every((t) => t.value === null)).toBe(true);
+    expect(d.root.responsive.breakpoints).toEqual([]);
     expect(d.material.preset).toBe('navbar');
     expect(d.material.document.id).toBe('navbar');
     expect(d.root.layout).toMatchObject({ height: 64, padding: 6, gap: 2, radius: 'capsule', offset: 12, maxWidth: 440 });
   });
 
   it('an edited component (custom tab, svg icon, breakpoint, overrides) round-trips exactly', () => {
-    let d = bt();
+    let d = demo();
     const icon = iconFromSvg('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor"/></svg>', 'dot.svg');
     expect(icon.ok).toBe(true);
     const added = addTab(d.root, { label: 'Classifica' });
@@ -92,7 +96,7 @@ describe('component document', () => {
   });
 
   it('missing properties take defaults with a warning; unknown ones are reported and dropped', () => {
-    const raw = clone(bt()) as unknown as { root: Record<string, Record<string, unknown>>; extra?: number };
+    const raw = clone(demo()) as unknown as { root: Record<string, Record<string, unknown>>; extra?: number };
     delete raw.root.layout!.gap;
     (raw.root.layout as Record<string, unknown>).magic = 1;
     raw.extra = 1;
@@ -107,7 +111,7 @@ describe('component document', () => {
   });
 
   it('is atomic: every invalid value is reported and nothing is returned', () => {
-    const raw = clone(bt()) as unknown as Record<string, any>;
+    const raw = clone(demo()) as unknown as Record<string, any>;
     raw.root.layout.height = 999;
     raw.root.states.focus.color = 'red';
     raw.root.children[1].id = 'home';
@@ -123,7 +127,7 @@ describe('component document', () => {
   });
 
   it('refuses newer versions, unknown types and an invalid embedded material', () => {
-    const d = clone(bt()) as unknown as Record<string, any>;
+    const d = clone(demo()) as unknown as Record<string, any>;
     expect(parseComponent({ ...d, schemaVersion: 2 })).toMatchObject({ ok: false, errors: [expect.stringMatching(/più recente/)] });
     expect(parseComponent({ ...d, typeVersion: 5 })).toMatchObject({ ok: false, errors: [expect.stringMatching(/typeVersion 5/)] });
     expect(parseComponent({ ...d, type: 'carousel' })).toMatchObject({ ok: false, errors: [expect.stringMatching(/sconosciuto/)] });
@@ -136,25 +140,25 @@ describe('component document', () => {
   });
 
   it('migrates an embedded jello-glass v1 material (component keeps every other field)', () => {
-    const d = clone(bt()) as unknown as Record<string, any>;
+    const d = clone(demo()) as unknown as Record<string, any>;
     d.material.document = JSON.parse(serializeParams({ ...defaultParams(), blur: 9 }));
     const r = parseComponent(d);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.migratedFrom).toBe('jello-glass@1');
     expect(r.doc.material.document.material.blur).toBe(9);
-    expect(r.doc.root).toEqual(bt().root);
+    expect(r.doc.root).toEqual(demo().root);
   });
 
   it('a defaultTab that is not a tab falls back to the first one', () => {
-    const d = clone(bt());
+    const d = clone(demo());
     d.root.defaultTab = 'nowhere';
     const r = parseComponent(d);
     expect(r.ok && r.doc.root.defaultTab).toBe('home');
   });
 
   it('serialized documents contain no functions, only declarative events', () => {
-    const text = serializeComponent(bt());
+    const text = serializeComponent(demo());
     expect(text).not.toMatch(/function|=>/);
     expect(JSON.parse(text).root.interactions.events).toEqual({ change: 'jello-change', press: 'jello-press', reselect: 'jello-reselect' });
   });
@@ -162,48 +166,48 @@ describe('component document', () => {
   it('every described property has a valid default', () => {
     const root = createRoot([createTab('a', 'A')]);
     for (const f of BN_FIELDS) expect(setRootField(root, f.path, f.default), f.path).not.toBeNull();
-    expect(withRootField(bt(), 'layout.height', 20)).toBeNull();
+    expect(withRootField(demo(), 'layout.height', 20)).toBeNull();
   });
 });
 
 describe('editing tabs', () => {
   it('ids are stable, unique and independent from labels', () => {
-    const d = bt();
-    const a = addTab(d.root, { after: 'live' });
+    const d = demo();
+    const a = addTab(d.root, { after: 'explore' });
     expect(a.id).toBe('tab');
-    expect(a.root.children.map((t) => t.id)).toEqual(['home', 'live', 'tab', 'matrix', 'results']);
+    expect(a.root.children.map((t) => t.id)).toEqual(['home', 'explore', 'tab', 'profile']);
     const b = addTab(a.root);
     expect(b.id).toBe('tab-2');
-    const renamed = updateTab(b.root, 'tab', { label: 'Matrice' });
-    expect(renamed.children.find((t) => t.label === 'Matrice' && t.id === 'tab')).toBeTruthy();
+    const renamed = updateTab(b.root, 'tab', { label: 'Profile' });
+    expect(renamed.children.find((t) => t.label === 'Profile' && t.id === 'tab')).toBeTruthy();
     expect(uniqueId('Città è bella!', [])).toBe('citta-e-bella');
     expect(uniqueId('42', [])).toBe('tab-42');
   });
 
   it('no arbitrary maximum: 30 tabs are a valid document', () => {
-    let root = bt().root;
-    for (let i = 0; i < 26; i++) root = addTab(root).root;
+    let root = demo().root;
+    for (let i = 0; i < 27; i++) root = addTab(root).root;
     expect(root.children).toHaveLength(30);
-    expect(parseComponent({ ...bt(), root }).ok).toBe(true);
+    expect(parseComponent({ ...demo(), root }).ok).toBe(true);
   });
 
   it('duplicate, move, remove (never the last tab) and default tab follow', () => {
-    const d = bt();
-    const dup = duplicateTab(d.root, 'live');
-    expect(dup.id).toBe('live-copia');
-    expect(dup.root.children[2]).toMatchObject({ id: 'live-copia', label: 'Live (copia)', icon: { kind: 'builtin', name: 'live' } });
-    const moved = moveTab(dup.root, 'results', 0);
-    expect(moved.children.map((t) => t.id)).toEqual(['results', 'home', 'live', 'live-copia', 'matrix']);
-    expect(moveTab(moved, 'results', -5)).toBe(moved);
-    const removed = removeTab({ ...moved, defaultTab: 'results' }, 'results');
+    const d = demo();
+    const dup = duplicateTab(d.root, 'explore');
+    expect(dup.id).toBe('explore-copia');
+    expect(dup.root.children[2]).toMatchObject({ id: 'explore-copia', label: 'Explore (copia)', icon: { kind: 'builtin', name: 'compass' } });
+    const moved = moveTab(dup.root, 'profile', 0);
+    expect(moved.children.map((t) => t.id)).toEqual(['profile', 'home', 'explore', 'explore-copia']);
+    expect(moveTab(moved, 'profile', -5)).toBe(moved);
+    const removed = removeTab({ ...moved, defaultTab: 'profile' }, 'profile');
     expect(removed.defaultTab).toBe('home');
     const one = createRoot([createTab('only', 'Solo')]);
     expect(removeTab(one, 'only')).toBe(one);
   });
 
   it('per-tab overrides inherit from the root when null', () => {
-    const root = bt().root;
-    const t = updateTab(root, 'live', { style: { iconSize: 30 } as never }).children[1]!;
+    const root = demo().root;
+    const t = updateTab(root, 'explore', { style: { iconSize: 30 } as never }).children[1]!;
     expect(tabStyle(root, t)).toEqual({ iconSize: 30, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.1 });
   });
 });
@@ -211,9 +215,9 @@ describe('editing tabs', () => {
 describe('responsive', () => {
   it('breakpoints apply from the widest to the narrowest', () => {
     const root = {
-      ...bt().root,
+      ...demo().root,
       responsive: {
-        ...bt().root.responsive,
+        ...demo().root.responsive,
         breakpoints: [
           { id: 'tablet', maxWidth: 800, overrides: { 'layout.height': 60, 'layout.labels': 'active' } },
           { id: 'phone', maxWidth: 420, overrides: { 'layout.height': 56 } },
@@ -264,7 +268,7 @@ describe('svg icons', () => {
   });
 
   it('a stored component with tampered svg is refused at parse time', () => {
-    const d = clone(bt()) as ComponentDocument;
+    const d = clone(demo()) as ComponentDocument;
     d.root.children[0]!.icon = { kind: 'svg', name: 'x', viewBox: '0 0 1 1', body: '<path d="M0 0" onload="alert(1)"/>', paint: 'fill' };
     const r = parseComponent(d);
     expect(r.ok).toBe(false);
@@ -301,7 +305,7 @@ describe('material binding', () => {
   });
 
   it('the revision survives serialization; documents without it still parse', () => {
-    const d = { ...bt(), material: bindMaterial(personal(4), 'user-1') };
+    const d = { ...demo(), material: bindMaterial(personal(4), 'user-1') };
     const r = parseComponent(JSON.parse(serializeComponent(d)));
     expect(r.ok && r.doc.material).toEqual(d.material);
     const raw = clone(d) as unknown as { material: Record<string, unknown> };

@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { parseNumberInput, type NumberDescriptor, type ParamDescriptor } from '../../core/params';
 import type { Applicability } from '../applicability';
+import { ColorField, useProjectTokens } from './ColorPicker';
 
 const digits = (d: NumberDescriptor) => (d.step < 0.01 ? 3 : d.step < 0.1 ? 2 : d.step < 1 ? 1 : 0);
 /** Text shown in the numeric field: no trailing zeros, step precision. */
@@ -25,6 +26,7 @@ export interface ParamFieldProps {
 }
 
 export function ParamField({ d, value, applicability: a, support, onChange }: ParamFieldProps) {
+  const tokens = useProjectTokens();
   const disabled = !!a?.disabled;
   const state = a ? (a.disabled ? 'no' : 'inactive') : 'yes';
   const note = a?.note;
@@ -70,7 +72,7 @@ export function ParamField({ d, value, applicability: a, support, onChange }: Pa
     <div className="field param" data-param-field={d.key} data-applicable={state} data-support={support?.level}>
       <div className="field-head">
         {label}
-        <input id={`param-${d.key}`} type="color" data-param={d.key} aria-describedby={`desc-${d.key}`} value={String(value)} disabled={disabled} onChange={(e) => onChange(e.target.value)} />
+        <ColorField id={`param-${d.key}`} label={d.label} hex={String(value)} withAlpha={false} disabled={disabled} {...(tokens ? { tokens } : {})} onChange={(hex) => onChange(hex)} />
       </div>
       <p className="param-desc" id={`desc-${d.key}`}>
         {d.description}

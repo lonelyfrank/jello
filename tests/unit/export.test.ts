@@ -114,7 +114,7 @@ describe('examples', () => {
 });
 
 describe('export adapters', () => {
-  const bt = () => componentTemplate('bt-darts')!.create();
+  const demo = () => componentTemplate('bottom-navigation')!.create();
   /** File at `path` relative to the package root. */
   const text = (r: { root: string; files: { path: string; data: Uint8Array }[] }, path: string) => new TextDecoder().decode(r.files.find((f) => f.path === `${r.root}${path}`)!.data);
 
@@ -130,16 +130,16 @@ describe('export adapters', () => {
   });
 
   it('the React package contains component, typed wrapper, TSX source, config, material, runtime and example', async () => {
-    const doc = bt();
+    const doc = demo();
     const r = await componentReactAdapter.build({ component: doc, runtime, now });
-    expect(r.root).toBe('jello-bt-darts-react');
+    expect(r.root).toBe('jello-bottom-navigation-react');
     const paths = r.files.map((f) => f.path.slice(r.root.length + 1));
-    for (const p of ['package.json', 'index.js', 'index.d.ts', 'src/BtDartsNavigation.tsx', 'component.json', 'material.json', 'runtime/jello.js', 'runtime/types/runtime/index.d.ts', 'example/App.tsx', 'README.md', 'jello-manifest.json']) {
+    for (const p of ['package.json', 'index.js', 'index.d.ts', 'src/BottomNavigation.tsx', 'component.json', 'material.json', 'runtime/jello.js', 'runtime/types/runtime/index.d.ts', 'example/App.tsx', 'README.md', 'jello-manifest.json']) {
       expect(paths).toContain(p);
     }
     expect(paths.every((p) => !/(^|\/)src\/(lab|stage|core|model)/.test(p) && !p.endsWith('.map'))).toBe(true);
     const pkg = JSON.parse(text(r, '/package.json'));
-    expect(pkg).toMatchObject({ name: '@jello-export/bt-darts', peerDependencies: { react: '>=18', 'react-dom': '>=18' } });
+    expect(pkg).toMatchObject({ name: '@jello-export/bottom-navigation', peerDependencies: { react: '>=18', 'react-dom': '>=18' } });
     expect(pkg.dependencies).toBeUndefined();
     // Same document everywhere: component.json, the inline config of index.js, the material inside.
     const parsed = parseComponentText(text(r, '/component.json'));
@@ -151,40 +151,40 @@ describe('export adapters', () => {
     const imports = [...js.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
     expect(imports.sort()).toEqual(['./runtime/jello.js', 'react']);
     const dts = text(r, '/index.d.ts');
-    expect(dts).toContain('export type BtDartsTabId = "home" | "live" | "matrix" | "results";');
-    expect(dts).toContain('export declare function BtDartsNavigation(props: BtDartsNavigationProps): ReactElement;');
-    expect(text(r, '/src/BtDartsNavigation.tsx')).toContain("from '../runtime/jello.js'");
+    expect(dts).toContain('export type BottomNavigationTabId = "home" | "explore" | "profile";');
+    expect(dts).toContain('export declare function BottomNavigation(props: BottomNavigationProps): ReactElement;');
+    expect(text(r, '/src/BottomNavigation.tsx')).toContain("from '../runtime/jello.js'");
     const m = r.manifest as unknown as { kind: string; component: { tabs: string[] }; files: { path: string; sha256: string }[] };
     expect(m.kind).toBe('component-react');
-    expect(m.component.tabs).toEqual(['home', 'live', 'matrix', 'results']);
+    expect(m.component.tabs).toEqual(['home', 'explore', 'profile']);
     for (const f of m.files) expect(createHash('sha256').update(r.files.find((x) => x.path === `${r.root}/${f.path}`)!.data).digest('hex')).toBe(f.sha256);
   });
 
   it('the tab union follows the edited structure', async () => {
-    const doc = bt();
+    const doc = demo();
     const added = addTab(doc.root, { label: 'Classifica' });
     const r = await componentReactAdapter.build({ component: { ...doc, name: 'Mia App', root: added.root }, runtime, now });
     expect(r.root).toBe('jello-mia-app-react');
     expect(JSON.parse(text(r, '/package.json')).name).toBe('@jello-export/mia-app');
-    expect(text(r, '/index.d.ts')).toContain('export type MiaAppTabId = "home" | "live" | "matrix" | "results" | "tab";');
+    expect(text(r, '/index.d.ts')).toContain('export type MiaAppTabId = "home" | "explore" | "profile" | "tab";');
     expect(text(r, '/index.js')).toContain('export function MiaAppNavigation(props)');
   });
 
   it('refuses a runtime without declarations or with repository paths', async () => {
     const noTypes = { ...runtime, files: runtime.files.filter((f) => !f.path.startsWith('types/')) };
-    await expect(componentReactAdapter.build({ component: bt(), runtime: noTypes, now })).rejects.toThrow(/dichiarazioni/);
+    await expect(componentReactAdapter.build({ component: demo(), runtime: noTypes, now })).rejects.toThrow(/dichiarazioni/);
     const bad = { ...runtime, files: [...runtime.files, { path: 'src/lab/main.ts', data: enc.encode('') }] };
-    await expect(componentReactAdapter.build({ component: bt(), runtime: bad, now })).rejects.toThrow(/non ammesso/);
+    await expect(componentReactAdapter.build({ component: demo(), runtime: bad, now })).rejects.toThrow(/non ammesso/);
   });
 
   it('describes files and dependencies before building, and lists adapters by target', () => {
-    const req = { material: navbar, component: bt() };
+    const req = { material: navbar, component: demo() };
     expect(adaptersFor('material', req).map((a) => a.id)).toEqual(['material-runtime', 'material-css']);
     expect(adaptersFor('component', req).map((a) => a.id)).toEqual(['component-react']);
     expect(adaptersFor('component', { material: navbar })).toEqual([]);
     expect(adaptersFor('configuration', req).map((a) => a.id)).toEqual(['material-json', 'component-json']);
     const plan = componentReactAdapter.describe(req);
-    expect(plan.name).toBe('jello-bt-darts-react.zip');
+    expect(plan.name).toBe('jello-bottom-navigation-react.zip');
     expect(plan.dependencies.map((d) => [d.name, d.kind])).toEqual([
       ['@jello/runtime', 'bundled'],
       ['react, react-dom', 'peer'],
@@ -193,9 +193,9 @@ describe('export adapters', () => {
   });
 
   it('JSON configuration exports are the documents the lab saves', async () => {
-    const c = await exportAdapter('component-json')!.build({ component: bt() });
-    expect(c.files[0]!.path).toBe('bt-darts.jello-component.json');
-    expect(parseComponentText(new TextDecoder().decode(c.files[0]!.data))).toMatchObject({ ok: true, doc: bt() });
+    const c = await exportAdapter('component-json')!.build({ component: demo() });
+    expect(c.files[0]!.path).toBe('bottom-navigation.jello-component.json');
+    expect(parseComponentText(new TextDecoder().decode(c.files[0]!.data))).toMatchObject({ ok: true, doc: demo() });
     const m = await exportAdapter('material-json')!.build({ material: navbar });
     expect(parseMaterialText(new TextDecoder().decode(m.files[0]!.data))).toMatchObject({ ok: true, doc: navbar });
   });

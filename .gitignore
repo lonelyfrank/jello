@@ -5,7 +5,7 @@ test-results/
 playwright-report/
 *.log
 .vite/
-examples/navbar-bt/jello/
+examples/navbar/jello/
 apps/android-preview/node_modules/
 apps/android-preview/www/
 apps/android-preview/android/app/build/

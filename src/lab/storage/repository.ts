@@ -6,6 +6,10 @@
  *   projects   'last': the material open in the editor, its unsaved draft and the view
  *   assets     images chosen by the user, by SHA-256 (added in DB version 2)
  *   components saved components of the builder, jello-component documents (DB version 3)
+ *   projectdocs jello-project documents: settings, favourites and assets (DB version 4)
+ *
+ * Materials and components carry an optional `projectId`; records written before
+ * projects existed have none and are adopted by the first project.
  *
  * Every stored document is validated again when read (and migrated if it
  * is an older format). Failures are reported as StorageError with a kind,
@@ -14,10 +18,12 @@
 
 import { parseMaterial, type MaterialDocument } from '../../model';
 import { parseComponent, type ComponentDocument } from '../../components/document';
+import { parseProject } from '../../project/document';
+import type { ProjectDoc } from '../../project/types';
 import type { ViewOptions } from '../../stage/view';
 
 export const DB_NAME = 'jello-lab';
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 export type StorageErrorKind = 'unavailable' | 'quota' | 'blocked' | 'failed';
 
@@ -34,6 +40,8 @@ export class StorageError extends Error {
 export interface StoredMaterial {
   id: string;
   doc: MaterialDocument;
+  /** Owning project; absent on records from before projects. */
+  projectId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -41,6 +49,7 @@ export interface StoredMaterial {
 export interface StoredComponent {
   id: string;
   doc: ComponentDocument;
+  projectId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +64,9 @@ export interface ProjectRecord {
   imageHash?: string | null;
   /** Builder (DB version 3): open workspace, component, and the draft of an edited template. */
   workspace?: 'material' | 'builder';
+  /** Active project and the page shown (DB version 4). */
+  projectId?: string | null;
+  page?: 'home' | 'lab' | 'assets' | 'settings';
   componentId?: string | null;
   componentDraft?: ComponentDocument | null;
   savedAt: string;
@@ -87,6 +99,9 @@ export interface Repository {
   listComponents(): Promise<ReadReport<StoredComponent>>;
   putComponent(c: StoredComponent): Promise<void>;
   deleteComponent(id: string): Promise<void>;
+  listProjectDocs(): Promise<ReadReport<ProjectDoc>>;
+  putProjectDoc(p: ProjectDoc): Promise<void>;
+  deleteProjectDoc(id: string): Promise<void>;
   close(): void;
 }
 
@@ -102,6 +117,9 @@ export function upgrade(db: IDBDatabase, tx: IDBTransaction, oldVersion: number)
   }
   if (oldVersion < 3) {
     db.createObjectStore('components', { keyPath: 'id' });
+  }
+  if (oldVersion < 4) {
+    db.createObjectStore('projectdocs', { keyPath: 'id' });
   }
 }
 
@@ -140,9 +158,9 @@ class IdbRepository implements Repository {
     const raw = await req(tx.objectStore('materials').getAll());
     const items: StoredMaterial[] = [];
     const skipped: string[] = [];
-    for (const r of raw as { id: string; doc: unknown; createdAt: string; updatedAt: string }[]) {
+    for (const r of raw as { id: string; doc: unknown; projectId?: string; createdAt: string; updatedAt: string }[]) {
       const parsed = parseMaterial(r.doc);
-      if (parsed.ok) items.push({ id: r.id, doc: { ...parsed.doc, id: r.id }, createdAt: r.createdAt, updatedAt: r.updatedAt });
+      if (parsed.ok) items.push({ id: r.id, doc: { ...parsed.doc, id: r.id }, ...(r.projectId ? { projectId: r.projectId } : {}), createdAt: r.createdAt, updatedAt: r.updatedAt });
       else skipped.push(`${r.id}: ${parsed.errors[0] ?? 'non leggibile'}`);
     }
     items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -179,9 +197,9 @@ class IdbRepository implements Repository {
     const raw = await req(tx.objectStore('components').getAll());
     const items: StoredComponent[] = [];
     const skipped: string[] = [];
-    for (const r of raw as { id: string; doc: unknown; createdAt: string; updatedAt: string }[]) {
+    for (const r of raw as { id: string; doc: unknown; projectId?: string; createdAt: string; updatedAt: string }[]) {
       const parsed = parseComponent(r.doc);
-      if (parsed.ok) items.push({ id: r.id, doc: { ...parsed.doc, id: r.id }, createdAt: r.createdAt, updatedAt: r.updatedAt });
+      if (parsed.ok) items.push({ id: r.id, doc: { ...parsed.doc, id: r.id }, ...(r.projectId ? { projectId: r.projectId } : {}), createdAt: r.createdAt, updatedAt: r.updatedAt });
       else skipped.push(`${r.id}: ${parsed.errors[0] ?? 'non leggibile'}`);
     }
     items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -198,6 +216,28 @@ class IdbRepository implements Repository {
 
   async putProject(p: ProjectRecord): Promise<void> {
     await this.write('projects', (s) => s.put(p));
+  }
+
+  async listProjectDocs(): Promise<ReadReport<ProjectDoc>> {
+    const tx = this.db.transaction('projectdocs', 'readonly');
+    const raw = await req(tx.objectStore('projectdocs').getAll());
+    const items: ProjectDoc[] = [];
+    const skipped: string[] = [];
+    for (const r of raw as { id?: string }[]) {
+      const parsed = parseProject(r);
+      if (parsed.ok) items.push(parsed.doc);
+      else skipped.push(`${r.id ?? 'progetto'}: ${parsed.errors[0] ?? 'non leggibile'}`);
+    }
+    items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    return { items, skipped };
+  }
+
+  async putProjectDoc(p: ProjectDoc): Promise<void> {
+    await this.write('projectdocs', (s) => s.put(p));
+  }
+
+  async deleteProjectDoc(id: string): Promise<void> {
+    await this.write('projectdocs', (s) => s.delete(id));
   }
 
   async putAsset(a: StoredAsset): Promise<void> {
@@ -231,6 +271,7 @@ export class MemoryRepository implements Repository {
   private project: ProjectRecord | null = null;
   private readonly assets = new Map<string, StoredAsset>();
   private readonly components = new Map<string, StoredComponent>();
+  private readonly projectDocs = new Map<string, ProjectDoc>();
   constructor(readonly reason: string) {}
 
   async listMaterials() {
@@ -262,6 +303,15 @@ export class MemoryRepository implements Repository {
   }
   async deleteComponent(id: string) {
     this.components.delete(id);
+  }
+  async listProjectDocs() {
+    return { items: [...this.projectDocs.values()], skipped: [] };
+  }
+  async putProjectDoc(p: ProjectDoc) {
+    this.projectDocs.set(p.id, structuredClone(p));
+  }
+  async deleteProjectDoc(id: string) {
+    this.projectDocs.delete(id);
   }
   close() {}
 }

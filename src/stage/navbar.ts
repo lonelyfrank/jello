@@ -1,6 +1,6 @@
 /**
- * Demo navbar of the Material Lab: the BT Darts template of the generic
- * BottomNavigation component (src/runtime/bottom-navigation.ts), mounted on
+ * Demo navbar of the Material Lab: the official Bottom Navigation template of
+ * the generic BottomNavigation component (src/runtime/bottom-navigation.ts), mounted on
  * the stage's own material group. Nothing here renders tabs or material: the
  * adapter only keeps the lab's contract (class names, theme colours, the
  * NavId selection driven by the lab state).
@@ -9,7 +9,7 @@
  *     span.jello-surface              material, added by the group
  *     div.jello-bnav-track
  *       span.nav-indicator            selection layer (not a second lens)
- *       button.nav-item × 4           icon + label, never filtered or scaled
+ *       button.nav-item × 3           icon + label, never filtered or scaled
  *
  * Selection is controlled (`aria-current`, from the lab state); press is
  * transient and never changes the selection by itself.
@@ -38,7 +38,7 @@ export class Navbar {
   constructor(options: NavbarOptions) {
     this.nav = new BottomNavigation({
       container: options.overlay,
-      config: componentTemplate('bt-darts')!.create(),
+      config: componentTemplate('bottom-navigation')!.create(),
       group: options.group,
       scroller: options.scroller,
       activeTab: options.selected,

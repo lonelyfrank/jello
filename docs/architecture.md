@@ -13,7 +13,7 @@ non vi entra mai.
                  └──────────────────────────────▲───────────────────────────────────┘
                                                 │ stessa implementazione
        ┌──────────────────────┬─────────────────┼────────────────┬────────────────────┐
-   src/stage              src/lab            src/preview     src/export        examples/navbar-bt
+   src/stage              src/lab            src/preview     src/export        examples/navbar
    anteprima condivisa    editor React       pagina telefono  pacchetti         consumatore (solo
    (stage, scene,         + storage IDB      (senza editor)   (puro, no DOM)    pacchetto esportato)
     componenti demo)      + sync sender      + sync receiver
@@ -50,12 +50,20 @@ manifest).
 ```
  jello-component ──► BottomNavigation (runtime, DOM) ──► MaterialGroup ──► GlassGroup (SVG/CSS)
       │                    ▲          ▲                       ▲
-      │                    │          └── navbar del Material Lab (template BT Darts)
+      │                    │          └── navbar del Material Lab (template Bottom Navigation)
       │                    └── anteprima del Component Builder (stesso stage, stesso gruppo)
       └──► adapter di export ──► pacchetto React (wrapper + lo stesso runtime costruito)
 ```
 
 Dettagli: [Component Builder e componenti](component-builder.md).
+
+## Progetti
+
+Il livello progetto (`src/project/`) è puro e senza DOM: tipi, documento `jello-project`, colori
+(HEX · RGB · HSL · OKLCH, contrasto WCAG), modifica degli asset, pacchetto `.jello` (ZIP) e pianificazione
+dell'import con i conflitti. `src/lab/projects.ts` lo collega allo storage e alla sessione. I
+materiali e le componenti restano nei loro formati e portano solo un `projectId` nello store.
+Dettagli: [Progetti, asset e flussi guidati](projects.md).
 
 ## Stato, React e ciclo di rendering
 
@@ -63,6 +71,9 @@ Dettagli: [Component Builder e componenti](component-builder.md).
   `useSyncExternalStore`.
 - Le azioni (`src/lab/session.ts`) applicano ogni modifica **prima** al `PreviewController`
   (chiamata sincrona) e poi allo store: React ridisegna i pannelli, mai l’anteprima.
+- Le pagine (Home, Asset, Impostazioni) e i flussi sono React puro. L'area Materiali/Componenti
+  resta montata (nascosta con `hidden`) quando un'altra pagina è in primo piano, così l'anteprima
+  non si ricostruisce; al ritorno la capsula si ricentra se il laboratorio è stato aperto altrove.
 - Il contenuto della colonna centrale appartiene al controller: React fornisce solo il contenitore
   (`Preview.tsx`, `useLayoutEffect` → `session.mountPreview`).
 - Il movimento gira sui loop `requestAnimationFrame` del runtime, attivi solo quando qualcosa si

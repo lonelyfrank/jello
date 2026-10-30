@@ -15,7 +15,7 @@ run('node scripts/prepare-example.mjs --now 2026-01-01T00:00:00.000Z');
 run('node scripts/prepare-consumer.mjs --now 2026-01-01T00:00:00.000Z');
 
 const children = [
-  spawn('node', ['scripts/serve-static.mjs', 'examples/navbar-bt', '4175'], { stdio: 'inherit' }),
+  spawn('node', ['scripts/serve-static.mjs', 'examples/navbar', '4175'], { stdio: 'inherit' }),
   spawn('node', ['scripts/serve-static.mjs', 'examples/react-consumer/dist', '4176'], { stdio: 'inherit' }),
   spawn('node', ['tools/relay/relay.mjs'], { stdio: 'inherit', env: { ...process.env, JELLO_RELAY_HOST: '127.0.0.1', JELLO_RELAY_PORT: '5174' } }),
   spawn('npx', ['vite', 'preview', '--host', '127.0.0.1', '--port', '4173', '--strictPort'], { stdio: 'inherit' }),

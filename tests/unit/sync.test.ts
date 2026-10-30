@@ -98,12 +98,12 @@ describe('development relay', () => {
     });
     expect(decodeState(live[0]!).ok).toBe(true);
     // A preview that connects later (or reconnects) gets the last state at once.
-    const second = encodeState({ seq: 2, sentAt: 2, material, view: { ...view, nav: 'live' }, image: null });
+    const second = encodeState({ seq: 2, sentAt: 2, material, view: { ...view, nav: 'explore' }, image: null });
     await post(second);
     const replay = await events(1);
     const r = decodeState(replay[0]!);
     expect(r.ok && r.message.seq).toBe(2);
-    expect(r.ok && r.message.view.nav).toBe('live');
+    expect(r.ok && r.message.view.nav).toBe('explore');
   });
 
   it('stores assets by hash and refuses mismatching bytes', async () => {

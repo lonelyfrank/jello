@@ -14,5 +14,5 @@
     "types": ["vite/client"],
     "noEmit": true
   },
-  "include": ["src", "vendor/jello-bt-darts-react/src"]
+  "include": ["src", "vendor/jello-bottom-navigation-react/src"]
 }

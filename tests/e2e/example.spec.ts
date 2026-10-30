@@ -1,5 +1,5 @@
 /**
- * Consumer example (examples/navbar-bt), served on its own origin from the
+ * Consumer example (examples/navbar), served on its own origin from the
  * export package prepared with the built library: it must never fetch lab
  * sources.
  */
@@ -35,26 +35,26 @@ test('loads the built runtime from the package, never the lab sources', async ({
 
 test('active tab, press and scrolling content', async ({ page }) => {
   await open(page);
-  const live = page.locator('.tab[data-tab=live]');
-  await live.click();
-  await expect(live).toHaveAttribute('aria-current', 'page');
+  const explore = page.locator('.tab[data-tab=explore]');
+  await explore.click();
+  await expect(explore).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('.tab[data-tab=home]')).not.toHaveAttribute('aria-current', 'page');
-  await expect(page.locator('#sectionTitle')).toHaveText('Live');
+  await expect(page.locator('#sectionTitle')).toHaveText('Explore');
   // Press is transient and does not select.
-  const box = (await page.locator('.tab[data-tab=results]').boundingBox())!;
+  const box = (await page.locator('.tab[data-tab=profile]').boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
   await expect(page.locator('#tabbar')).toHaveAttribute('data-pressed');
   await page.mouse.move(box.x + box.width / 2, box.y - 200);
   await page.mouse.up();
   await expect(page.locator('#tabbar')).not.toHaveAttribute('data-pressed');
-  expect(await ex<string>(page, 'return e.selected')).toBe('live');
+  expect(await ex<string>(page, 'return e.selected')).toBe('explore');
   // Keyboard.
-  await live.focus();
+  await explore.focus();
   await page.keyboard.press('ArrowRight');
-  await expect(page.locator('.tab[data-tab=matrix]')).toBeFocused();
+  await expect(page.locator('.tab[data-tab=profile]')).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(page.locator('.tab[data-tab=matrix]')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.tab[data-tab=profile]')).toHaveAttribute('aria-current', 'page');
   // Content scrolls under the bar (wheel over the bar too).
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.wheel(0, 400);

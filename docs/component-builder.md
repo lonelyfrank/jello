@@ -14,7 +14,8 @@ un solo filtro, una sola superficie dopo cambi ripetuti di modalità).
 
 ## Flusso
 
-1. **Component Builder** → *Componenti → Bottom Navigation · BT Darts* (template).
+1. **Component Builder** → *Componenti → Template ufficiali Jello → Bottom Navigation*: la demo
+   generica con tre tab (Home, Explore, Profile), tutta modificabile.
 2. *Struttura* (colonna sinistra): seleziona la radice o una tab; **+ Tab**, ←/→ per riordinare,
    **Duplica**, **Elimina** (non l’ultima).
 3. Inspector (destra), contestuale all’elemento selezionato, in sezioni richiudibili:
@@ -68,10 +69,10 @@ personale non rompe le componenti che lo usano: tengono la propria copia.
 
 ## BottomNavigation
 
-Componente generica estratta dalla navbar dimostrativa. La navbar del Material Lab **è** ora il
-template BT Darts di questa componente (`src/stage/navbar.ts` è un adattatore che conserva classi
-e colori del tema del laboratorio): un solo codice per la demo, il builder e l’export, coperto dai
-18 test e2e della navbar che già esistevano.
+Componente generica, definita da uno schema serializzabile senza valori legati a un progetto. La
+navbar del Material Lab **è** il template ufficiale di questa componente (`src/stage/navbar.ts` è un
+adattatore che conserva classi e colori del tema del laboratorio): un solo codice per la demo, il
+builder e l’export, coperto dai test e2e della navbar.
 
 ```
 nav.jello-bnav               una superficie di materiale per tutta la barra
@@ -113,7 +114,7 @@ Lo stesso formato per builder, libreria, export e — in futuro — CLI, server 
 {
   "format": "jello-component", "schemaVersion": 1,
   "type": "bottom-navigation", "typeVersion": 1,
-  "id": "bt-darts", "name": "BT Darts", "runtime": { "min": "0.2.0" },
+  "id": "bottom-navigation", "name": "Bottom Navigation", "runtime": { "min": "0.2.0" },
   "material": { "family": "glass", "preset": "navbar", "revision": "1a2b3c4d", "document": { /* jello-material v2 completo */ } },
   "root": {
     "kind": "bottom-navigation", "id": "root", "label": "Navigazione principale",
@@ -127,7 +128,7 @@ Lo stesso formato per builder, libreria, export e — in futuro — CLI, server 
     "children": [ { "kind": "tab", "id": "home", "label": "Home", "icon": { "kind": "builtin", "name": "home" },
                     "value": null, "disabled": false, "style": { "iconSize": null, "fontSize": null, "fontWeight": null, "letterSpacing": null } } ]
   },
-  "meta": { "createdAt": null, "updatedAt": null, "basedOn": "bt-darts", "notes": "" }
+  "meta": { "createdAt": null, "updatedAt": null, "basedOn": "bottom-navigation", "notes": "" }
 }
 ```
 
@@ -167,6 +168,20 @@ Il tipo di disegno (tratto o riempimento) è rilevato e applicato con `currentCo
 - `src/runtime/materials.ts` — runtime dei materiali per famiglia (`createMaterialGroup`).
 - `src/components/registry.ts` — **tipi di componente**: Bottom Navigation disponibile; Desktop
   Navbar, Floating Dock, Flyout Menu elencati come «in arrivo», senza implementazioni fittizie.
+
+## Libreria: ufficiale e personale
+
+| | Dove | Modificabile |
+| --- | --- | --- |
+| **Template ufficiali Jello** | in codice (`COMPONENT_TEMPLATES`): oggi solo *Bottom Navigation* | no: le modifiche sono una bozza finché non si salvano |
+| **Componenti salvate** | IndexedDB, store `components` | sì, salvataggio automatico |
+| **Preset materiali personali** | IndexedDB, store `materials` | sì (Material Lab) |
+
+Il template `bt-darts` della fase sperimentale non è più ufficiale. Un link o un progetto che lo
+nomina apre *Bottom Navigation* (con un avviso); una sua bozza non salvata resta aperta, da salvare
+nella libreria. Le componenti personali che ne derivano — anche con id `bt-darts`, se importate —
+restano componenti personali: non vengono cancellate né distribuite come template. Le loro icone
+(`live`, `matrix`, `results`) restano nel set incluso per compatibilità.
 
 ## Limiti attuali
 

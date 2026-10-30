@@ -4,21 +4,21 @@
  * report which tab was chosen. Navigation is the app's own state.
  */
 import { useRef, useState } from 'react';
-import { BtDartsNavigation, config, tabs, type BtDartsTabId, type BottomNavigationEvent } from '@jello-export/bt-darts';
+import { BottomNavigation, config, tabs, type BottomNavigationTabId, type BottomNavigationEvent } from '@jello-export/bottom-navigation';
 
 declare global {
   interface Window {
-    __consumer: { selected: BtDartsTabId; events: string[] };
+    __consumer: { selected: BottomNavigationTabId; events: string[] };
   }
 }
 
-const LABEL = Object.fromEntries(config.root.children.map((t) => [t.id, t.label])) as Record<BtDartsTabId, string>;
-window.__consumer = { selected: config.root.defaultTab as BtDartsTabId, events: [] };
+const LABEL = Object.fromEntries(config.root.children.map((t) => [t.id, t.label])) as Record<BottomNavigationTabId, string>;
+window.__consumer = { selected: config.root.defaultTab as BottomNavigationTabId, events: [] };
 
 export function App() {
   const content = useRef<HTMLElement>(null);
-  const [tab, setTab] = useState<BtDartsTabId>(config.root.defaultTab as BtDartsTabId);
-  const log = (name: string) => (id: BtDartsTabId, e: BottomNavigationEvent) => window.__consumer.events.push(`${name}:${id}:${e.value ?? ''}`);
+  const [tab, setTab] = useState<BottomNavigationTabId>(config.root.defaultTab as BottomNavigationTabId);
+  const log = (name: string) => (id: BottomNavigationTabId, e: BottomNavigationEvent) => window.__consumer.events.push(`${name}:${id}:${e.value ?? ''}`);
   return (
     <>
       <main ref={content} className="content" id="content" tabIndex={0} aria-labelledby="title">
@@ -33,7 +33,7 @@ export function App() {
           ))}
         </ol>
       </main>
-      <BtDartsNavigation
+      <BottomNavigation
         sourceRef={content}
         activeTab={tab}
         onChange={(id, e) => {

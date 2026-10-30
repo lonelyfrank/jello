@@ -27,7 +27,7 @@ test('renders the exported structure with one material surface over the app cont
   const nav = page.locator('nav.jello-bnav');
   await expect(nav).toHaveAttribute('aria-label', exported.root.label);
   await expect(tabs(page)).toHaveText(exported.root.children.map((t: { label: string }) => t.label));
-  await expect(tabs(page).nth(4)).toHaveAttribute('data-value', '/classifica');
+  await expect(tabs(page).nth(3)).toHaveAttribute('data-value', '/settings');
   expect(await page.locator('nav.jello-bnav .jello-surface').count()).toBe(1);
   // Layout from the configuration: 66 px tall, fixed to the viewport, at most 440 px wide.
   const box = (await nav.boundingBox())!;
@@ -51,16 +51,16 @@ test('uses refraction where the engine supports SVG filters on HTML, CSS elsewhe
 
 test('controlled mode: the app owns the selection; events carry stable ids and values', async ({ page }) => {
   await expect(page.locator('#title')).toHaveText('Home');
-  await tabs(page).filter({ hasText: 'Classifica' }).click();
-  await expect(page.locator('#title')).toHaveText('Classifica');
-  await expect(tabs(page).filter({ hasText: 'Classifica' })).toHaveAttribute('aria-current', 'page');
+  await tabs(page).filter({ hasText: 'Settings' }).click();
+  await expect(page.locator('#title')).toHaveText('Settings');
+  await expect(tabs(page).filter({ hasText: 'Settings' })).toHaveAttribute('aria-current', 'page');
   await expect(tabs(page).filter({ hasText: 'Home' })).not.toHaveAttribute('aria-current', 'page');
   const events = await page.evaluate(() => window.__consumer.events);
-  expect(events).toContain('press:tab:/classifica');
-  expect(events).toContain('change:tab:/classifica');
+  expect(events).toContain('press:tab:/settings');
+  expect(events).toContain('change:tab:/settings');
   // Same tab again: reselect, no change.
   await page.locator('#content').evaluate((el) => (el.scrollTop = 400));
-  await tabs(page).filter({ hasText: 'Classifica' }).click();
+  await tabs(page).filter({ hasText: 'Settings' }).click();
   await expect.poll(() => page.evaluate(() => window.__consumer.events.filter((e) => e.startsWith('reselect')).length)).toBe(1);
   await expect.poll(() => page.locator('#content').evaluate((el) => el.scrollTop)).toBe(0);
 });
@@ -72,13 +72,13 @@ test('keyboard: arrows move focus, Enter selects, focus is visible', async ({ pa
   await expect(page.locator('#title')).toHaveText('Home');
   expect(await tabs(page).nth(1).evaluate((el) => getComputedStyle(el).outlineStyle)).not.toBe('none');
   await page.keyboard.press('Enter');
-  await expect(page.locator('#title')).toHaveText('Live');
+  await expect(page.locator('#title')).toHaveText('Explore');
 });
 
 test('the project ships the same runtime the lab previews with', async () => {
   const hash = (p: string) => createHash('sha256').update(readFileSync(new URL(p, import.meta.url))).digest('hex');
-  expect(hash('../../examples/react-consumer/vendor/jello-bt-darts-react/runtime/jello.js')).toBe(hash('../../dist-lib/jello.js'));
-  const pkg = JSON.parse(readFileSync(new URL('../../examples/react-consumer/vendor/jello-bt-darts-react/package.json', import.meta.url), 'utf8'));
+  expect(hash('../../examples/react-consumer/vendor/jello-bottom-navigation-react/runtime/jello.js')).toBe(hash('../../dist-lib/jello.js'));
+  const pkg = JSON.parse(readFileSync(new URL('../../examples/react-consumer/vendor/jello-bottom-navigation-react/package.json', import.meta.url), 'utf8'));
   expect(Object.keys(pkg.dependencies ?? {})).toEqual([]);
   expect(Object.keys(pkg.peerDependencies)).toEqual(['react', 'react-dom']);
 });

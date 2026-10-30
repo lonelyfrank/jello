@@ -20,6 +20,7 @@ import { applicability } from '../applicability';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
 import { ParamField } from './ParamField';
+import { Switch } from './ui';
 
 const OBJECT_LABEL = { capsule: 'Capsula', navbar: 'Navbar', button: 'Pulsante', card: 'Card', dialog: 'Pannello' } as const;
 const LEVEL_LABEL = { supported: 'supportato', approximated: 'approssimato', ignored: 'ignorato' } as const;
@@ -62,6 +63,7 @@ export function Properties({ session }: { session: LabSession }) {
     () => applicability({ object: options.object, path, motionReduced: report?.main.motionReduced ?? false, params, mode: options.mode }),
     [options.object, options.mode, path, report?.main.motionReduced, params],
   );
+  const tab = useLab((s) => s.panelTab);
   const preset = origin === 'builtin' && !modified ? materialId : '';
   const presetInfo = BUILTIN_MATERIALS.find((b) => b.doc.id === preset);
 
@@ -107,7 +109,19 @@ export function Properties({ session }: { session: LabSession }) {
           </p>
         </div>
       </div>
-      <div className="panel-body">
+      <div className="panel-tabs" role="tablist" aria-label="Pannello del materiale">
+        {(
+          [
+            ['params', 'Parametri'],
+            ['rendering', 'Rendering'],
+          ] as const
+        ).map(([id, label]) => (
+          <button key={id} type="button" role="tab" className="panel-tab" id={`panelTab-${id}`} aria-selected={tab === id} aria-controls={`panelTabs-${id}`} onClick={() => session.setPanelTab(id)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="panel-body" role="tabpanel" id="panelTabs-params" aria-labelledby="panelTab-params" hidden={tab !== 'params'}>
         <Section id="material" title="Materiale · Glass">
           <h3 className="panel-sub">Aspetto</h3>
           {byGroup('material')}
@@ -125,13 +139,27 @@ export function Properties({ session }: { session: LabSession }) {
         <Section id="behavior" title="Comportamento e interazione">
           {fields(SECTION_KEYS.behavior)}
         </Section>
-        <QualitySection session={session} />
-        <RendererSection session={session} effective={effective} />
-        <Diagnostics session={session} />
         <ImportExport session={session} />
         <PhoneSection session={session} />
       </div>
+      <div className="panel-body" role="tabpanel" id="panelTabs-rendering" aria-labelledby="panelTab-rendering" hidden={tab !== 'rendering'}>
+        <RendererSection session={session} effective={effective} />
+        <AccessibilitySection session={session} />
+        <QualitySection session={session} />
+        <Diagnostics session={session} />
+      </div>
     </div>
+  );
+}
+
+/** Reduced motion and transparency: what the material does when the person (or the system) asks for less. */
+function AccessibilitySection({ session }: { session: LabSession }) {
+  const options = useLab((s) => s.options);
+  return (
+    <Section id="accessibility" title="Accessibilità">
+      <Switch id="opt-reduceMotion" checked={options.reduceMotion} onChange={(v) => session.setOption('reduceMotion', v)} label="Riduci effetti e movimento" hint="Ferma molla, elasticità, scala e sfondo animato" />
+      <Switch id="opt-reduceTransparency" checked={options.reduceTransparency} onChange={(v) => session.setOption('reduceTransparency', v)} label="Riduci trasparenza" hint="Forza il percorso opaco, come prefers-reduced-transparency" />
+    </Section>
   );
 }
 
