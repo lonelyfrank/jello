@@ -20,9 +20,11 @@ import {
   DEFAULT_TARGET,
   glassParams,
   validateDocumentV2,
+  type GlassDocument,
   type ImportResult,
-  type MaterialDocument,
 } from './document';
+import { validateSolidDocument } from './solid';
+import { familyInfo } from './families';
 import { MATERIAL_FORMAT, RUNTIME_VERSION, SCHEMA_VERSION } from './version';
 
 export const LEGACY_V1 = `${V1_FORMAT}@${V1_VERSION}`;
@@ -55,7 +57,7 @@ export function parseMaterial(input: unknown): ImportResult {
   }
   const family = checkFamily(doc.family, doc.familyVersion);
   if (family) return { ok: false, errors: [family] };
-  return validateDocumentV2(doc);
+  return doc.family === 'solid' ? validateSolidDocument(doc) : validateDocumentV2(doc);
 }
 
 export function parseMaterialText(text: string): ImportResult {
@@ -67,6 +69,24 @@ export function parseMaterialText(text: string): ImportResult {
   }
   return parseMaterial(data);
 }
+
+export type GlassImportResult =
+  | { ok: true; doc: GlassDocument; warnings: string[]; migratedFrom: string | null }
+  | { ok: false; errors: string[] };
+
+/**
+ * Narrows a parse result to Glass for code that only handles Glass (the
+ * material lab, project files, the sync channel). A valid document of
+ * another family is refused with a reason, never half-applied.
+ */
+export function onlyGlass(r: ImportResult): GlassImportResult {
+  if (!r.ok || r.doc.family === 'glass') return r as GlassImportResult;
+  const label = familyInfo(r.doc.family)?.label ?? r.doc.family;
+  return { ok: false, errors: [`family: «${label}» è disponibile nel runtime ma questo editor modifica solo Glass: il documento non è stato importato.`] };
+}
+
+export const parseGlassMaterial = (input: unknown): GlassImportResult => onlyGlass(parseMaterial(input));
+export const parseGlassMaterialText = (text: string): GlassImportResult => onlyGlass(parseMaterialText(text));
 
 function migrateV1(doc: Record<string, unknown>): ImportResult {
   if (typeof doc.version === 'number' && doc.version > V1_VERSION) {
@@ -95,7 +115,7 @@ export interface LegacyExport {
 }
 
 /** v2 → jello-glass v1. Parameters survive unchanged; everything else is listed in `dropped`. */
-export function toLegacyV1(doc: MaterialDocument): LegacyExport {
+export function toLegacyV1(doc: GlassDocument): LegacyExport {
   const params = glassParams(doc);
   const dropped: string[] = [`id (${doc.id})`, `name (${doc.name})`];
   const q = doc.quality;
@@ -112,7 +132,7 @@ export function toLegacyV1(doc: MaterialDocument): LegacyExport {
   return { text, params, dropped };
 }
 
-function describeSource(doc: MaterialDocument): string {
+function describeSource(doc: GlassDocument): string {
   const s = doc.source;
   if (s.kind === 'dom') return 'DOM';
   const t = s.texture;

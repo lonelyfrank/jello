@@ -5,7 +5,7 @@
  */
 
 import { encodeState } from '../sync/protocol';
-import type { MaterialDocument } from '../model';
+import type { GlassDocument } from '../model';
 import type { ViewOptions } from '../stage/view';
 
 export type SyncState =
@@ -15,7 +15,7 @@ export type SyncState =
   | { kind: 'error'; relay: string; token: string; message: string; retryIn: number };
 
 export interface SyncSnapshot {
-  material: MaterialDocument;
+  material: GlassDocument;
   view: ViewOptions;
   /** Local image to publish (blob), or null for the bundled photo. */
   image: Blob | null;

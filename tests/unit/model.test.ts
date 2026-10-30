@@ -8,8 +8,8 @@ import {
   compareVersions,
   createGlassDocument,
   glassParams,
-  parseMaterial,
-  parseMaterialText,
+  parseGlassMaterial,
+  parseGlassMaterialText,
   resolveQuality,
   sectionOf,
   serializeMaterial,
@@ -55,7 +55,7 @@ describe('sections', () => {
 describe('jello-glass v1 migration', () => {
   it('keeps every parameter of every preset and of a custom file', () => {
     for (const params of [...PRESETS.map((p) => p.params), custom]) {
-      const r = parseMaterialText(serializeParams(params));
+      const r = parseGlassMaterialText(serializeParams(params));
       expect(r.ok).toBe(true);
       if (!r.ok) continue;
       expect(r.migratedFrom).toBe('jello-glass@1');
@@ -67,7 +67,7 @@ describe('jello-glass v1 migration', () => {
 
   it('round-trips v1 → v2 → v1 to the same parameters and reports what v1 cannot hold', () => {
     const v1 = serializeParams(custom);
-    const r = parseMaterialText(v1);
+    const r = parseGlassMaterialText(v1);
     if (!r.ok) throw new Error(r.errors.join());
     const back = toLegacyV1(r.doc);
     expect(JSON.parse(back.text)).toEqual(JSON.parse(v1));
@@ -79,13 +79,13 @@ describe('jello-glass v1 migration', () => {
   });
 
   it('derives a stable id from the content', () => {
-    const a = parseMaterialText(serializeParams(custom));
-    const b = parseMaterialText(serializeParams(custom));
+    const a = parseGlassMaterialText(serializeParams(custom));
+    const b = parseGlassMaterialText(serializeParams(custom));
     expect(a.ok && b.ok && a.doc.id === b.doc.id).toBe(true);
   });
 
   it('fills missing v1 keys with defaults and reports them', () => {
-    const r = parseMaterial({ format: 'jello-glass', version: 1, params: { refraction: 30, nope: 1 } });
+    const r = parseGlassMaterial({ format: 'jello-glass', version: 1, params: { refraction: 30, nope: 1 } });
     if (!r.ok) throw new Error(r.errors.join());
     expect(glassParams(r.doc).refraction).toBe(30);
     expect(r.warnings.some((w) => w.includes('nope'))).toBe(true);
@@ -97,7 +97,7 @@ describe('jello-material v2', () => {
   const doc = createGlassDocument({ id: 'nav-1', name: 'Navbar', params: custom, target: { backend: 'svg' } });
 
   it('round-trips through JSON unchanged', () => {
-    const r = parseMaterialText(serializeMaterial(doc));
+    const r = parseGlassMaterialText(serializeMaterial(doc));
     if (!r.ok) throw new Error(r.errors.join());
     expect(r.doc).toEqual(doc);
     expect(r.warnings).toEqual([]);
@@ -109,7 +109,7 @@ describe('jello-material v2', () => {
     bad.material.refraction = 999;
     bad.geometry.shape = 'star';
     bad.material.tint = 'red';
-    const r = parseMaterial(bad);
+    const r = parseGlassMaterial(bad);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join('\n')).toMatch(/material\.refraction/);
@@ -119,33 +119,33 @@ describe('jello-material v2', () => {
 
   it('refuses newer schema, family and runtime versions with a readable reason', () => {
     const base = JSON.parse(serializeMaterial(doc));
-    const future = parseMaterial({ ...base, schemaVersion: SCHEMA_VERSION + 1 });
+    const future = parseGlassMaterial({ ...base, schemaVersion: SCHEMA_VERSION + 1 });
     expect(future.ok).toBe(false);
     if (!future.ok) expect(future.errors[0]).toMatch(/più recente.*aggiorna il runtime/);
-    const runtime = parseMaterial({ ...base, runtime: { min: '9.0.0' } });
+    const runtime = parseGlassMaterial({ ...base, runtime: { min: '9.0.0' } });
     if (!runtime.ok) expect(runtime.errors[0]).toMatch(/richiede il runtime 9\.0\.0/);
     else throw new Error('accepted a document for a newer runtime');
-    const family = parseMaterial({ ...base, familyVersion: 7 });
+    const family = parseGlassMaterial({ ...base, familyVersion: 7 });
     expect(family.ok).toBe(false);
   });
 
   it('does not accept planned or unknown families as usable', () => {
     const base = JSON.parse(serializeMaterial(doc));
-    const gel = parseMaterial({ ...base, family: 'gel' });
-    expect(gel.ok).toBe(false);
-    if (!gel.ok) expect(gel.errors[0]).toMatch(/non è ancora disponibile/);
-    const metal = parseMaterial({ ...base, family: 'metal' });
+    const jelly = parseGlassMaterial({ ...base, family: 'jelly' });
+    expect(jelly.ok).toBe(false);
+    if (!jelly.ok) expect(jelly.errors[0]).toMatch(/non è ancora disponibile/);
+    const metal = parseGlassMaterial({ ...base, family: 'metal' });
     if (!metal.ok) expect(metal.errors[0]).toMatch(/sconosciuta/);
   });
 
   it('rejects malformed envelopes', () => {
     for (const bad of [null, [], 'x', { format: 'other' }, { format: 'jello-material', schemaVersion: 'two' }]) {
-      expect(parseMaterial(bad).ok).toBe(false);
+      expect(parseGlassMaterial(bad).ok).toBe(false);
     }
-    expect(parseMaterialText('{ nope').ok).toBe(false);
+    expect(parseGlassMaterialText('{ nope').ok).toBe(false);
     const base = JSON.parse(serializeMaterial(doc));
-    expect(parseMaterial({ ...base, id: 'has space' }).ok).toBe(false);
-    expect(parseMaterial({ ...base, source: { kind: 'texture', texture: { kind: 'video' } } }).ok).toBe(false);
+    expect(parseGlassMaterial({ ...base, id: 'has space' }).ok).toBe(false);
+    expect(parseGlassMaterial({ ...base, source: { kind: 'texture', texture: { kind: 'video' } } }).ok).toBe(false);
   });
 
   it('withGlassParams replaces only the parameter sections', () => {
@@ -160,7 +160,7 @@ describe('built-in materials', () => {
     expect(BUILTIN_MATERIALS.map((b) => b.doc.id)).toEqual(PRESETS.map((p) => p.id));
     for (const b of BUILTIN_MATERIALS) {
       expect(glassParams(b.doc)).toEqual(PRESETS.find((p) => p.id === b.doc.id)!.params);
-      expect(parseMaterialText(serializeMaterial(b.doc)).ok).toBe(true);
+      expect(parseGlassMaterialText(serializeMaterial(b.doc)).ok).toBe(true);
     }
   });
 });

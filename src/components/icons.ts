@@ -308,3 +308,25 @@ export function iconTree(icon: IconRef): { viewBox: string; nodes: SvgNode[]; pa
   const r = parseSvgBody(icon.viewBox, icon.body);
   return r.ok ? { viewBox: icon.viewBox, nodes: r.nodes, paint: icon.paint } : null;
 }
+
+
+/**
+ * Validates an icon of a document read from outside. A builtin name this
+ * runtime does not know falls back to «star» (warning); an SVG is parsed again
+ * and only what this runtime would have written is kept.
+ */
+export function checkIconRef(icon: IconRef, at: string, errors: string[], warnings: string[]): IconRef {
+  if (icon.kind === 'builtin' && !BUILTIN_ICONS[icon.name]) {
+    warnings.push(`${at}: icona "${icon.name}" sconosciuta a questo runtime, uso «star»`);
+    return { kind: 'builtin', name: 'star' };
+  }
+  if (icon.kind !== 'svg') return icon;
+  const r = parseSvgBody(icon.viewBox, icon.body);
+  if (!r.ok) {
+    errors.push(...r.errors.map((e) => `${at}: SVG ${e}`));
+    return icon;
+  }
+  const body = serializeSvgNodes(r.nodes);
+  if (body !== icon.body) warnings.push(`${at}: SVG normalizzato`);
+  return { ...icon, viewBox: r.viewBox, body };
+}

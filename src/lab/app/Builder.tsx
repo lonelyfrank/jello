@@ -1,18 +1,42 @@
 /**
  * Component Builder panels: the left column (library and structure) and the
  * contextual inspector on the right. Everything here edits the builder's
- * jello-component document through LabSession; the preview is the same
+ * canonical definition through LabSession; the preview is the same
  * controller and material renderer as the Material Lab.
  */
 
 import { useMemo, useState } from 'react';
-import { PARAM_INDEX, type ParamDescriptor, type ParamKey } from '../../core/params';
-import { COMPONENT_TYPES } from '../../components/registry';
+import { PARAM_INDEX, type ParamKey } from '../../core/params';
 import { INSPECTOR_SECTIONS, type FieldDescriptor, type InspectorSection } from '../../components/fields';
-import { BN_FIELDS, BN_FIELD_INDEX, OVERRIDE_PATHS, TAB_STYLE_FIELDS, rootField, type BnRoot, type BnTab, type BnTabStyle } from '../../components/bottom-navigation/model';
+import {
+  BN_FIELDS,
+  BN_FIELD_INDEX,
+  BUTTON_FIELDS,
+  BUTTON_FIELD_INDEX,
+  BUTTON_OVERRIDE_PATHS,
+  BUTTON_STATES,
+  COMPONENTS,
+  OVERRIDE_PATHS,
+  TAB_STYLE_FIELDS,
+  bindingState,
+  buttonBreakpoints,
+  buttonNodes,
+  getPath,
+  hasMaterialOverrides,
+  navbarView,
+  resolveButton,
+  resolveDefinitionMaterial,
+  rootField,
+  toCanonicalPath,
+  unsupportedProperties,
+  type BnRoot,
+  type BnTab,
+  type BnTabStyle,
+  type BindingState,
+  type ComponentDefinition,
+} from '../../components';
 import { BUILTIN_ICONS, BUILTIN_ICON_NAMES, iconTree, type IconRef, type SvgNode } from '../../components/icons';
-import { bindingState, type BindingState } from '../../components/document';
-import { FAMILIES, glassParams, SECTION_KEYS, supportReport, type Backend } from '../../model';
+import { FAMILIES, MATERIALS, glassParams, inspectorModel, supportReport, type Backend, type InspectorControl } from '../../model';
 import { applicability } from '../applicability';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
@@ -32,10 +56,12 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
   const [renaming, setRenaming] = useState<string | null>(null);
   const templates = components.filter((c) => c.origin === 'template');
   const saved = components.filter((c) => c.origin === 'user');
-  const personal = library.filter((i) => i.origin === 'user');
-  const root = b.doc.root;
-  const selectedTab = root.children.find((t) => t.id === b.selection);
-  const index = selectedTab ? root.children.indexOf(selectedTab) : -1;
+  const personal = library.filter((i) => i.origin === 'user' && i.doc.family === b.doc.material.family);
+  const navbar = b.doc.type === 'mobile-navbar';
+  const root = navbar ? navbarView(b.doc) : null;
+  const selectedTab = root?.children.find((t) => t.id === b.selection);
+  const index = root && selectedTab ? root.children.indexOf(selectedTab) : -1;
+  const material = resolveDefinitionMaterial(b.doc);
 
   return (
     <>
@@ -44,27 +70,43 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
           Materiali
         </h2>
         <ul className="bl-list" aria-label="Famiglie di materiali">
-          {FAMILIES.map((f) => (
-            <li key={f.id}>
-              {f.status === 'available' ? (
-                <button type="button" className="bl-item" id={`bl-material-${f.id}`} aria-pressed={b.selection === 'material'} onClick={() => session.selectElement('material')}>
-                  <span className="sphere" aria-hidden="true" />
-                  <span>
-                    <strong>{f.label}</strong>
-                    <span className="bl-sub">{b.doc.material.family === f.id ? `In uso: ${b.doc.material.document.name}` : f.description}</span>
+          {FAMILIES.map((f) => {
+            const usable = f.status === 'available' && MATERIALS.has(f.id) && COMPONENTS.supports(b.doc.type, f.id);
+            const current = b.doc.material.family === f.id;
+            return (
+              <li key={f.id}>
+                {usable ? (
+                  <button
+                    type="button"
+                    className="bl-item"
+                    id={`bl-material-${f.id}`}
+                    data-family={f.id}
+                    aria-pressed={current && b.selection === 'material'}
+                    aria-current={current ? 'true' : undefined}
+                    title={current ? undefined : `Disegna la componente con ${f.label}: contenuto, layout e stati restano`}
+                    onClick={() => {
+                      if (!current) session.setComponentFamily(f.id);
+                      session.selectElement('material');
+                    }}
+                  >
+                    <span className="sphere" aria-hidden="true" />
+                    <span>
+                      <strong>{f.label}</strong>
+                      <span className="bl-sub">{current ? `In uso: ${material.name}` : f.description}</span>
+                    </span>
+                  </button>
+                ) : (
+                  <span className="bl-item" aria-disabled="true" title={f.description}>
+                    <span className="sphere sphere-soon" data-material={f.id} aria-hidden="true" />
+                    <span>
+                      <strong>{f.label}</strong>
+                      <span className="bl-sub">{f.status === 'available' ? 'Non disponibile per questa componente' : 'In sviluppo · non utilizzabile'}</span>
+                    </span>
                   </span>
-                </button>
-              ) : (
-                <span className="bl-item" aria-disabled="true" title={f.description}>
-                  <span className="sphere sphere-soon" data-material={f.id} aria-hidden="true" />
-                  <span>
-                    <strong>{f.id === 'gel' ? 'Jelly (Gel)' : f.label}</strong>
-                    <span className="bl-sub">In sviluppo · non utilizzabile</span>
-                  </span>
-                </span>
-              )}
-            </li>
-          ))}
+                )}
+              </li>
+            );
+          })}
         </ul>
       </section>
 
@@ -72,30 +114,26 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
         <h2 className="side-title" id="bl-components">
           Componenti
         </h2>
-        {COMPONENT_TYPES.map((t) =>
-          t.status === 'available' ? (
-            <div key={t.type} className="bl-group">
-              <h3 className="side-sub">Template ufficiali Jello</h3>
-              <div className="bl-list" role="group" aria-label={`Template ufficiali Jello · ${t.label}`}>
-                {templates.map((c) => (
-                  <button key={c.id} type="button" className="bl-item" data-template={c.id} aria-pressed={b.componentId === c.id} title={c.description} onClick={() => session.openComponent(c.id)}>
-                    <TemplateGlyph />
-                    <span>
-                      <strong>{c.name}</strong>
-                      <span className="bl-sub">{c.description}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null,
-        )}
+        <div className="bl-group">
+          <h3 className="side-sub">Template ufficiali Jello</h3>
+          <div className="bl-list" role="group" aria-label="Template ufficiali Jello">
+            {templates.map((c) => (
+              <button key={c.id} type="button" className="bl-item" data-template={c.id} data-type={c.doc.type} aria-pressed={b.componentId === c.id} title={c.description} onClick={() => session.openComponent(c.id)}>
+                <TemplateGlyph type={c.doc.type} />
+                <span>
+                  <strong>{c.name}</strong>
+                  <span className="bl-sub">{c.description}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
         <p className="side-caption">In arrivo · non ancora disponibili</p>
         <ul className="soon-grid" aria-label="Componenti in arrivo">
-          {COMPONENT_TYPES.filter((t) => t.status === 'planned').map((t) => (
-            <li key={t.type} className="soon-card" title={t.description}>
-              {t.label}
-              <span className="visually-hidden">: {t.description}</span>
+          {COMPONENTS.planned().map((t) => (
+            <li key={t.id} className="soon-card" title={t.description} data-planned={t.id}>
+              {t.name}
+              <span className="visually-hidden">: {t.description} {t.reason}</span>
             </li>
           ))}
         </ul>
@@ -153,11 +191,11 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
           <div className="bl-list" role="group" aria-label="Componenti salvate" id="savedComponents">
             {saved.map((c) => (
               <button key={c.id} type="button" className="bl-item" data-component={c.id} aria-pressed={b.componentId === c.id} onClick={() => session.openComponent(c.id)}>
-                <TemplateGlyph />
+                <TemplateGlyph type={c.doc.type} />
                 <span>
                   <strong>{b.componentId === c.id ? b.doc.name : c.name}</strong>
                   <span className="bl-sub">
-                    {c.doc.root.children.length} tab · {c.doc.material.document.name}
+                    {summary(b.componentId === c.id ? b.doc : c.doc)} · {resolveDefinitionMaterial(b.componentId === c.id ? b.doc : c.doc).name}
                   </span>
                 </span>
               </button>
@@ -214,46 +252,73 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
             <button type="button" className="tree-node" data-node="root" aria-pressed={b.selection === 'root'} onClick={() => session.selectElement('root')}>
               <Icon name="left" />
               <span>{b.doc.name}</span>
-              <span className="tree-kind">navigazione</span>
+              <span className="tree-kind">{navbar ? 'navigazione' : 'pulsante'}</span>
             </button>
-            <ul>
-              {root.children.map((t) => (
-                <li key={t.id}>
-                  <button type="button" className="tree-node" data-node={t.id} aria-pressed={b.selection === t.id} onClick={() => session.selectElement(t.id)}>
-                    <TabIcon icon={t.icon} />
-                    <span>{t.label}</span>
-                    <span className="tree-kind">
-                      {t.id === root.defaultTab ? 'iniziale · ' : ''}
-                      {t.disabled ? 'disabilitata · ' : ''}
-                      {t.id}
+            {root ? (
+              <ul>
+                {root.children.map((t) => (
+                  <li key={t.id}>
+                    <button type="button" className="tree-node" data-node={t.id} aria-pressed={b.selection === t.id} onClick={() => session.selectElement(t.id)}>
+                      <TabIcon icon={t.icon} />
+                      <span>{t.label}</span>
+                      <span className="tree-kind">
+                        {t.id === root.defaultTab ? 'iniziale · ' : ''}
+                        {t.disabled ? 'disabilitata · ' : ''}
+                        {t.id}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul>
+                {b.doc.structure.children?.map((n) => (
+                  <li key={n.id}>
+                    <span className="tree-node" data-node={n.id} aria-disabled="true">
+                      {n.role === 'icon' ? <TabIcon icon={b.doc.content[n.id]?.icon ?? { kind: 'none' }} /> : <Icon name="left" />}
+                      <span>{n.role === 'label' ? (b.doc.content[n.id]?.text ?? '') : 'Icona'}</span>
+                      <span className="tree-kind">{n.role === 'label' ? 'etichetta' : 'icona'} · {n.id}</span>
                     </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         </ul>
-        <div className="library-actions" role="group" aria-label="Azioni sulle tab">
-          <button type="button" className="button small" id="tabAdd" onClick={() => session.addTab()}>
-            <Icon name="plus" /> Tab
-          </button>
-          <button type="button" className="button small" id="tabUp" aria-label="Sposta la tab prima" disabled={index <= 0} onClick={() => selectedTab && session.moveTab(selectedTab.id, -1)}>
-            ←
-          </button>
-          <button type="button" className="button small" id="tabDown" aria-label="Sposta la tab dopo" disabled={index < 0 || index >= root.children.length - 1} onClick={() => selectedTab && session.moveTab(selectedTab.id, 1)}>
-            →
-          </button>
-          <button type="button" className="button small" id="tabDuplicate" disabled={!selectedTab} onClick={() => selectedTab && session.duplicateTab(selectedTab.id)}>
-            <Icon name="copy" /> Duplica
-          </button>
-          <button type="button" className="button small" id="tabRemove" disabled={!selectedTab || root.children.length <= 1} onClick={() => selectedTab && session.removeTab(selectedTab.id)}>
-            <Icon name="trash" /> Elimina
-          </button>
-        </div>
-        <p className="hint">{root.children.length} tab · nessun limite: quando non stanno nella barra decide «Responsive → Troppe tab».</p>
+        {root ? (
+          <>
+            <div className="library-actions" role="group" aria-label="Azioni sulle tab">
+              <button type="button" className="button small" id="tabAdd" onClick={() => session.addTab()}>
+                <Icon name="plus" /> Tab
+              </button>
+              <button type="button" className="button small" id="tabUp" aria-label="Sposta la tab prima" disabled={index <= 0} onClick={() => selectedTab && session.moveTab(selectedTab.id, -1)}>
+                ←
+              </button>
+              <button type="button" className="button small" id="tabDown" aria-label="Sposta la tab dopo" disabled={index < 0 || index >= root.children.length - 1} onClick={() => selectedTab && session.moveTab(selectedTab.id, 1)}>
+                →
+              </button>
+              <button type="button" className="button small" id="tabDuplicate" disabled={!selectedTab} onClick={() => selectedTab && session.duplicateTab(selectedTab.id)}>
+                <Icon name="copy" /> Duplica
+              </button>
+              <button type="button" className="button small" id="tabRemove" disabled={!selectedTab || root.children.length <= 1} onClick={() => selectedTab && session.removeTab(selectedTab.id)}>
+                <Icon name="trash" /> Elimina
+              </button>
+            </div>
+            <p className="hint">{root.children.length} tab · nessun limite: quando non stanno nella barra decide «Responsive → Troppe tab».</p>
+          </>
+        ) : (
+          <p className="hint">Un pulsante ha un’etichetta e, se vuoi, un’icona: si modificano dal pannello a destra.</p>
+        )}
       </section>
     </>
   );
+}
+
+/** One line about what a component contains, for the library list. */
+function summary(doc: ComponentDefinition): string {
+  if (doc.type === 'mobile-navbar') return `${navbarView(doc).children.length} tab`;
+  const p = resolveButton(doc, Number.POSITIVE_INFINITY);
+  return `«${p.text}» · ${p.style.variant}`;
 }
 
 function Messages() {
@@ -268,10 +333,10 @@ function Messages() {
   );
 }
 
-function TemplateGlyph() {
+function TemplateGlyph({ type }: { type: string }) {
   return (
     <svg className="icon bl-glyph" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3 15h18v5H3zM6 17.5h2M11 17.5h2M16 17.5h2" />
+      {type === 'button' ? <path d="M4 8.5h16a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 14v-4A1.5 1.5 0 0 1 4 8.5zM8.5 12h7" /> : <path d="M3 15h18v5H3zM6 17.5h2M11 17.5h2M16 17.5h2" />}
     </svg>
   );
 }
@@ -340,23 +405,41 @@ function relevant(f: FieldDescriptor, root: BnRoot): boolean {
   }
 }
 
+/** A property control plus, when the component's material cannot render it, the reason (explicit and findable: `data-unsupported`). */
+function PropertyField({ f, path, value, unsupported, onChange }: { f: FieldDescriptor; path: string; value: unknown; unsupported: ReadonlyMap<string, string>; onChange(v: unknown): void }) {
+  const why = unsupported.get(path);
+  return (
+    <>
+      <FieldControl f={f} value={value} onChange={onChange} />
+      {why && (
+        <p className="param-support" data-level="ignored" data-unsupported={path}>
+          Senza effetto con questo materiale: {why}
+        </p>
+      )}
+    </>
+  );
+}
+
+const unsupportedMap = (def: ComponentDefinition): ReadonlyMap<string, string> => new Map(unsupportedProperties(def).map((u) => [u.path, u.reason]));
+
 export function Inspector({ session }: { session: LabSession }) {
   const b = useLab((s) => s.builder);
-  const root = b.doc.root;
-  const tab = root.children.find((t) => t.id === b.selection);
+  const spec = COMPONENTS.get(b.doc.type)!;
+  const root = b.doc.type === 'mobile-navbar' ? navbarView(b.doc) : null;
+  const tab = root?.children.find((t) => t.id === b.selection);
   return (
-    <div className="panel-inner" id="inspector">
+    <div className="panel-inner" id="inspector" data-component-type={b.doc.type}>
       <div className="panel-head">
         <div className="panel-heading">
-          <h2>{b.selection === 'material' ? 'Materiale' : tab ? 'Tab' : 'Navigazione'}</h2>
-          <span className="chip chip-accent">{tab ? tab.label : b.selection === 'material' ? b.doc.material.document.name : 'Bottom Navigation'}</span>
+          <h2>{b.selection === 'material' ? 'Materiale' : tab ? 'Tab' : root ? 'Navigazione' : spec.name}</h2>
+          <span className="chip chip-accent">{tab ? tab.label : b.selection === 'material' ? resolveDefinitionMaterial(b.doc).name : spec.name}</span>
         </div>
         <p className="hint" id="inspectorSubject">
-          {tab ? `Tab «${tab.label}» · id ${tab.id}` : b.selection === 'material' ? 'Materiale applicato alla componente' : `${b.doc.name} · ${root.children.length} tab`}
+          {tab ? `Tab «${tab.label}» · id ${tab.id}` : b.selection === 'material' ? 'Materiale applicato alla componente' : root ? `${b.doc.name} · ${root.children.length} tab` : `${b.doc.name} · ${summary(b.doc)}`}
         </p>
       </div>
       <div className="panel-body">
-        {b.selection === 'material' ? <MaterialPanel session={session} /> : tab ? <TabInspector session={session} tab={tab} root={root} /> : <RootInspector session={session} root={root} />}
+        {b.selection === 'material' ? <MaterialPanel session={session} /> : tab && root ? <TabInspector session={session} tab={tab} root={root} /> : root ? <RootInspector session={session} root={root} /> : <ButtonInspector session={session} />}
       </div>
     </div>
   );
@@ -364,8 +447,12 @@ export function Inspector({ session }: { session: LabSession }) {
 
 function RootInspector({ session, root }: { session: LabSession; root: BnRoot }) {
   const name = useLab((s) => s.builder.doc.name);
+  const definition = useLab((s) => s.builder.doc);
+  const unsupported = useMemo(() => unsupportedMap(definition), [definition]);
   const fields = (section: InspectorSection) =>
-    BN_FIELDS.filter((f) => f.section === section && relevant(f, root)).map((f) => <FieldControl key={f.path} f={f} value={rootField(root, f.path)} onChange={(v) => session.setComponentField(f.path, v)} />);
+    BN_FIELDS.filter((f) => f.section === section && relevant(f, root)).map((f) => (
+      <PropertyField key={f.path} f={f} path={toCanonicalPath(f.path)} value={rootField(root, f.path)} unsupported={unsupported} onChange={(v) => session.setComponentField(f.path, v)} />
+    ));
   return (
     <>
       <Section id="structure" title={SECTION_LABEL.structure}>
@@ -498,42 +585,7 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
         </p>
       </Section>
       <Section id="appearance" title="Icona">
-        <fieldset className="icon-grid" id="tab-icons">
-          <legend className="visually-hidden">Icona della tab</legend>
-          {BUILTIN_ICON_NAMES.map((name) => (
-            <label key={name} className="icon-choice" htmlFor={`tab-icon-${name}`} title={BUILTIN_ICONS[name]!.label}>
-              <input type="radio" name="tabIcon" id={`tab-icon-${name}`} checked={tab.icon.kind === 'builtin' && tab.icon.name === name} onChange={() => session.setTabIcon(tab.id, { kind: 'builtin', name })} />
-              <TabIcon icon={{ kind: 'builtin', name }} />
-              <span className="visually-hidden">{BUILTIN_ICONS[name]!.label}</span>
-            </label>
-          ))}
-          <label className="icon-choice" htmlFor="tab-icon-none" title="Nessuna icona">
-            <input type="radio" name="tabIcon" id="tab-icon-none" checked={tab.icon.kind === 'none'} onChange={() => session.setTabIcon(tab.id, { kind: 'none' })} />
-            <span className="tab-icon-none" aria-hidden="true">∅</span>
-            <span className="visually-hidden">Nessuna icona</span>
-          </label>
-          {tab.icon.kind === 'svg' && (
-            <label className="icon-choice" htmlFor="tab-icon-custom" title={`SVG «${tab.icon.name}»`}>
-              <input type="radio" name="tabIcon" id="tab-icon-custom" checked readOnly />
-              <TabIcon icon={tab.icon} />
-              <span className="visually-hidden">SVG {tab.icon.name}</span>
-            </label>
-          )}
-        </fieldset>
-        <label className="button small side-button" htmlFor="tab-icon-upload">
-          Carica SVG…
-        </label>
-        <input
-          type="file"
-          accept="image/svg+xml,.svg"
-          id="tab-icon-upload"
-          className="visually-hidden"
-          onChange={async (e) => {
-            const f = e.target.files?.[0];
-            if (f) await session.uploadTabIcon(tab.id, f);
-            e.target.value = '';
-          }}
-        />
+        <IconPicker prefix="tab" icon={tab.icon} onPick={(icon) => session.setTabIcon(tab.id, icon)} onUpload={(f) => session.uploadTabIcon(tab.id, f)} />
         <p className="hint">Solo forme e attributi di presentazione: script, eventi, link, stili, immagini e riferimenti esterni vengono rifiutati. Massimo 16 KB.</p>
         <Messages />
       </Section>
@@ -591,6 +643,229 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
   );
 }
 
+/** Icon of a tab or of a button: the built-in set, none, or a custom SVG (sanitized by the session). Ids keep the prefix. */
+function IconPicker({ prefix, icon, onPick, onUpload }: { prefix: string; icon: IconRef; onPick(icon: IconRef): void; onUpload(file: File): Promise<boolean> }) {
+  return (
+    <>
+      <fieldset className="icon-grid" id={`${prefix}-icons`}>
+        <legend className="visually-hidden">Icona</legend>
+        {BUILTIN_ICON_NAMES.map((name) => (
+          <label key={name} className="icon-choice" htmlFor={`${prefix}-icon-${name}`} title={BUILTIN_ICONS[name]!.label}>
+            <input type="radio" name={`${prefix}Icon`} id={`${prefix}-icon-${name}`} checked={icon.kind === 'builtin' && icon.name === name} onChange={() => onPick({ kind: 'builtin', name })} />
+            <TabIcon icon={{ kind: 'builtin', name }} />
+            <span className="visually-hidden">{BUILTIN_ICONS[name]!.label}</span>
+          </label>
+        ))}
+        <label className="icon-choice" htmlFor={`${prefix}-icon-none`} title="Nessuna icona">
+          <input type="radio" name={`${prefix}Icon`} id={`${prefix}-icon-none`} checked={icon.kind === 'none'} onChange={() => onPick({ kind: 'none' })} />
+          <span className="tab-icon-none" aria-hidden="true">∅</span>
+          <span className="visually-hidden">Nessuna icona</span>
+        </label>
+        {icon.kind === 'svg' && (
+          <label className="icon-choice" htmlFor={`${prefix}-icon-custom`} title={`SVG «${icon.name}»`}>
+            <input type="radio" name={`${prefix}Icon`} id={`${prefix}-icon-custom`} checked readOnly />
+            <TabIcon icon={icon} />
+            <span className="visually-hidden">SVG {icon.name}</span>
+          </label>
+        )}
+      </fieldset>
+      <label className="button small side-button" htmlFor={`${prefix}-icon-upload`}>
+        Carica SVG…
+      </label>
+      <input
+        type="file"
+        accept="image/svg+xml,.svg"
+        id={`${prefix}-icon-upload`}
+        className="visually-hidden"
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          if (f) await onUpload(f);
+          e.target.value = '';
+        }}
+      />
+    </>
+  );
+}
+
+// ---------- button ----------
+
+function ButtonInspector({ session }: { session: LabSession }) {
+  const def = useLab((s) => s.builder.doc);
+  const b = useLab((s) => s.builder);
+  const unsupported = useMemo(() => unsupportedMap(def), [def]);
+  const p = resolveButton(def, Number.POSITIVE_INFINITY);
+  const nodes = buttonNodes(def);
+  const [href, setHref] = useState(def.content.root?.href ?? '');
+  const fields = (section: InspectorSection, skip: readonly string[] = []) =>
+    BUTTON_FIELDS.filter((f) => f.section === section && !skip.includes(f.path) && relevantButton(f, p)).map((f) => (
+      <PropertyField key={f.path} f={f} path={f.path} value={getPath(def, f.path)} unsupported={unsupported} onChange={(v) => session.setComponentField(f.path, v)} />
+    ));
+  return (
+    <>
+      <Section id="structure" title={SECTION_LABEL.structure}>
+        <TextControl id="cmp-name" label={<label htmlFor="cmp-name">Nome della componente</label>} value={def.name} maxLength={80} description="Nome nella libreria e nell’export (diventa il nome del componente React)." onChange={(v) => session.setComponentName(v)} />
+        <TextControl id="btn-text" label={<label htmlFor="btn-text">Testo</label>} value={def.content[nodes.labelId]?.text ?? ''} maxLength={60} description="Testo visibile e nome accessibile del pulsante." onChange={(v) => session.setButtonText(v)} />
+        <div className="field param">
+          <div className="field-head">
+            <label htmlFor="btn-semantics">Elemento</label>
+          </div>
+          <select
+            id="btn-semantics"
+            value={p.semantics}
+            aria-describedby="btn-semantics-desc"
+            onChange={(e) => {
+              const v = e.target.value as 'action' | 'link';
+              if (v === 'link' && !def.content.root?.href) session.setButtonSemantics('link', href || '/');
+              else session.setButtonSemantics(v, href);
+            }}
+          >
+            <option value="action">Azione · &lt;button&gt;</option>
+            <option value="link">Navigazione · &lt;a href&gt;</option>
+          </select>
+          <p className="param-desc" id="btn-semantics-desc">
+            Azione: riporta la pressione all’applicazione. Navigazione: un collegamento vero, lo segue il browser (nell’anteprima non naviga).
+          </p>
+        </div>
+        {p.semantics === 'link' && (
+          <div className="field param">
+            <div className="field-head">
+              <label htmlFor="btn-href">Indirizzo</label>
+            </div>
+            <input
+              id="btn-href"
+              className="text-input"
+              value={href}
+              maxLength={200}
+              placeholder="/pagina, #sezione o https://…"
+              onChange={(e) => {
+                setHref(e.target.value);
+                session.setButtonSemantics('link', e.target.value);
+              }}
+            />
+            <p className="param-desc">Un percorso (/…), un’ancora (#…) o un URL http(s). Senza indirizzo valido la modifica non si applica.</p>
+          </div>
+        )}
+        <div className="field param">
+          <div className="field-head">
+            <label htmlFor="btn-value">Valore (facoltativo)</label>
+          </div>
+          <input id="btn-value" className="text-input" value={p.value ?? ''} maxLength={200} placeholder="es. conferma" onChange={(e) => session.setButtonValue(e.target.value || null)} />
+          <p className="param-desc">Dato libero inviato con l’evento di pressione: il pulsante non fa altro da solo.</p>
+        </div>
+        <label className="check" htmlFor="btn-disabled">
+          <input id="btn-disabled" type="checkbox" checked={p.disabled} onChange={(e) => session.setButtonDisabled(e.target.checked)} />
+          <span>Disabilitato</span>
+        </label>
+      </Section>
+      <Section id="icon" title="Icona">
+        <IconPicker prefix="btn" icon={p.icon ?? { kind: 'none' }} onPick={(icon) => session.setButtonIcon(icon)} onUpload={(f) => session.uploadButtonIcon(f)} />
+        <p className="hint">Solo forme e attributi di presentazione: script, eventi, link, stili, immagini e riferimenti esterni vengono rifiutati. Massimo 16 KB. La posizione (prima o dopo il testo) è nel Layout.</p>
+        <Messages />
+      </Section>
+      <Section id="layout" title={SECTION_LABEL.layout}>
+        {fields('layout')}
+      </Section>
+      <Section id="appearance" title={SECTION_LABEL.appearance}>
+        {fields('appearance')}
+      </Section>
+      <Section id="typography" title={SECTION_LABEL.typography} open={false}>
+        {fields('typography')}
+      </Section>
+      <Section id="material" title={SECTION_LABEL.material} open={false}>
+        <MaterialPanel session={session} />
+      </Section>
+      <Section id="states" title={SECTION_LABEL.states} open={false}>
+        <div className="field param">
+          <div className="field-head">
+            <label htmlFor="btn-preview-state">Anteprima stato</label>
+          </div>
+          <select id="btn-preview-state" value={b.previewState ?? ''} onChange={(e) => session.setPreviewState((e.target.value || null) as never)}>
+            <option value="">Normale</option>
+            <option value="hover">Hover</option>
+            <option value="pressed">Premuto</option>
+            <option value="focus">Focus</option>
+          </select>
+          <p className="param-desc">Mostra lo stato sul pulsante senza interagire. Stati del tipo: {BUTTON_STATES.join(', ')}.</p>
+        </div>
+        {fields('states')}
+      </Section>
+      <Section id="interactions" title={SECTION_LABEL.interactions} open={false}>
+        {fields('interactions')}
+        <p className="hint">
+          La componente esportata espone <code>onPress</code>, <code>onHover</code> e <code>onFocus</code> (React) e gli eventi DOM qui sopra. Un collegamento non ha bisogno di <code>onPress</code>: lo segue il browser.
+        </p>
+      </Section>
+      <Section id="responsive" title={SECTION_LABEL.responsive} open={false}>
+        <ButtonBreakpoints session={session} def={def} />
+      </Section>
+    </>
+  );
+}
+
+/** Controls that would have no effect with the current configuration are not shown. */
+function relevantButton(f: FieldDescriptor, p: ReturnType<typeof resolveButton>): boolean {
+  switch (f.path) {
+    case 'layout.width':
+      return p.layout.widthMode === 'fixed';
+    case 'layout.align':
+      return p.layout.widthMode !== 'hug';
+    case 'layout.iconPosition':
+    case 'layout.gap':
+    case 'style.icon.size':
+    case 'style.icon.strokeWidth':
+      return p.icon !== null && p.icon.kind !== 'none';
+    default:
+      return true;
+  }
+}
+
+function ButtonBreakpoints({ session, def }: { session: LabSession; def: ComponentDefinition }) {
+  const width = useLab((s) => s.report?.options.device);
+  const list = buttonBreakpoints(def);
+  return (
+    <div className="breakpoints" id="breakpoints">
+      <h3 className="panel-sub">Breakpoint (larghezza del contenitore)</h3>
+      {list.length === 0 && <p className="hint">Nessuno: le stesse proprietà a ogni larghezza.</p>}
+      {list.map((bp) => (
+        <fieldset key={bp.id} className="bp" data-breakpoint={bp.id}>
+          <legend>
+            ≤ {bp.maxWidth} px <code>{bp.id}</code>
+          </legend>
+          <FieldControl
+            f={{ type: 'number', path: 'maxWidth', section: 'responsive', label: 'Fino a', unit: 'px', min: 100, max: 2000, step: 1, default: bp.maxWidth, description: 'Vale finché il contenitore del pulsante è largo al massimo così.' }}
+            id={`bp-${bp.id}-max`}
+            value={bp.maxWidth}
+            onChange={(v) => session.updateButtonBreakpoint(bp.id, { maxWidth: v as number })}
+          />
+          {BUTTON_OVERRIDE_PATHS.map((path) => {
+            const f = BUTTON_FIELD_INDEX[path]!;
+            const on = path in bp.overrides;
+            const id = `bp-${bp.id}-${path.replace(/\./g, '-')}`;
+            return (
+              <div key={path} className="bp-override">
+                <label className="check" htmlFor={`${id}-on`}>
+                  <input id={`${id}-on`} type="checkbox" checked={on} onChange={(e) => session.updateButtonBreakpoint(bp.id, { set: [path, e.target.checked ? (getPath(def, path) as number | string) : null] })} />
+                  <span>{f.label}</span>
+                </label>
+                {on && <FieldControl f={f} id={id} value={bp.overrides[path]} onChange={(v) => session.updateButtonBreakpoint(bp.id, { set: [path, v as number | string] })} />}
+              </div>
+            );
+          })}
+          <button type="button" className="button small" onClick={() => session.removeButtonBreakpoint(bp.id)}>
+            <Icon name="trash" /> Rimuovi breakpoint
+          </button>
+        </fieldset>
+      ))}
+      <button type="button" className="button small" id="bpAdd" onClick={() => session.addButtonBreakpoint(360)}>
+        <Icon name="plus" /> Breakpoint
+      </button>
+      <p className="hint">Il pulsante legge la larghezza del proprio contenitore. Provali con i formati Desktop, Tablet (768 px) e Telefono (390 px) dell’anteprima{width ? ` · ora: ${width}` : ''}.</p>
+    </div>
+  );
+}
+
+// ---------- material ----------
+
 function linkNote(link: BindingState, name: string | null, personal: boolean): string {
   switch (link) {
     case 'linked':
@@ -606,60 +881,104 @@ function linkNote(link: BindingState, name: string | null, personal: boolean): s
   }
 }
 
-const MATERIAL_GROUPS: [string, string][] = [
-  ['material', 'Aspetto'],
-  ['optics', 'Ottica'],
-  ['light', 'Luce'],
-  ['shadow', 'Ombra'],
-];
-/** The component sizes the surface by layout and is never dragged: only press behaviour applies. */
-const COMPONENT_BEHAVIOR: ParamKey[] = ['pressScale', 'pressRefraction', 'pressLight'];
+/** Glass's press behaviour is the only part of the `motion` group a component uses (springs and stretch are for dragged lenses). */
+const GLASS_PRESS: readonly string[] = ['pressScale', 'pressRefraction', 'pressLight'] satisfies ParamKey[];
 
+/**
+ * Which controls of the family apply to a component: its size, shape and radius come from the layout
+ * (the `shape` group), and a dragged lens's physics are not used.
+ */
+function usedByComponent(family: string, group: string, key: string): boolean {
+  if (group === 'shape') return false;
+  if (family === 'glass' && group === 'motion') return GLASS_PRESS.includes(key);
+  return true;
+}
+
+const GROUP_LABEL: Record<string, string> = { motion: 'Pressione' };
+
+/**
+ * The material of the open component, for any family: the same panel, built from the registry's
+ * inspector model (`inspectorModel` / `applyControl`). Glass adds what only it has (the rendering
+ * limits of the running backend); nothing else differs.
+ */
 function MaterialPanel({ session }: { session: LabSession }) {
-  const binding = useLab((s) => s.builder.doc.material);
+  const definition = useLab((s) => s.builder.doc);
+  const binding = definition.material;
   const library = useLab((s) => s.library);
   const report = useLab((s) => s.report);
   const [name, setName] = useState('');
-  const doc = binding.document;
-  const params = useMemo(() => glassParams(doc), [doc]);
-  const preset = library.find((i) => i.id === binding.preset);
-  const link = bindingState(binding, preset?.doc);
+  const def = MATERIALS.get(binding.family)!;
+  const glass = binding.family === 'glass';
+  const doc = useMemo(() => resolveDefinitionMaterial(definition), [definition]);
+  const model = useMemo(() => inspectorModel(def, doc), [def, doc]);
+  const spec = COMPONENTS.get(definition.type)!;
+  const personal = library.filter((i) => i.origin === 'user' && i.doc.family === binding.family);
+  const builtin = def.presets.map((p) => ({ id: p.doc.id, name: p.doc.name }));
+  const presetItem = library.find((i) => i.id === binding.preset);
+  const presetDoc = presetItem?.doc ?? (binding.preset ? MATERIALS.preset(binding.preset)?.doc : undefined);
+  const presetName = presetItem?.name ?? presetDoc?.name ?? null;
+  const link = bindingState(binding, presetDoc, hasMaterialOverrides(definition));
+  const params = useMemo(() => (doc.family === 'glass' ? glassParams(doc) : null), [doc]);
   const path = report?.main.effective ?? 'refraction';
   const effective: Backend = path === 'refraction' ? 'svg' : 'css';
-  const support = useMemo(() => new Map(supportReport(effective).map((r) => [r.key, r])), [effective]);
-  const appl = useMemo(() => applicability({ object: 'navbar', path, motionReduced: report?.main.motionReduced ?? false, params }), [path, report?.main.motionReduced, params]);
-  const field = (d: ParamDescriptor) => <ParamField key={d.key} d={d} value={params[d.key]} applicability={appl.get(d.key)} support={support.get(d.key)} onChange={(v) => session.setComponentParam(d.key, v as never)} />;
-  const limits = supportReport(effective).filter((r) => r.level !== 'supported');
+  const support = useMemo(() => new Map(supportReport(effective).map((r) => [r.key as string, r])), [effective]);
+  const appl = useMemo(() => (params ? applicability({ object: 'navbar', path, motionReduced: report?.main.motionReduced ?? false, params }) : null), [params, path, report?.main.motionReduced]);
+  const control = (c: InspectorControl, state?: 'hover' | 'pressed' | 'active' | 'disabled') => {
+    const d = (state ? def.stateParams : def.params).find((x) => x.key === c.key)!;
+    const key = c.key as ParamKey;
+    return (
+      <ParamField
+        key={state ? `${state}-${c.key}` : c.key}
+        d={d}
+        value={c.value}
+        applicability={!state && appl ? appl.get(key) : undefined}
+        support={!state && glass ? support.get(c.key) : undefined}
+        {...(state ? { idKey: `${state}-${c.key}` } : {})}
+        onChange={(v) => session.setComponentControl({ key: c.key, ...(state ? { state } : {}) }, v)}
+      />
+    );
+  };
+  const limits = glass ? supportReport(effective).filter((r) => r.level !== 'supported') : [];
+  const off = unsupportedProperties(definition);
   return (
-    <div className="material-panel" id="cmpMaterialPanel">
+    <div className="material-panel" id="cmpMaterialPanel" data-family={binding.family}>
+      <label className="field row-field" htmlFor="cmpFamily">
+        <span>Famiglia</span>
+        <select id="cmpFamily" value={binding.family} onChange={(e) => session.setComponentFamily(e.target.value)}>
+          {FAMILIES.filter((f) => f.status === 'available' && COMPONENTS.supports(definition.type, f.id)).map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="hint" id="cmpFamilyNote">
+        Cambiare famiglia non tocca contenuto, struttura, layout, stati e interazioni di «{definition.name}»{spec.id === 'button' ? ' (né la variante)' : ''}.
+      </p>
       <label className="field row-field" htmlFor="cmpMaterial">
         <span>Materiale</span>
         <select id="cmpMaterial" value={binding.preset ?? ''} onChange={(e) => e.target.value && session.applyMaterialPreset(e.target.value)}>
-          <optgroup label="Preset inclusi · Glass">
-            {library
-              .filter((i) => i.origin === 'builtin')
-              .map((i) => (
+          <optgroup label={`Preset inclusi · ${def.name}`}>
+            {builtin.map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.name}
+              </option>
+            ))}
+          </optgroup>
+          {personal.length > 0 && (
+            <optgroup label="Preset personali">
+              {personal.map((i) => (
                 <option key={i.id} value={i.id}>
                   {i.name}
                 </option>
               ))}
-          </optgroup>
-          {library.some((i) => i.origin === 'user') && (
-            <optgroup label="Preset personali">
-              {library
-                .filter((i) => i.origin === 'user')
-                .map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.name}
-                  </option>
-                ))}
             </optgroup>
           )}
-          {!preset && <option value="">{doc.name} (incluso nella componente)</option>}
+          {!presetDoc && <option value="">{doc.name} (incluso nella componente)</option>}
         </select>
       </label>
       <p className="hint" id="cmpMaterialNote" data-link={link}>
-        {linkNote(link, preset?.name ?? null, preset?.origin === 'user')}
+        {linkNote(link, presetName, presetItem?.origin === 'user')}
       </p>
       {(link === 'modified' || link === 'diverged' || link === 'outdated') && (
         <div className="button-row">
@@ -668,51 +987,88 @@ function MaterialPanel({ session }: { session: LabSession }) {
           </button>
         </div>
       )}
-      {MATERIAL_GROUPS.map(([g, label]) => (
-        <div key={g}>
-          <h3 className="panel-sub">{label}</h3>
-          {SECTION_KEYS.material.filter((k) => PARAM_INDEX[k].group === g).map((k) => field(PARAM_INDEX[k]))}
+      {definition.style.variant === 'primary' && (
+        <p className="hint" id="cmpAccentNote">
+          Variante Primary: {def.name} applica il suo accento ({def.accent.note}) sotto le tue modifiche.
+        </p>
+      )}
+      {model.groups.map((g) => {
+        const controls = g.controls.filter((c) => usedByComponent(binding.family, g.id, c.key));
+        if (!controls.length) return null;
+        return (
+          <div key={g.id} data-group={g.id}>
+            <h3 className="panel-sub">{GROUP_LABEL[g.id] ?? g.label}</h3>
+            {controls.map((c) => control(c))}
+          </div>
+        );
+      })}
+      {model.states.map((st) => (
+        <div key={st.state} data-state={st.state}>
+          <h3 className="panel-sub">Stato · {st.state}</h3>
+          {st.controls.map((c) => control(c, st.state as 'hover' | 'pressed' | 'active' | 'disabled'))}
         </div>
       ))}
-      <h3 className="panel-sub">Pressione</h3>
-      {COMPONENT_BEHAVIOR.map((k) => field(PARAM_INDEX[k]))}
-      <p className="hint">Dimensioni e forma della superficie vengono dal layout della componente; molla ed elasticità valgono solo per lenti trascinabili.</p>
+      <p className="hint">Dimensioni e forma della superficie vengono dal layout della componente{glass ? '; molla ed elasticità valgono solo per lenti trascinabili' : ''}.</p>
       <div className="button-row">
         <button type="button" className="button small" id="cmpResetMaterial" disabled={link === 'linked'} onClick={() => session.resetComponentMaterial()}>
-          {preset ? 'Ripristina valori del preset' : 'Ripristina valori iniziali'}
+          {presetDoc ? 'Ripristina valori del preset' : 'Ripristina valori iniziali'}
         </button>
       </div>
-      <form
-        className="save-preset"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (await session.saveComponentMaterialAsPreset(name)) setName('');
-        }}
-      >
-        <label htmlFor="cmpPresetName">Salva come preset personale</label>
-        <div className="button-row">
-          <input id="cmpPresetName" className="text-input" value={name} maxLength={80} placeholder="es. My Soft Glass" onChange={(e) => setName(e.target.value)} />
-          <button type="submit" className="button small primary" id="cmpSavePreset" disabled={!name.trim()}>
-            <Icon name="save" /> Salva preset
-          </button>
-        </div>
-      </form>
-      <h3 className="panel-sub">Limiti del rendering ({effective === 'svg' ? 'SVG' : 'CSS'})</h3>
-      {limits.length ? (
-        <ul className="support-list" id="cmpSupportList">
-          {limits.map((r) => (
-            <li key={r.key} data-level={r.level}>
-              <strong>{PARAM_INDEX[r.key].label}</strong> · {LEVEL_LABEL[r.level]}
-              {r.note ? ` — ${r.note}` : ''}
+      {glass ? (
+        <form
+          className="save-preset"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (await session.saveComponentMaterialAsPreset(name)) setName('');
+          }}
+        >
+          <label htmlFor="cmpPresetName">Salva come preset personale</label>
+          <div className="button-row">
+            <input id="cmpPresetName" className="text-input" value={name} maxLength={80} placeholder="es. My Soft Glass" onChange={(e) => setName(e.target.value)} />
+            <button type="submit" className="button small primary" id="cmpSavePreset" disabled={!name.trim()}>
+              <Icon name="save" /> Salva preset
+            </button>
+          </div>
+        </form>
+      ) : (
+        <p className="hint" id="cmpPresetNote">
+          I preset personali sono disponibili per Glass: il materiale {def.name} modificato resta incluso nella componente.
+        </p>
+      )}
+      {glass && (
+        <>
+          <h3 className="panel-sub">Limiti del rendering ({effective === 'svg' ? 'SVG' : 'CSS'})</h3>
+          {limits.length ? (
+            <ul className="support-list" id="cmpSupportList">
+              {limits.map((r) => (
+                <li key={r.key} data-level={r.level}>
+                  <strong>{PARAM_INDEX[r.key].label}</strong> · {LEVEL_LABEL[r.level]}
+                  {r.note ? ` — ${r.note}` : ''}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="hint" id="cmpSupportList">
+              Tutti i parametri supportati dal percorso in uso.
+            </p>
+          )}
+        </>
+      )}
+      <h3 className="panel-sub">Proprietà della componente con {def.name}</h3>
+      {off.length ? (
+        <ul className="support-list" id="cmpUnsupportedList">
+          {off.map((u) => (
+            <li key={u.path} data-level="ignored" data-unsupported={u.path}>
+              <code>{u.path}</code> · senza effetto — {u.reason}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="hint" id="cmpSupportList">
-          Tutti i parametri supportati dal percorso in uso.
+        <p className="hint" id="cmpUnsupportedList">
+          Ogni proprietà descritta ha effetto con {def.name}.
         </p>
       )}
-      {(report?.group.reasons.length ?? 0) > 0 && (
+      {(report?.group.reasons.length ?? 0) > 0 && glass && (
         <ul className="messages" data-ok="true">
           {report!.group.reasons.map((r) => (
             <li key={r}>{r}</li>
@@ -722,4 +1078,3 @@ function MaterialPanel({ session }: { session: LabSession }) {
     </div>
   );
 }
-

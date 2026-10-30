@@ -1,10 +1,11 @@
 /**
- * The `jello-material` document, schema version 2.
+ * The `jello-material` document, schema version 2. This file holds the
+ * envelope and the Glass family; Solid's sections are in solid.ts.
  *
  *   {
  *     format: 'jello-material', schemaVersion: 2,
- *     id, name, family: 'glass', familyVersion: 1,
- *     runtime: { min: '0.2.0' },            // oldest runtime that can read it
+ *     id, name, family: 'glass' | 'solid', familyVersion: 1,
+ *     runtime: { min: '0.2.0' },            // oldest runtime that can read it (per family)
  *     material, geometry, behavior,          // family sections (glass.ts)
  *     quality: { profile, dprCap, internalScale, adaptive },
  *     source:  { kind: 'dom' } | { kind: 'texture', texture: … },
@@ -20,10 +21,11 @@
 import * as z from 'zod/mini';
 import { defaultParams, type GlassParams } from '../core/params';
 import { familyInfo, type FamilyId } from './families';
+import type { SolidDocument } from './solid';
 import { checkSection, joinSections, splitParams, SECTIONS, type GlassBehavior, type GlassGeometry, type GlassMaterial } from './glass';
 import { QUALITY_IDS, type QualitySettings } from './quality';
 import type { BackendRequest } from './support';
-import { compareVersions, isVersion, MATERIAL_FORMAT, RUNTIME_VERSION, SCHEMA_VERSION } from './version';
+import { compareVersions, FAMILY_MIN_RUNTIME, isVersion, MATERIAL_FORMAT, RUNTIME_VERSION, SCHEMA_VERSION } from './version';
 
 export type PatternId = 'grid' | 'blocks' | 'bands';
 export const PATTERNS: readonly { id: PatternId; label: string }[] = [
@@ -76,8 +78,11 @@ export interface GlassDocument {
   meta: MaterialMeta;
 }
 
-/** Only Glass exists today; a Gel document will join this union with its own sections. */
-export type MaterialDocument = GlassDocument;
+/**
+ * Every document family that exists. A new family adds its document type here
+ * (discriminated by `family`) and nowhere else in the envelope.
+ */
+export type MaterialDocument = GlassDocument | SolidDocument;
 
 export type ImportResult =
   | { ok: true; doc: MaterialDocument; warnings: string[]; migratedFrom: string | null }
@@ -254,7 +259,7 @@ export function createGlassDocument(o: CreateOptions): GlassDocument {
     name: o.name,
     family: 'glass',
     familyVersion: 1,
-    runtime: { min: RUNTIME_VERSION },
+    runtime: { min: FAMILY_MIN_RUNTIME.glass },
     ...s,
     quality: { ...DEFAULT_QUALITY, ...o.quality },
     source: o.source ?? DEFAULT_SOURCE,
@@ -274,7 +279,7 @@ export function withGlassParams(doc: GlassDocument, params: GlassParams): GlassD
 
 /** Stable key order, two-space indent: diffs of exported files stay readable. */
 export function serializeMaterial(doc: MaterialDocument): string {
-  const ordered = {
+  const head = {
     format: doc.format,
     schemaVersion: doc.schemaVersion,
     id: doc.id,
@@ -285,11 +290,11 @@ export function serializeMaterial(doc: MaterialDocument): string {
     material: doc.material,
     geometry: doc.geometry,
     behavior: doc.behavior,
-    quality: doc.quality,
-    source: doc.source,
-    target: doc.target,
-    meta: doc.meta,
   };
+  const ordered =
+    doc.family === 'solid'
+      ? { ...head, states: doc.states, meta: doc.meta }
+      : { ...head, quality: doc.quality, source: doc.source, target: doc.target, meta: doc.meta };
   return JSON.stringify(ordered, null, 2);
 }
 

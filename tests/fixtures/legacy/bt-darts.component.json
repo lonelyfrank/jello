@@ -1,0 +1,216 @@
+{
+  "format": "jello-component",
+  "schemaVersion": 1,
+  "type": "bottom-navigation",
+  "typeVersion": 1,
+  "id": "bt-darts",
+  "name": "BT Darts",
+  "runtime": {
+    "min": "0.3.0"
+  },
+  "material": {
+    "family": "glass",
+    "preset": "bt",
+    "revision": "60f2d649",
+    "document": {
+      "format": "jello-material",
+      "schemaVersion": 2,
+      "id": "bt",
+      "name": "Mio materiale",
+      "family": "glass",
+      "familyVersion": 1,
+      "runtime": {
+        "min": "0.2.0"
+      },
+      "material": {
+        "band": 12,
+        "refraction": 5,
+        "profile": "bump",
+        "dome": 0,
+        "chroma": 0,
+        "blur": 10,
+        "saturation": 150,
+        "tint": "#121216",
+        "tintOpacity": 0.14,
+        "light": 0.18,
+        "lightAngle": 315,
+        "shadow": 0.2,
+        "shadowBlur": 22,
+        "shadowOffset": 7
+      },
+      "geometry": {
+        "shape": "capsule",
+        "width": 280,
+        "height": 104,
+        "radius": 32
+      },
+      "behavior": {
+        "stiffness": 420,
+        "damping": 0.68,
+        "stretch": 0,
+        "pressScale": 1,
+        "pressRefraction": 0,
+        "pressLight": 0.22
+      },
+      "quality": {
+        "profile": "balanced",
+        "dprCap": null,
+        "internalScale": null,
+        "adaptive": false
+      },
+      "source": {
+        "kind": "dom"
+      },
+      "target": {
+        "backend": "auto",
+        "fallback": "css"
+      },
+      "meta": {
+        "createdAt": null,
+        "updatedAt": null,
+        "basedOn": null,
+        "notes": ""
+      }
+    }
+  },
+  "root": {
+    "kind": "bottom-navigation",
+    "id": "root",
+    "label": "Navigazione principale",
+    "semantics": "navigation",
+    "defaultTab": "live",
+    "layout": {
+      "anchor": "viewport",
+      "placement": "floating",
+      "align": "center",
+      "widthMode": "fill",
+      "width": 440,
+      "maxWidth": 440,
+      "height": 64,
+      "padding": 6,
+      "gap": 2,
+      "radius": "capsule",
+      "offset": 12,
+      "itemLayout": "stacked",
+      "labels": "show"
+    },
+    "appearance": {
+      "foreground": "#0c0c10",
+      "textShadow": true,
+      "indicator": {
+        "style": "pill",
+        "color": "#ffffff9e",
+        "inset": 0
+      }
+    },
+    "typography": {
+      "fontFamily": "system",
+      "fontSize": 11.5,
+      "fontWeight": 600,
+      "letterSpacing": 0.1
+    },
+    "icon": {
+      "size": 22,
+      "strokeWidth": 1.8
+    },
+    "states": {
+      "active": {
+        "color": "#0a54bd",
+        "fontWeight": 750
+      },
+      "hover": {
+        "background": "#ffffff38"
+      },
+      "pressed": {
+        "background": "#00000014",
+        "scale": 1
+      },
+      "focus": {
+        "color": "#7a2fb8",
+        "width": 2,
+        "offset": -2
+      },
+      "disabled": {
+        "opacity": 0.4
+      }
+    },
+    "interactions": {
+      "pressFeedback": true,
+      "wheelForward": true,
+      "reselect": "event",
+      "events": {
+        "change": "jello-change",
+        "press": "jello-press",
+        "reselect": "jello-reselect"
+      }
+    },
+    "motion": {
+      "indicator": "spring",
+      "duration": 340
+    },
+    "responsive": {
+      "overflow": "scroll",
+      "minTabWidth": 56,
+      "breakpoints": []
+    },
+    "children": [
+      {
+        "kind": "tab",
+        "id": "matrice",
+        "label": "Matrice",
+        "icon": {
+          "kind": "builtin",
+          "name": "matrix"
+        },
+        "value": null,
+        "disabled": false,
+        "style": {
+          "iconSize": null,
+          "fontSize": null,
+          "fontWeight": null,
+          "letterSpacing": null
+        }
+      },
+      {
+        "kind": "tab",
+        "id": "live",
+        "label": "Live",
+        "icon": {
+          "kind": "builtin",
+          "name": "live"
+        },
+        "value": null,
+        "disabled": false,
+        "style": {
+          "iconSize": null,
+          "fontSize": null,
+          "fontWeight": null,
+          "letterSpacing": null
+        }
+      },
+      {
+        "kind": "tab",
+        "id": "risultati",
+        "label": "Risultati",
+        "icon": {
+          "kind": "builtin",
+          "name": "results"
+        },
+        "value": null,
+        "disabled": false,
+        "style": {
+          "iconSize": null,
+          "fontSize": null,
+          "fontWeight": null,
+          "letterSpacing": null
+        }
+      }
+    ]
+  },
+  "meta": {
+    "createdAt": "2026-10-10T09:00:00.000Z",
+    "updatedAt": "2026-10-10T09:00:00.000Z",
+    "basedOn": "bt-darts",
+    "notes": ""
+  }
+}

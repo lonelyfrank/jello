@@ -5,10 +5,10 @@
  */
 
 import { useSyncExternalStore } from 'react';
-import type { MaterialDocument } from '../model';
-import type { ComponentDocument } from '../components/document';
+import type { GlassDocument } from '../model';
+import type { ComponentDefinition } from '../components';
 import type { ProjectDoc } from '../project/types';
-import type { PreviewState } from '../runtime/bottom-navigation';
+import type { PreviewState } from '../runtime/component-types';
 import type { PreviewReport } from '../stage/controller';
 import type { ViewOptions } from '../stage/view';
 import type { SaveState } from './storage/autosave';
@@ -18,7 +18,7 @@ export interface LibraryItem {
   id: string;
   name: string;
   origin: 'builtin' | 'user';
-  doc: MaterialDocument;
+  doc: GlassDocument;
   approximation: boolean;
   note: string;
   updatedAt: string | null;
@@ -34,7 +34,7 @@ export interface ComponentItem {
   name: string;
   /** Templates live in code and are read-only; user components are stored (IndexedDB). */
   origin: 'template' | 'user';
-  doc: ComponentDocument;
+  doc: ComponentDefinition;
   description: string;
   updatedAt: string | null;
 }
@@ -48,7 +48,7 @@ export type AssetTab = 'colors' | 'icons' | 'fonts';
 export type FlowKind = 'wizard' | 'import' | 'export';
 
 export interface BuilderState {
-  doc: ComponentDocument;
+  doc: ComponentDefinition;
   /** Template id or user component id. */
   componentId: string;
   origin: 'template' | 'user';
@@ -65,7 +65,7 @@ export interface BuilderState {
 }
 
 export interface LabState {
-  doc: MaterialDocument;
+  doc: GlassDocument;
   /** Library entry being edited. */
   materialId: string;
   origin: 'builtin' | 'user';

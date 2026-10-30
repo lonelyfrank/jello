@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { adaptersFor, type ExportTarget } from '../../export/adapters';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
+import { resolveDefinitionMaterial } from '../../components';
 import { Icon } from './icons';
 
 const TARGETS: { id: ExportTarget; label: string; hint: string }[] = [
@@ -19,7 +20,9 @@ const TARGETS: { id: ExportTarget; label: string; hint: string }[] = [
 export function ExportDialog({ session }: { session: LabSession }) {
   const open = useLab((s) => s.exportOpen);
   const workspace = useLab((s) => s.workspace);
-  const material = useLab((s) => (s.workspace === 'builder' ? s.builder.doc.material.document : s.doc));
+  const doc = useLab((s) => s.doc);
+  const builderDoc = useLab((s) => s.builder.doc);
+  const material = useMemo(() => (workspace === 'builder' ? resolveDefinitionMaterial(builderDoc) : doc), [workspace, builderDoc, doc]);
   const component = useLab((s) => (s.workspace === 'builder' ? s.builder.doc : null));
   const ref = useRef<HTMLDialogElement>(null);
   const [target, setTarget] = useState<ExportTarget>(workspace === 'builder' ? 'component' : 'material');
@@ -87,6 +90,11 @@ export function ExportDialog({ session }: { session: LabSession }) {
               </label>
             ))}
           </fieldset>
+        )}
+        {!adapter && (
+          <p className="hint" id="exportNone">
+            {target === 'material' ? `Il pacchetto del solo materiale è disponibile per Glass: con ${material.name} esporta la componente (include il materiale) o la configurazione JSON.` : 'Nessun formato disponibile.'}
+          </p>
         )}
         {plan && adapter && (
           <section className="export-plan" id="exportPlan" aria-label="Contenuto dell’export">

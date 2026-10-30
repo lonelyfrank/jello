@@ -1,6 +1,7 @@
 /**
- * BottomNavigation on the DOM: the renderer of a `jello-component` document
- * of type bottom-navigation. Framework-independent; the lab's preview, the
+ * BottomNavigation on the DOM: the renderer of a `jello-component-definition`
+ * of type `mobile-navbar`. Reads the derived view (`navbarView`), never a
+ * second stored model. Framework-independent; the lab's preview, the
  * builder and the exported React component all run this class.
  *
  *   nav.jello-bnav                 host: one material surface for the whole bar
@@ -9,9 +10,11 @@
  *       span.jello-bnav-indicator  selection layer, moved with a CSS transition (not a second lens)
  *       button.jello-bnav-tab × n  icon + label, never filtered or scaled
  *
- * Material: the bar gets its surface from a MaterialGroup (src/runtime/materials.ts),
- * either shared by the host (`group`) or created here from `config.material`
- * over `source`. Without a source the group runs on the CSS backend.
+ * Material: the bar gets its surface through a MaterialBinding (surface-binding.ts),
+ * which uses a group shared by the host (`group`, Glass) or creates the group of
+ * the definition's family: Glass over `source` (without one it runs on the CSS
+ * backend) or Solid. Changing the family in `update()` replaces the group and
+ * keeps the bar, its tabs and its state.
  *
  * Selection is persistent (aria-current / aria-selected); press is transient
  * (data-pressed + press light on the surface) and never selects by itself.
@@ -22,10 +25,15 @@ import './bottom-navigation.css';
 import type { GlassSurface } from '../core/surface';
 import { glassParams } from '../model/document';
 import type { BackendRequest } from '../model/support';
-import type { ComponentDocument } from '../components/document';
+import { resolveDefinitionMaterial, type ComponentDefinition } from '../components/definition';
+import { unsupportedProperties } from '../components/registry';
 import { iconTree, type SvgNode } from '../components/icons';
-import { resolveRoot, tabStyle, type BnLayout, type BnRoot, type BnTab } from '../components/bottom-navigation/model';
-import { createMaterialGroup, type MaterialGroup } from './materials';
+import { navbarPresentation, navbarView, resolveNavbar, tabStyle, type BnLayout, type BnRoot, type BnTab } from '../components/navbar';
+import type { ComponentInstance, ComponentStatus, PreviewState } from './component-types';
+import type { MaterialGroup } from './materials';
+import { MaterialBinding, type BoundSurface } from './surface-binding';
+
+export type { PreviewState } from './component-types';
 
 export interface BottomNavigationEvent {
   tabId: string;
@@ -35,19 +43,17 @@ export interface BottomNavigationEvent {
   trigger: 'pointer' | 'keyboard' | 'api';
 }
 
-export type PreviewState = 'hover' | 'pressed' | 'focus';
-
 export interface BottomNavigationOptions {
   /** Element the <nav> is appended to. */
   container: HTMLElement;
-  config: ComponentDocument;
-  /** GlassSource: opaque element behind the bar whose content may be refracted. */
+  config: ComponentDefinition;
+  /** GlassSource: opaque element behind the bar whose content may be refracted (Glass only). */
   source?: HTMLElement | null;
-  /** Shared material group (not destroyed by this component). Wins over `source`. */
+  /** Shared Glass group (not destroyed by this component). Wins over `source` while the material is Glass. */
   group?: MaterialGroup;
   /** Element scrolled by wheel input over the bar (interactions.wheelForward). */
   scroller?: HTMLElement | null;
-  /** Initial active tab (default: config.root.defaultTab). */
+  /** Initial active tab (default: the definition's default item). */
   activeTab?: string | null;
   /** True: clicks only report `change`; the host calls setActiveTab(). */
   controlled?: boolean;
@@ -64,12 +70,10 @@ export interface BottomNavigationOptions {
   onReselect?(tabId: string, e: BottomNavigationEvent): void;
 }
 
-export interface BottomNavigationStatus {
-  material: MaterialGroup['status'];
-  breakpoint: string | null;
+export interface BottomNavigationStatus extends ComponentStatus {
+  type: 'mobile-navbar';
   overflowing: boolean;
   activeTab: string;
-  reasons: string[];
 }
 
 interface TabView {
@@ -81,22 +85,21 @@ interface TabView {
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PRESS_KEYS = new Set([' ', 'Enter']);
-const EASING = { spring: 'cubic-bezier(0.3, 1.2, 0.4, 1)', ease: 'cubic-bezier(0.2, 0.8, 0.2, 1)', none: 'linear' } as const;
 
-export class BottomNavigation {
+export class BottomNavigation implements ComponentInstance {
+  readonly type = 'mobile-navbar' as const;
   readonly host: HTMLElement;
   readonly track: HTMLDivElement;
   readonly indicator: HTMLSpanElement;
-  private config: ComponentDocument;
+  private config: ComponentDefinition;
   private effective: BnRoot;
   private breakpoint: string | null = null;
   private readonly options: BottomNavigationOptions;
-  private readonly group: MaterialGroup;
-  private readonly ownsGroup: boolean;
+  private readonly binding: MaterialBinding;
+  private material: ComponentDefinition['material'];
   private readonly reasons: string[] = [];
   private readonly tabs = new Map<string, TabView>();
-  private surface: GlassSurface | null = null;
-  private surfaceRadius: number | 'capsule' | null = null;
+  private surface: BoundSurface | null = null;
   private active: string;
   private pressedTab: HTMLButtonElement | null = null;
   private pointer: number | null = null;
@@ -110,21 +113,16 @@ export class BottomNavigation {
   constructor(options: BottomNavigationOptions) {
     this.options = options;
     this.config = options.config;
-    this.effective = options.config.root;
+    this.effective = navbarView(options.config);
     const doc = options.container.ownerDocument;
-    if (options.group) {
-      this.group = options.group;
-      this.ownsGroup = false;
-    } else {
-      const source = options.source ?? null;
-      if (!source) this.reasons.push('Nessuna GlassSource indicata: superficie su backdrop-filter (CSS), senza rifrazione');
-      this.group = createMaterialGroup({
-        source: source ?? options.container,
-        material: options.config.material.document,
-        ...(source ? (options.backend ? { backend: options.backend } : {}) : { backend: 'css' as const }),
-      });
-      this.ownsGroup = true;
-    }
+    this.material = options.config.material;
+    this.binding = new MaterialBinding({
+      container: options.container,
+      material: resolveDefinitionMaterial(options.config),
+      ...(options.source ? { source: options.source } : {}),
+      ...(options.group ? { group: options.group } : {}),
+      ...(options.backend ? { backend: options.backend } : {}),
+    });
     this.host = doc.createElement('nav');
     this.host.className = cls('jello-bnav', options.classNames?.root);
     this.host.hidden = true;
@@ -136,16 +134,16 @@ export class BottomNavigation {
     this.track.append(this.indicator);
     this.host.append(this.track);
     options.container.append(this.host);
-    const first = options.activeTab ?? options.config.root.defaultTab;
-    this.active = options.config.root.children.some((t) => t.id === first) ? first : options.config.root.defaultTab;
-    this.host.toggleAttribute('data-motion-reduced', this.group.status.motionReduced);
-    this.lifetime.push(this.group.onStatus((s) => this.host.toggleAttribute('data-motion-reduced', s.motionReduced)));
+    const first = options.activeTab ?? navbarView(options.config).defaultTab;
+    this.active = navbarView(options.config).children.some((t) => t.id === first) ? first : navbarView(options.config).defaultTab;
+    this.host.toggleAttribute('data-motion-reduced', this.binding.status.motionReduced);
+    this.lifetime.push(this.binding.onStatus((s) => this.host.toggleAttribute('data-motion-reduced', s.motionReduced)));
     this.render(true);
   }
 
   // ---------- public API ----------
 
-  get component(): ComponentDocument {
+  get component(): ComponentDefinition {
     return this.config;
   }
 
@@ -157,12 +155,19 @@ export class BottomNavigation {
     return this.pressedTab?.dataset.tab ?? null;
   }
 
+  /** The Glass surface while the material is Glass (lens geometry, frames…), else null. */
   get glassSurface(): GlassSurface | null {
+    return this.surface?.glass ?? null;
+  }
+
+  /** The surface of the bar, whichever family draws it. */
+  get materialSurface(): BoundSurface | null {
     return this.surface;
   }
 
-  get materialGroup(): MaterialGroup {
-    return this.group;
+  /** The Glass group in use while the material is Glass. */
+  get materialGroup(): MaterialGroup | null {
+    return this.binding.glassGroup;
   }
 
   get mounted(): boolean {
@@ -170,8 +175,22 @@ export class BottomNavigation {
   }
 
   get status(): BottomNavigationStatus {
-    const material = this.group.status;
-    return { material, breakpoint: this.breakpoint, overflowing: this.overflowing, activeTab: this.active, reasons: [...this.reasons, ...material.reasons] };
+    const material = this.binding.status;
+    return {
+      type: 'mobile-navbar',
+      family: this.binding.family,
+      material,
+      breakpoint: this.breakpoint,
+      overflowing: this.overflowing,
+      activeTab: this.active,
+      reasons: [...this.reasons, ...material.reasons],
+      unsupported: unsupportedProperties(this.config),
+    };
+  }
+
+  /** Id of the tab under `target` (`root` when it is none). */
+  nodeAt(target: EventTarget | null): string {
+    return this.tabOf(target)?.dataset.tab ?? 'root';
   }
 
   /** Element of the root (`root`) or of a tab, for hosts that highlight or measure it. */
@@ -199,11 +218,12 @@ export class BottomNavigation {
   }
 
   /** New configuration (same component). The surface is re-created only if its shape changes. */
-  update(config: ComponentDocument): void {
-    const materialChanged = config.material.document !== this.config.material.document;
+  update(config: ComponentDefinition): void {
+    const materialChanged = config.material !== this.material || config.states !== this.config.states;
     this.config = config;
-    if (!config.root.children.some((t) => t.id === this.active)) this.active = config.root.defaultTab;
-    if (materialChanged && this.ownsGroup) this.group.setMaterial(config.material.document);
+    this.material = config.material;
+    if (!navbarView(config).children.some((t) => t.id === this.active)) this.active = navbarView(config).defaultTab;
+    if (materialChanged) this.binding.setMaterial(resolveDefinitionMaterial(config));
     this.render(false);
     this.placeIndicator(false);
   }
@@ -214,7 +234,7 @@ export class BottomNavigation {
   }
 
   setActiveTab(id: string, animate = true): void {
-    if (id === this.active || !this.config.root.children.some((t) => t.id === id)) return;
+    if (id === this.active || !navbarView(this.config).children.some((t) => t.id === id)) return;
     this.active = id;
     this.applySelection();
     this.placeIndicator(animate);
@@ -241,14 +261,14 @@ export class BottomNavigation {
     this.destroyed = true;
     for (const c of this.lifetime.splice(0)) c();
     this.host.remove();
-    if (this.ownsGroup) this.group.destroy();
+    this.binding.destroy();
   }
 
   // ---------- rendering ----------
 
   /** Box the bar is laid out in: its containing block (container anchor) or first ancestor with a box. */
   private layoutParent(): HTMLElement {
-    const anchor = this.options.anchor ?? this.config.root.layout.anchor;
+    const anchor = this.options.anchor ?? navbarView(this.config).layout.anchor;
     if (anchor === 'container' && this.host.offsetParent instanceof HTMLElement) return this.host.offsetParent;
     let el: HTMLElement | null = this.options.container;
     const win = this.host.ownerDocument.defaultView;
@@ -258,16 +278,16 @@ export class BottomNavigation {
 
   /** Width the responsive breakpoints are evaluated against. */
   private containerWidth(): number {
-    const anchor = this.options.anchor ?? this.config.root.layout.anchor;
+    const anchor = this.options.anchor ?? navbarView(this.config).layout.anchor;
     if (anchor === 'viewport') return this.host.ownerDocument.defaultView?.innerWidth ?? this.options.container.clientWidth;
     return this.layoutParent().clientWidth;
   }
 
   private render(force: boolean) {
-    const { root, breakpoint } = resolveRoot(this.config.root, this.containerWidth());
+    const { root, breakpoint } = resolveNavbar(this.config, this.containerWidth());
     this.effective = root;
     this.breakpoint = breakpoint;
-    const key = JSON.stringify([root.layout, root.appearance, root.typography, root.icon, root.states, root.motion, root.responsive.overflow, root.responsive.minTabWidth, root.semantics, this.options.label ?? root.label, breakpoint]);
+    const key = JSON.stringify([root.layout, root.appearance, root.typography, root.icon, root.states, root.motion, root.responsive.overflow, root.responsive.minTabWidth, root.semantics, this.options.label ?? root.label, breakpoint, this.binding.family]);
     if (force || key !== this.appliedKey) {
       this.appliedKey = key;
       this.applyRoot(root);
@@ -275,66 +295,22 @@ export class BottomNavigation {
     this.renderTabs(root);
     this.applySelection();
     this.applyLight();
-    if (this.surface && this.radius() !== this.surfaceRadius) {
-      this.detachSurface();
-      this.attachSurface();
-    }
+    this.surface?.setRadius(this.radius());
     this.checkOverflow();
   }
 
   private applyRoot(r: BnRoot) {
     const h = this.host;
-    const L = r.layout;
-    const docked = L.placement === 'docked';
     h.setAttribute('aria-label', this.options.label ?? r.label);
-    const d = h.dataset;
-    d.anchor = this.options.anchor ?? L.anchor;
-    d.placement = L.placement;
-    d.align = L.align;
-    d.width = L.widthMode;
-    d.itemLayout = L.itemLayout;
-    d.labels = L.labels;
-    d.indicator = r.appearance.indicator.style;
-    d.textShadow = String(r.appearance.textShadow);
-    d.font = r.typography.fontFamily;
-    d.overflow = r.responsive.overflow;
-    d.motion = r.motion.indicator;
-    d.semantics = r.semantics;
-    if (this.breakpoint) d.breakpoint = this.breakpoint;
-    else delete d.breakpoint;
+    // The presentation is data (components/navbar.ts): what is written here is what the tests compare.
+    const p = navbarPresentation(r, this.binding.family, { breakpoint: this.breakpoint, ...(this.options.anchor ? { anchor: this.options.anchor } : {}) });
+    for (const name of MANAGED_ATTRS) if (!(name in p.attrs)) h.removeAttribute(name);
+    for (const [k, v] of Object.entries(p.attrs)) h.setAttribute(k, v);
+    for (const name of MANAGED_VARS) if (!(name in p.vars)) h.style.removeProperty(name);
+    for (const [k, v] of Object.entries(p.vars)) h.style.setProperty(k, v);
     this.track.setAttribute('role', r.semantics === 'tabs' ? 'tablist' : 'presentation');
     if (r.semantics === 'tabs') this.track.setAttribute('aria-label', this.options.label ?? r.label);
     else this.track.removeAttribute('aria-label');
-    const vars: Record<string, string> = {
-      '--jbn-width': `${L.width}px`,
-      '--jbn-max-width': `${L.maxWidth}px`,
-      '--jbn-height': `${L.height}px`,
-      '--jbn-padding': `${L.padding}px`,
-      '--jbn-gap': `${L.gap}px`,
-      '--jbn-radius': docked ? '0px' : L.radius === 'capsule' ? '9999px' : `${L.radius}px`,
-      '--jbn-offset': docked ? '0px' : `${L.offset}px`,
-      '--jbn-fg': r.appearance.foreground,
-      '--jbn-indicator': r.appearance.indicator.color,
-      '--jbn-indicator-inset': `${r.appearance.indicator.inset}px`,
-      '--jbn-font-size': `${r.typography.fontSize}px`,
-      '--jbn-font-weight': String(r.typography.fontWeight),
-      '--jbn-letter-spacing': `${r.typography.letterSpacing}px`,
-      '--jbn-icon': `${r.icon.size}px`,
-      '--jbn-stroke': String(r.icon.strokeWidth),
-      '--jbn-active': r.states.active.color,
-      '--jbn-active-weight': String(r.states.active.fontWeight),
-      '--jbn-hover': r.states.hover.background,
-      '--jbn-press': r.states.pressed.background,
-      '--jbn-press-scale': String(r.states.pressed.scale),
-      '--jbn-focus': r.states.focus.color,
-      '--jbn-focus-width': `${r.states.focus.width}px`,
-      '--jbn-focus-offset': `${r.states.focus.offset}px`,
-      '--jbn-disabled': String(r.states.disabled.opacity),
-      '--jbn-duration': `${r.motion.indicator === 'none' ? 0 : r.motion.duration}ms`,
-      '--jbn-easing': EASING[r.motion.indicator],
-      '--jbn-min-tab': `${r.responsive.minTabWidth}px`,
-    };
-    for (const [k, v] of Object.entries(vars)) h.style.setProperty(k, v);
   }
 
   private renderTabs(root: BnRoot) {
@@ -407,10 +383,11 @@ export class BottomNavigation {
     }
   }
 
-  /** The indicator's rim follows the material's light (read from the document, not re-rendered). */
+  /** The indicator's rim follows the material's light (Glass; read from the document, not re-rendered). */
   private applyLight() {
-    const doc = this.group.material;
+    const doc = this.binding.material;
     if (doc.family === 'glass') this.host.style.setProperty('--jbn-light', String(glassParams(doc).light));
+    else this.host.style.removeProperty('--jbn-light');
   }
 
   private checkOverflow() {
@@ -448,13 +425,12 @@ export class BottomNavigation {
   }
 
   private attachSurface() {
-    this.surfaceRadius = this.radius();
-    this.surface = this.group.attach(this.host, { sizing: 'element', radius: this.surfaceRadius, interaction: 'none' });
+    this.surface = this.binding.attach(this.host, { radius: this.radius() });
   }
 
   private detachSurface() {
     if (!this.surface) return;
-    this.group.detach(this.surface);
+    this.binding.detach(this.surface);
     this.surface = null;
   }
 
@@ -513,7 +489,11 @@ export class BottomNavigation {
         target.focus();
       }),
       listen(h, 'keyup', (e) => PRESS_KEYS.has(e.key) && this.release()),
-      listen(h, 'focusout', () => this.release()),
+      // Focus leaving the bar ends a press; focus moving to another tab of the bar (the mouse pressed it) does not.
+      listen(h, 'focusout', (e) => {
+        if (e.relatedTarget instanceof Node && h.contains(e.relatedTarget)) return;
+        this.release();
+      }),
       listen(
         h,
         'wheel',
@@ -538,8 +518,9 @@ export class BottomNavigation {
     }
   }
 
+  /** Press feedback on the bar's surface: a Glass bar answers with local light; a Solid bar does not dip (see NAVBAR_UNSUPPORTED). */
   private feedback() {
-    return this.effective.interactions.pressFeedback;
+    return this.effective.interactions.pressFeedback && this.binding.family === 'glass';
   }
 
   private tabOf(target: EventTarget | null): HTMLButtonElement | null {
@@ -548,8 +529,8 @@ export class BottomNavigation {
   }
 
   private event(id: string, trigger: BottomNavigationEvent['trigger'], previous: string | null): BottomNavigationEvent {
-    const i = this.config.root.children.findIndex((t) => t.id === id);
-    return { tabId: id, previous, value: this.config.root.children[i]?.value ?? null, index: i, trigger };
+    const i = navbarView(this.config).children.findIndex((t) => t.id === id);
+    return { tabId: id, previous, value: navbarView(this.config).children[i]?.value ?? null, index: i, trigger };
   }
 
   private emit(name: string, detail: BottomNavigationEvent) {
@@ -574,7 +555,7 @@ export class BottomNavigation {
   }
 
   private select(id: string, trigger: BottomNavigationEvent['trigger']) {
-    const tab = this.config.root.children.find((t) => t.id === id);
+    const tab = navbarView(this.config).children.find((t) => t.id === id);
     if (!tab || tab.disabled) return;
     const e = this.event(id, trigger, this.active);
     if (id === this.active) {
@@ -621,6 +602,10 @@ function renderIcon(doc: Document, tab: BnTab, extra: string | undefined): SVGSV
   add(svg, tree.nodes);
   return svg;
 }
+
+/** Attributes and variables `navbarPresentation` may write: the ones it leaves out are removed, so a material switch leaves nothing behind. */
+const MANAGED_ATTRS = ['data-text-shadow', 'data-breakpoint'];
+const MANAGED_VARS = ['--jbn-fg', '--jbn-indicator'];
 
 const cls = (base: string, extra: string | undefined) => (extra ? `${base} ${extra}` : base);
 

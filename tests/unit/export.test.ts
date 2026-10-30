@@ -3,8 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { buildPackage, cssOnlyStylesheet, packageZip, type RuntimeBundle } from '../../src/export/package';
 import { DOM_FIXTURE_HTML, exampleHtml, exampleScript } from '../../src/export/example';
 import { crc32, unzip, zip } from '../../src/export/zip';
-import { builtinMaterial, parseMaterialText, type MaterialDocument } from '../../src/model';
-import { addTab, componentTemplate, parseComponentText, serializeComponent } from '../../src/components';
+import { builtinMaterial, parseMaterialText, type GlassDocument } from '../../src/model';
+import { addTab, componentTemplate, editNavbar, glassMaterialOf, parseDefinitionText, resolveDefinitionMaterial, serializeDefinition, setButtonLink, switchMaterialFamily, type ComponentDefinition } from '../../src/components';
+import { buildReactPackage, reactNames } from '../../src/export/react';
 import { adaptersFor, componentReactAdapter, EXPORT_ADAPTERS, exportAdapter } from '../../src/export/adapters';
 
 const enc = new TextEncoder();
@@ -64,7 +65,7 @@ describe('export package (runtime)', () => {
   });
 
   it('WebGL2 materials ship their image and explain how to provide a texture', async () => {
-    const doc: MaterialDocument = { ...navbar, id: 'scene-1', target: { backend: 'webgl2', fallback: 'css' }, source: { kind: 'texture', texture: { kind: 'image', url: 'example:tulips' } } };
+    const doc: GlassDocument = { ...navbar, id: 'scene-1', target: { backend: 'webgl2', fallback: 'css' }, source: { kind: 'texture', texture: { kind: 'image', url: 'example:tulips' } } };
     const r = await buildPackage({
       material: doc,
       kind: 'runtime',
@@ -80,7 +81,7 @@ describe('export package (runtime)', () => {
   });
 
   it('a missing asset is a warning, not a silent omission', async () => {
-    const doc: MaterialDocument = { ...navbar, target: { backend: 'webgl2', fallback: 'css' }, source: { kind: 'texture', texture: { kind: 'image', url: 'asset:' + 'f'.repeat(64) } } };
+    const doc: GlassDocument = { ...navbar, target: { backend: 'webgl2', fallback: 'css' }, source: { kind: 'texture', texture: { kind: 'image', url: 'asset:' + 'f'.repeat(64) } } };
     const r = await buildPackage({ material: doc, kind: 'runtime', runtime, now, resolveAsset: async () => null });
     expect(r.warnings.join()).toMatch(/non disponibile/);
   });
@@ -114,7 +115,7 @@ describe('examples', () => {
 });
 
 describe('export adapters', () => {
-  const demo = () => componentTemplate('bottom-navigation')!.create();
+  const demo = () => componentTemplate('mobile-navbar')!.create();
   /** File at `path` relative to the package root. */
   const text = (r: { root: string; files: { path: string; data: Uint8Array }[] }, path: string) => new TextDecoder().decode(r.files.find((f) => f.path === `${r.root}${path}`)!.data);
 
@@ -132,28 +133,28 @@ describe('export adapters', () => {
   it('the React package contains component, typed wrapper, TSX source, config, material, runtime and example', async () => {
     const doc = demo();
     const r = await componentReactAdapter.build({ component: doc, runtime, now });
-    expect(r.root).toBe('jello-bottom-navigation-react');
+    expect(r.root).toBe('jello-mobile-navbar-react');
     const paths = r.files.map((f) => f.path.slice(r.root.length + 1));
-    for (const p of ['package.json', 'index.js', 'index.d.ts', 'src/BottomNavigation.tsx', 'component.json', 'material.json', 'runtime/jello.js', 'runtime/types/runtime/index.d.ts', 'example/App.tsx', 'README.md', 'jello-manifest.json']) {
+    for (const p of ['package.json', 'index.js', 'index.d.ts', 'src/MobileNavbar.tsx', 'component.json', 'material.json', 'runtime/jello.js', 'runtime/types/runtime/index.d.ts', 'example/App.tsx', 'README.md', 'jello-manifest.json']) {
       expect(paths).toContain(p);
     }
     expect(paths.every((p) => !/(^|\/)src\/(lab|stage|core|model)/.test(p) && !p.endsWith('.map'))).toBe(true);
     const pkg = JSON.parse(text(r, '/package.json'));
-    expect(pkg).toMatchObject({ name: '@jello-export/bottom-navigation', peerDependencies: { react: '>=18', 'react-dom': '>=18' } });
+    expect(pkg).toMatchObject({ name: '@jello-export/mobile-navbar', peerDependencies: { react: '>=18', 'react-dom': '>=18' } });
     expect(pkg.dependencies).toBeUndefined();
     // Same document everywhere: component.json, the inline config of index.js, the material inside.
-    const parsed = parseComponentText(text(r, '/component.json'));
+    const parsed = parseDefinitionText(text(r, '/component.json'));
     expect(parsed.ok && parsed.doc).toEqual(doc);
-    expect(text(r, '/index.js')).toContain(`export const config = ${serializeComponent(doc)};`);
-    expect(parseMaterialText(text(r, '/material.json'))).toMatchObject({ ok: true, doc: doc.material.document });
+    expect(text(r, '/index.js')).toContain(`export const config = ${serializeDefinition(doc)};`);
+    expect(parseMaterialText(text(r, '/material.json'))).toMatchObject({ ok: true, doc: glassMaterialOf(doc) });
     // Imports only the bundled runtime and React: no lab, no router.
     const js = text(r, '/index.js');
     const imports = [...js.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
     expect(imports.sort()).toEqual(['./runtime/jello.js', 'react']);
     const dts = text(r, '/index.d.ts');
-    expect(dts).toContain('export type BottomNavigationTabId = "home" | "explore" | "profile";');
-    expect(dts).toContain('export declare function BottomNavigation(props: BottomNavigationProps): ReactElement;');
-    expect(text(r, '/src/BottomNavigation.tsx')).toContain("from '../runtime/jello.js'");
+    expect(dts).toContain('export type MobileNavbarTabId = "home" | "explore" | "profile";');
+    expect(dts).toContain('export declare function MobileNavbar(props: MobileNavbarProps): ReactElement;');
+    expect(text(r, '/src/MobileNavbar.tsx')).toContain("from '../runtime/jello.js'");
     const m = r.manifest as unknown as { kind: string; component: { tabs: string[] }; files: { path: string; sha256: string }[] };
     expect(m.kind).toBe('component-react');
     expect(m.component.tabs).toEqual(['home', 'explore', 'profile']);
@@ -162,8 +163,8 @@ describe('export adapters', () => {
 
   it('the tab union follows the edited structure', async () => {
     const doc = demo();
-    const added = addTab(doc.root, { label: 'Classifica' });
-    const r = await componentReactAdapter.build({ component: { ...doc, name: 'Mia App', root: added.root }, runtime, now });
+    const edited = editNavbar(doc, (root) => addTab(root, { label: 'Classifica' }).root);
+    const r = await componentReactAdapter.build({ component: { ...edited, name: 'Mia App' }, runtime, now });
     expect(r.root).toBe('jello-mia-app-react');
     expect(JSON.parse(text(r, '/package.json')).name).toBe('@jello-export/mia-app');
     expect(text(r, '/index.d.ts')).toContain('export type MiaAppTabId = "home" | "explore" | "profile" | "tab";');
@@ -184,7 +185,7 @@ describe('export adapters', () => {
     expect(adaptersFor('component', { material: navbar })).toEqual([]);
     expect(adaptersFor('configuration', req).map((a) => a.id)).toEqual(['material-json', 'component-json']);
     const plan = componentReactAdapter.describe(req);
-    expect(plan.name).toBe('jello-bottom-navigation-react.zip');
+    expect(plan.name).toBe('jello-mobile-navbar-react.zip');
     expect(plan.dependencies.map((d) => [d.name, d.kind])).toEqual([
       ['@jello/runtime', 'bundled'],
       ['react, react-dom', 'peer'],
@@ -194,9 +195,100 @@ describe('export adapters', () => {
 
   it('JSON configuration exports are the documents the lab saves', async () => {
     const c = await exportAdapter('component-json')!.build({ component: demo() });
-    expect(c.files[0]!.path).toBe('bottom-navigation.jello-component.json');
-    expect(parseComponentText(new TextDecoder().decode(c.files[0]!.data))).toMatchObject({ ok: true, doc: demo() });
+    expect(c.files[0]!.path).toBe('mobile-navbar.jello-component.json');
+    expect(parseDefinitionText(new TextDecoder().decode(c.files[0]!.data))).toMatchObject({ ok: true, doc: demo() });
     const m = await exportAdapter('material-json')!.build({ material: navbar });
     expect(parseMaterialText(new TextDecoder().decode(m.files[0]!.data))).toMatchObject({ ok: true, doc: navbar });
+  });
+});
+
+
+describe('React packages of any component and material', () => {
+  const rt: RuntimeBundle = { ...runtime, version: '0.3.0' };
+  const get = (r: { files: { path: string; data: Uint8Array }[] }, end: string) => new TextDecoder().decode(r.files.find((f) => f.path.endsWith(end))!.data);
+  const solid = (d: ComponentDefinition) => switchMaterialFamily(d, 'solid').definition;
+  const cta = () => componentTemplate('button')!.create();
+
+  it('names follow the component: a button is «…Button», with its variants as the second type', () => {
+    expect(reactNames(cta())).toEqual({ component: 'Button', tabType: 'ButtonVariant', packageName: '@jello-export/button', root: 'jello-button-react' });
+    expect(reactNames({ ...cta(), name: 'Call to action' }).component).toBe('CallToActionButton');
+    expect(reactNames(componentTemplate('mobile-navbar')!.create()).component).toBe('MobileNavbar');
+  });
+
+  it('a Button package mounts the runtime’s button and carries the definition, the material and the runtime — no renderer of its own', async () => {
+    const d = cta();
+    const r = await buildReactPackage({ component: d, runtime: rt, now });
+    const paths = r.files.map((f) => f.path.replace(`${r.root}/`, ''));
+    for (const p of ['package.json', 'index.js', 'index.d.ts', 'src/Button.tsx', 'component.json', 'material.json', 'runtime/jello.js', 'runtime/jello.css', 'example/App.tsx', 'README.md', 'jello-manifest.json']) expect(paths).toContain(p);
+    const js = get(r, '/index.js');
+    expect(js).toMatch(/import \{ createButton \} from '\.\/runtime\/jello\.js'/);
+    // The wrapper renders nothing itself: one empty box for React, the runtime fills it.
+    expect(js).not.toMatch(/createElement\('(button|a|span|svg)'/);
+    expect(js).not.toMatch(/\.style\.setProperty|dataset\./);
+    expect(get(r, '/src/Button.tsx')).toContain("createButton");
+    // component.json is the definition the lab saves, material.json its material.
+    const parsed = parseDefinitionText(get(r, '/component.json'));
+    expect(parsed.ok && serializeDefinition(parsed.doc)).toBe(serializeDefinition(d));
+    expect(parseMaterialText(get(r, '/material.json'))).toMatchObject({ ok: true, doc: resolveDefinitionMaterial(d) });
+    expect(JSON.parse(get(r, '/package.json'))).toMatchObject({ name: '@jello-export/button', peerDependencies: { react: '>=18' } });
+    expect(get(r, '/index.d.ts')).toMatch(/export type ButtonVariant = 'primary' \| 'secondary' \| 'ghost'/);
+    expect(get(r, '/index.d.ts')).toMatch(/onPress\?: \(event: ButtonEvent\) => void/);
+    const m = r.manifest as unknown as { component: { type: string; unsupported: unknown[] }; backend: { requested: string }; events: Record<string, string>; files: { path: string }[] };
+    expect(m.component).toMatchObject({ type: 'button', unsupported: [] });
+    expect(m.events).toMatchObject({ press: 'jello-press', hover: 'jello-hover', focus: 'jello-focus' });
+    expect(m.files.map((f) => f.path)).toContain('component.json');
+    expect(r.warnings).toEqual([]);
+    expect(get(r, '/README.md')).toMatch(/Azione: un `<button type="button">`/);
+  });
+
+  it('a link button says so: <a href>, no navigation of its own', async () => {
+    const link = setButtonLink(cta(), 'link', '/prezzi')!;
+    const r = await buildReactPackage({ component: link, runtime: rt, now });
+    expect(get(r, '/README.md')).toMatch(/un `<a href="\/prezzi">`.*il componente non naviga/);
+    expect(JSON.parse(get(r, '/component.json')).interactions.behavior.semantics).toBe('link');
+  });
+
+  it('a Solid button ships as a component: Solid material, no backend, and what Solid cannot render is reported', async () => {
+    const d = solid(cta());
+    const r = await buildReactPackage({ component: d, runtime: rt, now });
+    const material = parseMaterialText(get(r, '/material.json'));
+    expect(material.ok && material.doc.family).toBe('solid');
+    const m = r.manifest as unknown as { backend: { requested: string; candidates: unknown[] }; component: { unsupported: { path: string }[] }; material: { family: string } };
+    expect(m.material.family).toBe('solid');
+    expect(m.backend).toMatchObject({ requested: 'none', candidates: [] });
+    expect(m.component.unsupported.map((u) => u.path)).toContain('states.hover.style.background');
+    expect(r.warnings.join('\n')).toMatch(/Senza effetto|Proprietà senza effetto con Solid · neutro: states\.hover\.style\.background/);
+    expect(get(r, '/README.md')).toMatch(/## Proprietà non applicate a questo materiale[\s\S]*states\.hover\.style\.background/);
+    expect(get(r, '/README.md')).toMatch(/Solid: una superficie CSS/);
+    // No Glass source is needed: the example still compiles as written.
+    expect(get(r, '/README.md')).toMatch(/<Button onPress=/);
+  });
+
+  it('a Solid mobile navbar ships with its tabs and the same wrapper as a Glass one', async () => {
+    const d = solid(componentTemplate('mobile-navbar')!.create());
+    const r = await buildReactPackage({ component: d, runtime: rt, now });
+    expect(get(r, '/index.js')).toMatch(/createBottomNavigation/);
+    expect(get(r, '/index.d.ts')).toMatch(/MobileNavbarTabId = "home" \| "explore" \| "profile"/);
+    expect((r.manifest as unknown as { material: { family: string } }).material.family).toBe('solid');
+    expect(get(r, '/README.md')).toMatch(/Solid: una superficie CSS/);
+    expect(get(r, '/README.md')).toMatch(/style\.appearance\.foreground/);
+    expect(r.warnings.join('\n')).toMatch(/style\.appearance\.foreground/);
+  });
+
+  it('adapters: the material-only packages are Glass’s; the component and JSON ones take any material', async () => {
+    const d = solid(cta());
+    const material = resolveDefinitionMaterial(d);
+    const req = { material, component: d, runtime: rt, now };
+    expect(adaptersFor('material', req).map((a) => a.id)).toEqual([]);
+    expect(adaptersFor('component', req).map((a) => a.id)).toEqual(['component-react']);
+    expect(adaptersFor('configuration', req).map((a) => a.id)).toEqual(['material-json', 'component-json']);
+    await expect(exportAdapter('material-runtime')!.build(req)).rejects.toThrow(/disponibile per Glass, non per solid/);
+    const plan = componentReactAdapter.describe(req);
+    expect(plan.name).toBe('jello-button-react.zip');
+    expect(plan.files.map((f) => f.path).join(' ')).toContain('src/Button.tsx');
+    expect(plan.notes.join(' ')).toMatch(/Senza effetto con Solid · neutro: states\.hover\.style\.background/);
+    const json = await exportAdapter('material-json')!.build(req);
+    const text = new TextDecoder().decode(json.files[0]!.data);
+    expect(parseMaterialText(text)).toMatchObject({ ok: true, doc: { family: 'solid' } });
   });
 });

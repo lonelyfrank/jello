@@ -2,13 +2,20 @@
  * Versions that travel with every material document.
  *
  * - RUNTIME_VERSION: the runtime that reads and renders documents. A document
- *   declares the minimum runtime it needs (`runtime.min`).
+ *   declares the minimum runtime it needs (`runtime.min`, per family below).
  * - SCHEMA_VERSION: the shape of the `jello-material` envelope. Older
  *   documents are migrated (see migrate.ts); newer ones are refused with a
  *   readable message instead of being half-applied.
  */
 
-export const RUNTIME_VERSION = '0.2.0';
+export const RUNTIME_VERSION = '0.3.0';
+
+/**
+ * Oldest runtime that understands each family. A document declares the
+ * minimum of its own family, not the current runtime: a Glass file written
+ * today still opens in 0.2.0.
+ */
+export const FAMILY_MIN_RUNTIME = { glass: '0.2.0', solid: '0.3.0' } as const;
 export const MATERIAL_FORMAT = 'jello-material';
 export const SCHEMA_VERSION = 2;
 

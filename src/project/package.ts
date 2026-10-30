@@ -9,8 +9,9 @@
  *   asset/token.json                    colour and type tokens
  */
 
-import { serializeComponent, parseComponentText, type ComponentDocument } from '../components/document';
-import { serializeMaterial, parseMaterialText, type MaterialDocument } from '../model';
+import { definitionIcons, serializeDefinition, type ComponentDefinition } from '../components';
+import { importComponentText } from '../migration';
+import { serializeMaterial, parseGlassMaterialText, type GlassDocument } from '../model';
 import { zip, type ZipEntry } from '../export/zip';
 import { formatHsl, formatOklch, formatRgb } from './color';
 import { parseProject, serializeProject, usedTokens } from './document';
@@ -20,8 +21,8 @@ const enc = new TextEncoder();
 const dec = new TextDecoder();
 
 export interface PackageSelection {
-  materials: MaterialDocument[];
-  components: ComponentDocument[];
+  materials: GlassDocument[];
+  components: ComponentDefinition[];
   colors: boolean;
   /** `used`: only icons referenced by the exported components. */
   icons: 'all' | 'used' | 'none';
@@ -43,10 +44,10 @@ export const fileSlug = (name: string) =>
     .slice(0, 48) || 'senza-nome';
 
 /** Names of the icons a set of components uses. */
-export function usedIconNames(components: readonly ComponentDocument[]): Set<string> {
+export function usedIconNames(components: readonly ComponentDefinition[]): Set<string> {
   const names = new Set<string>();
   for (const c of components) {
-    for (const t of c.root.children) if (t.icon.kind !== 'none') names.add(t.icon.name);
+    for (const i of definitionIcons(c)) if (i.icon.kind !== 'none') names.add(i.icon.name);
   }
   return names;
 }
@@ -140,7 +141,7 @@ export function buildProjectPackage(project: ProjectDoc, sel: PackageSelection):
     return `${dir}/${slug}.json`;
   };
   for (const m of sel.materials) files.push({ path: pathFor('materiali', m.name), data: enc.encode(serializeMaterial(m)) });
-  for (const c of sel.components) files.push({ path: pathFor('componenti', c.name), data: enc.encode(serializeComponent(c)) });
+  for (const c of sel.components) files.push({ path: pathFor('componenti', c.name), data: enc.encode(serializeDefinition(c)) });
   for (const s of assets.iconSets) for (const i of s.icons) files.push({ path: `asset/icone/${fileSlug(s.name)}/${fileSlug(i.name)}.svg`, data: enc.encode(iconSvg(i)) });
   if (assets.palettes.length || assets.typeStyles.length) files.push({ path: 'asset/token.json', data: enc.encode(tokensJson(assets)) });
   return files;
@@ -220,8 +221,8 @@ export async function readZip(bytes: Uint8Array): Promise<ZipEntry[]> {
 
 export interface ReadPackage {
   project: ProjectDoc;
-  materials: { path: string; doc: MaterialDocument; warnings: string[] }[];
-  components: { path: string; doc: ComponentDocument; warnings: string[] }[];
+  materials: { path: string; doc: GlassDocument; warnings: string[] }[];
+  components: { path: string; doc: ComponentDefinition; warnings: string[] }[];
   /** Entries refused as a whole, with the reason. */
   rejected: { path: string; errors: string[] }[];
 }
@@ -244,11 +245,11 @@ export function readProjectEntries(entries: readonly ZipEntry[]): PackageRead {
   const rejected: ReadPackage['rejected'] = [];
   for (const e of entries) {
     if (e.path.startsWith('materiali/') && e.path.endsWith('.json')) {
-      const r = parseMaterialText(dec.decode(e.data));
+      const r = parseGlassMaterialText(dec.decode(e.data));
       if (r.ok) materials.push({ path: e.path, doc: r.doc, warnings: r.warnings });
       else rejected.push({ path: e.path, errors: r.errors });
     } else if (e.path.startsWith('componenti/') && e.path.endsWith('.json')) {
-      const r = parseComponentText(dec.decode(e.data));
+      const r = importComponentText(dec.decode(e.data));
       if (r.ok) components.push({ path: e.path, doc: r.doc, warnings: r.warnings });
       else rejected.push({ path: e.path, errors: r.errors });
     }

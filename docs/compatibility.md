@@ -8,6 +8,97 @@ il laboratorio solo se è stato prodotto per la stessa versione del runtime (`fi
 `runtimeVersion`): i risultati precedenti non certificano il codice modificato. L’emulazione
 mobile non certifica un telefono.
 
+## M2 · Component Engine (runtime 0.3.0) — 30 ottobre 2026
+
+Ambiente: lo stesso delle sezioni seguenti (Linux x64, Playwright 1.64.1, browser headless). Esecuzione completa
+con `npm run typecheck && npm test && npm run build && npm run test:e2e:local`, dopo l'ultima modifica.
+
+| Controllo | Esito |
+| --- | --- |
+| `tsc --noEmit` | **superato** |
+| Vitest | **superato** — 339 test (19 file; 285 prima di M2) |
+| `npm run build` (libreria + laboratorio) | **superato**; il consumer di prova (`examples/react-consumer`, progetto indipendente con tre pacchetti esportati) passa `tsc --noEmit` e `vite build` |
+| E2E Chromium + Firefox + Pixel 7 emulato (`test:e2e:local`) | **523 superati, 2 saltati, 0 falliti** (424 dei test esistenti + 99 nuovi) |
+| E2E WebKit | **non eseguibile** (mancano `libicu74` e `libjpeg-turbo8`; non installate) |
+| Fedeltà preview ↔ componente esportato | **superato** su Chromium, Firefox e Pixel 7: stesso elemento, attributi, testo, icona, stile calcolato di ogni strato e geometria, a riposo, in hover, premuto e con focus — 7 pulsanti (Glass/Solid; primary, secondary, ghost, collegamento, disabilitato) e 3 barre (Glass, Solid, Solid con breakpoint, tab disabilitata e semantica «tabs») |
+| Raster SVG → `verification/*.json` | rigenerati dalla suite per il runtime `0.3.0` |
+
+I due test saltati sono quelli di sempre: `prefers-reduced-transparency` (si emula solo via CDP di Chromium) in Firefox e il
+cambio di progetto dal breadcrumb sul viewport mobile (che il telefono nasconde).
+
+**Cosa coprono i test nuovi**
+
+- `tests/unit/button.test.ts` (30): definizione, validazione (ogni proprietà non valida rifiuta il documento con il suo percorso; proprietà
+  mancanti → default con avviso; sconosciute → avviso), modifica, responsive, presentazione per famiglia — **ogni proprietà descritta, cambiata, modifica
+  ciò che il renderer scrive se e solo se non è tra quelle dichiarate senza effetto** —, accento Primary (contrasto ≥ 4,5:1), cambio di
+  materiale senza perdite, serializzazione canonica.
+- `tests/unit/component-registry.test.ts` (14): voci registrate e pianificate, controllo di coerenza, parità registro ↔ runtime, matrice
+  componente × materiale, la Mobile Navbar con Solid (stessa prova proprietà per proprietà), stato del legame con override locali.
+- `tests/unit/export.test.ts` (+6): pacchetti React del Button (azione, collegamento, Solid) e della navbar Solid, adapter per famiglia.
+- `tests/unit/autosave.test.ts` (3), `tests/unit/project.test.ts` (+1: Button Glass e Solid in un pacchetto `.jello`).
+- `tests/e2e/components.spec.ts` (19 × 3 progetti): rendering Glass e Solid, cambio di materiale, elemento (pulsante / collegamento / disabilitato),
+  tastiera e focus, hover, pressione, ghost, accento, responsive, inspector condiviso con le proprietà senza effetto, navbar Solid (tab, attiva, disabilitata,
+  tastiera, responsive), import/export della definizione.
+- `tests/e2e/component-export.spec.ts` (10 × 3): fedeltà preview ↔ pacchetto, sopra.
+- `tests/e2e/react-consumer.spec.ts` (+4 × 3): i due Button esportati in un'app React indipendente (props, stati, ricreazione sul posto).
+
+**Instabilità.** `builder.spec.ts › a material customised in the Material Lab…` (e il test gemello «an edited built-in…»): in 28 ripetizioni
+in parallelo (4 worker) **prima** della correzione non è fallito, quindi l'intermittenza non è stata riprodotta nel browser. La causa è stata
+trovata e riprodotta in modo deterministico a livello unitario: `Autosaver.flush()` ritornava al termine della scrittura già in corso, fatta da
+uno stato precedente (`tests/unit/autosave.test.ts` fallisce senza la correzione). Il test leggeva inoltre lo stato subito dopo un clic che
+completa in modo asincrono: ora aspetta la condizione (`expect.poll`). Nessun timeout aggiunto. Nell'esecuzione completa il test è passato su tutti i progetti.
+
+Trovato e corretto con i test nuovi: la pressione di una tab della navbar terminava quando il focus passava da un'altra tab della stessa barra
+(`focusout`); `GlassSurface.destroy()` lasciava `data-jello-path`, `data-jello-sizing` e `--jello-host-radius` sull'ospite; il trigger
+dell'evento di focus del Button era sempre «keyboard».
+
+**Non verificato in M2:** WebKit e Safari (macOS, iOS); prestazioni (la suite `test:perf` non è stata rieseguita: il percorso Glass non è stato modificato e
+Solid non ha cicli di animazione, ma non c'è una misura); telefono fisico e Android WebView (come in precedenza).
+
+## Runtime 0.3.0 (Material Core: Solid, registro generalizzato) — 30 ottobre 2026
+
+Ambiente: lo stesso della 0.2.0 (Linux x64, Playwright 1.64.1, headless). WebKit non eseguito.
+
+| Controllo | Esito |
+| --- | --- |
+| `tsc --noEmit` | **superato** |
+| Vitest | **superato** — 235 test (165 prima di M1) |
+| `npm run build` (libreria + laboratorio) | **superato** |
+| E2E Chromium + Firefox + Pixel 7 emulato (`test:e2e:local`) | 394 superati, 2 saltati, 3 falliti alla prima esecuzione (vedi sotto) |
+| Solid nel browser (`solid.spec.ts`, 7 test × 3 progetti) | **superato** (21/21) |
+| Raster SVG → `verification/*.json` | rigenerati dalla suite per il runtime `0.3.0` (11 controlli per motore, esito dei record) |
+
+I tre fallimenti: `materials.spec.ts › imports become personal materials` falliva **identico sul
+commit precedente** (il test leggeva lo stato subito dopo un'eliminazione asincrona): corretto con
+`expect.poll`; `builder.spec.ts › an edited built-in is saved as a personal copy` ha fallito una volta
+su Pixel 7 emulato e non si è ripetuto. Rieseguiti insieme 18 volte (3 progetti × 3 ripetizioni × 2
+test): 18 superati. Non è stata rieseguita l'intera suite dopo la correzione.
+
+### M1.1 · formato unico delle componenti, 30 ottobre 2026
+
+| Controllo | Esito |
+| --- | --- |
+| `tsc --noEmit` | **superato** |
+| Vitest | **superato** — 285 test (16 file) |
+| `npm run build` (libreria + laboratorio) | **superato**; la libreria costruita non contiene identificativi legacy |
+| E2E Chromium + Firefox + Pixel 7 emulato (`test:e2e:local`), esecuzione completa | 411 superati, 2 saltati, **13 falliti** |
+| Gli stessi test falliti, rieseguiti dopo la correzione | **superati** su tutti e tre i progetti (4 test) |
+| `builder.spec.ts › a material customised in the Material Lab…` (solo Chromium) | fallito nell'esecuzione completa, superato quando rieseguito: **instabile** (legge lo stato subito dopo il clic) |
+
+I 13 fallimenti dell'esecuzione completa erano 4 test scritti in questa milestone con asserzioni
+errate (un elemento `#notice` assente quando non c'è avviso; ombra calcolata dal browser come
+`color(srgb …)` invece di `rgba()`; l'host Solid non raggiunto dal primo `Tab`) più l'instabilità
+indicata. Non è stata rieseguita l'intera suite dopo le correzioni. WebKit non eseguito.
+
+Migrazione dei formati: 3 file reali del formato precedente (`tests/fixtures/legacy/`) convertiti, vista
+derivata identica alla `root` originale (SVG, breakpoint, eventi, materiale personale compresi); lettura
+da IndexedDB, da file e da pacchetto `.jello`; apertura nel laboratorio reale (E2E).
+
+Compatibilità preservata (controllata da `tests/unit/registry.test.ts`): 24 parametri e 5 preset di
+Glass, `runtime.min` dei documenti Glass a `0.2.0`, simboli pubblici del runtime, lettura dei file
+`jello-glass` v1. I record raster della 0.2.0 non valgono per la 0.3.0 (`findVerification` confronta
+la versione): sono stati sostituiti da quelli prodotti dalla suite.
+
 ## Runtime 0.2.0 (Material Lab) — 29 ottobre 2026
 
 Macchina: ThinkPad T14 Gen1, Intel i7-10510U, 31 GB RAM, grafica integrata Intel UHD, Fedora 44
@@ -37,7 +128,7 @@ Macchina: ThinkPad T14 Gen1, Intel i7-10510U, 31 GB RAM, grafica integrata Intel
 
 - **Modello** (`tests/unit/model.test.ts`): sezioni, migrazione v1 di tutti i preset e di un file
   personalizzato senza perdite, round-trip v1 → v2 → v1, export v1 con campi non rappresentabili,
-  import atomici, versioni future (schema, famiglia, runtime) rifiutate, famiglia Gel rifiutata.
+  import atomici, versioni future (schema, famiglia, runtime) rifiutate, famiglia Jelly (pianificata) rifiutata.
 - **Persistenza** (`storage.test.ts`, `materials.spec.ts`): salvataggio e riapertura dopo il
   ricaricamento, bozza dei preset inclusi, annullamento, import come copia personale,
   migrazione del database da versione 1 a 2, IndexedDB assente («Non persistente»), errore di

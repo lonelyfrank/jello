@@ -1,0 +1,261 @@
+{
+  "format": "jello-component",
+  "schemaVersion": 1,
+  "type": "bottom-navigation",
+  "typeVersion": 1,
+  "id": "user-custom1",
+  "name": "Menu personalizzato",
+  "runtime": {
+    "min": "0.3.0"
+  },
+  "material": {
+    "family": "glass",
+    "preset": "user-abc123",
+    "revision": "224f18fe",
+    "document": {
+      "format": "jello-material",
+      "schemaVersion": 2,
+      "id": "user-abc123",
+      "name": "Il mio vetro (modificato)",
+      "family": "glass",
+      "familyVersion": 1,
+      "runtime": {
+        "min": "0.2.0"
+      },
+      "material": {
+        "band": 16,
+        "refraction": 10,
+        "profile": "smooth",
+        "dome": 0,
+        "chroma": 0,
+        "blur": 11,
+        "saturation": 160,
+        "tint": "#aabbcc",
+        "tintOpacity": 0.14,
+        "light": 0.65,
+        "lightAngle": 330,
+        "shadow": 0.2,
+        "shadowBlur": 26,
+        "shadowOffset": 8
+      },
+      "geometry": {
+        "shape": "capsule",
+        "width": 280,
+        "height": 104,
+        "radius": 32
+      },
+      "behavior": {
+        "stiffness": 420,
+        "damping": 0.8,
+        "stretch": 0,
+        "pressScale": 1.02,
+        "pressRefraction": 0.4,
+        "pressLight": 0.45
+      },
+      "quality": {
+        "profile": "balanced",
+        "dprCap": null,
+        "internalScale": null,
+        "adaptive": false
+      },
+      "source": {
+        "kind": "dom"
+      },
+      "target": {
+        "backend": "auto",
+        "fallback": "css"
+      },
+      "meta": {
+        "createdAt": null,
+        "updatedAt": null,
+        "basedOn": null,
+        "notes": ""
+      }
+    }
+  },
+  "root": {
+    "kind": "bottom-navigation",
+    "id": "root",
+    "label": "Menu principale",
+    "semantics": "tabs",
+    "defaultTab": "Cerca",
+    "layout": {
+      "anchor": "viewport",
+      "placement": "docked",
+      "align": "center",
+      "widthMode": "hug",
+      "width": 440,
+      "maxWidth": 440,
+      "height": 64,
+      "padding": 6,
+      "gap": 2,
+      "radius": 18,
+      "offset": 12,
+      "itemLayout": "stacked",
+      "labels": "active"
+    },
+    "appearance": {
+      "foreground": "#223344",
+      "textShadow": true,
+      "indicator": {
+        "style": "none",
+        "color": "#ffffff9e",
+        "inset": 0
+      }
+    },
+    "typography": {
+      "fontFamily": "system",
+      "fontSize": 12.5,
+      "fontWeight": 600,
+      "letterSpacing": 0.1
+    },
+    "icon": {
+      "size": 22,
+      "strokeWidth": 2.2
+    },
+    "states": {
+      "active": {
+        "color": "#0a54bd",
+        "fontWeight": 750
+      },
+      "hover": {
+        "background": "#ffffff38"
+      },
+      "pressed": {
+        "background": "#00000014",
+        "scale": 0.95
+      },
+      "focus": {
+        "color": "#ff6600",
+        "width": 2,
+        "offset": -2
+      },
+      "disabled": {
+        "opacity": 0.4
+      }
+    },
+    "interactions": {
+      "pressFeedback": true,
+      "wheelForward": true,
+      "reselect": "none",
+      "events": {
+        "change": "menu-change",
+        "press": "jello-press",
+        "reselect": "jello-reselect"
+      }
+    },
+    "motion": {
+      "indicator": "ease",
+      "duration": 220
+    },
+    "responsive": {
+      "overflow": "compress",
+      "minTabWidth": 56,
+      "breakpoints": [
+        {
+          "id": "bp-420",
+          "maxWidth": 420,
+          "overrides": {
+            "layout.height": 56,
+            "layout.labels": "hide"
+          }
+        }
+      ]
+    },
+    "children": [
+      {
+        "kind": "tab",
+        "id": "home",
+        "label": "Home",
+        "icon": {
+          "kind": "builtin",
+          "name": "home"
+        },
+        "value": "/",
+        "disabled": false,
+        "style": {
+          "iconSize": 26,
+          "fontSize": null,
+          "fontWeight": 700,
+          "letterSpacing": null
+        }
+      },
+      {
+        "kind": "tab",
+        "id": "Cerca",
+        "label": "Cerca",
+        "icon": {
+          "kind": "builtin",
+          "name": "search"
+        },
+        "value": null,
+        "disabled": false,
+        "style": {
+          "iconSize": null,
+          "fontSize": null,
+          "fontWeight": null,
+          "letterSpacing": null
+        }
+      },
+      {
+        "kind": "tab",
+        "id": "nuovo",
+        "label": "Nuovo",
+        "icon": {
+          "kind": "svg",
+          "name": "croce",
+          "viewBox": "0 0 24 24",
+          "body": "<path d=\"M4 12h16M12 4v16\"/>",
+          "paint": "fill"
+        },
+        "value": null,
+        "disabled": false,
+        "style": {
+          "iconSize": null,
+          "fontSize": null,
+          "fontWeight": null,
+          "letterSpacing": null
+        }
+      },
+      {
+        "kind": "tab",
+        "id": "avvisi",
+        "label": "Avvisi",
+        "icon": {
+          "kind": "builtin",
+          "name": "bell"
+        },
+        "value": "/avvisi",
+        "disabled": true,
+        "style": {
+          "iconSize": null,
+          "fontSize": null,
+          "fontWeight": null,
+          "letterSpacing": null
+        }
+      },
+      {
+        "kind": "tab",
+        "id": "solo-testo",
+        "label": "Solo testo",
+        "icon": {
+          "kind": "none"
+        },
+        "value": null,
+        "disabled": false,
+        "style": {
+          "iconSize": null,
+          "fontSize": null,
+          "fontWeight": null,
+          "letterSpacing": null
+        }
+      }
+    ]
+  },
+  "meta": {
+    "createdAt": "2026-10-20T10:00:00.000Z",
+    "updatedAt": "2026-10-21T11:30:00.000Z",
+    "basedOn": "bottom-navigation",
+    "notes": "Fixture di test."
+  }
+}

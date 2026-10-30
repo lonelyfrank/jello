@@ -5,18 +5,21 @@
  *
  *   material-runtime    material + built runtime + types + example (existing package)
  *   material-css        material as a static stylesheet (reduced rendering)
- *   component-react     component + material + runtime as a React/TypeScript package
- *   material-json       jello-material document
- *   component-json      jello-component document (material included)
+ *   component-react     component + material + runtime as a React/TypeScript package (any registered component type)
+ *   material-json       jello-material document (any family)
+ *   component-json      jello-component-definition document (material included)
+ *
+ * The package of the material alone (`material-runtime`, `material-css`) is
+ * built for Glass: a component with another material exports as a component.
  *
  * Planned targets (Web Components, HTML/CSS/JS, Figma, Canva, CLI, MCP) are
  * new adapters reading the same documents: there is no separate format for
  * tools or AI agents.
  */
 
-import type { ComponentDocument } from '../components/document';
-import { serializeComponent } from '../components/document';
-import { serializeMaterial, type MaterialDocument } from '../model/document';
+import { COMPONENTS, navbarView, resolveDefinitionMaterial, unsupportedProperties, type ComponentDefinition } from '../components';
+import { serializeDefinition } from '../components';
+import { serializeMaterial, type GlassDocument, type MaterialDocument } from '../model/document';
 import { buildPackage, packageRoot, sha256Hex, type AssetData, type PackageResult, type RuntimeBundle } from './package';
 import { buildReactPackage, reactNames } from './react';
 
@@ -24,7 +27,7 @@ export type ExportTarget = 'material' | 'component' | 'configuration';
 
 export interface ExportRequest {
   material?: MaterialDocument;
-  component?: ComponentDocument;
+  component?: ComponentDefinition;
   runtime?: RuntimeBundle;
   resolveAsset?: (url: string) => Promise<AssetData | null>;
   now?: string;
@@ -55,11 +58,13 @@ export interface ExportAdapter {
   /** Single file (download as is) or a folder (zip). */
   output: 'zip' | 'file';
   requires: 'material' | 'component';
+  /** Material families the adapter can write (absent: every one). */
+  families?: readonly string[];
   describe(req: ExportRequest): ExportPlan;
   build(req: ExportRequest): Promise<PackageResult>;
 }
 
-const RUNTIME_DEP = (v = '0.2.0'): ExportDependency => ({ name: '@jello/runtime', version: v, kind: 'bundled', note: 'in runtime/: renderer, CSS, backend WebGL2 (caricato solo se serve), tipi' });
+const RUNTIME_DEP = (v = '0.3.0'): ExportDependency => ({ name: '@jello/runtime', version: v, kind: 'bundled', note: 'in runtime/: renderer, CSS, backend WebGL2 (caricato solo se serve), tipi' });
 
 function need<T>(v: T | undefined, what: string): T {
   if (!v) throw new Error(`Esportazione: manca ${what}`);
@@ -67,6 +72,13 @@ function need<T>(v: T | undefined, what: string): T {
 }
 
 const enc = new TextEncoder();
+
+/** The material of a Glass-only adapter; any other family is refused with the reason instead of exporting half of it. */
+function glass(req: ExportRequest): GlassDocument {
+  const m = need(req.material, 'il materiale');
+  if (m.family !== 'glass') throw new Error(`Esportazione: il pacchetto del solo materiale è disponibile per Glass, non per ${m.family}. Esporta la componente, che include il materiale.`);
+  return m;
+}
 
 async function single(name: string, text: string): Promise<PackageResult> {
   const data = enc.encode(text);
@@ -85,8 +97,9 @@ export const materialRuntimeAdapter: ExportAdapter = {
   needsRuntime: true,
   output: 'zip',
   requires: 'material',
+  families: ['glass'],
   describe: (req) => {
-    const m = need(req.material, 'il materiale');
+    const m = glass(req);
     return {
       name: `${packageRoot(m)}.zip`,
       files: [
@@ -100,7 +113,7 @@ export const materialRuntimeAdapter: ExportAdapter = {
       notes: ['Nessuna componente: solo il materiale, da applicare a elementi del tuo progetto.'],
     };
   },
-  build: (req) => buildPackage({ material: need(req.material, 'il materiale'), kind: 'runtime', runtime: need(req.runtime, 'il runtime (npm run build:lib)'), ...(req.resolveAsset ? { resolveAsset: req.resolveAsset } : {}), ...(req.now ? { now: req.now } : {}) }),
+  build: async (req) => buildPackage({ material: glass(req), kind: 'runtime', runtime: need(req.runtime, 'il runtime (npm run build:lib)'), ...(req.resolveAsset ? { resolveAsset: req.resolveAsset } : {}), ...(req.now ? { now: req.now } : {}) }),
 };
 
 export const materialCssAdapter: ExportAdapter = {
@@ -110,8 +123,9 @@ export const materialCssAdapter: ExportAdapter = {
   needsRuntime: false,
   output: 'zip',
   requires: 'material',
+  families: ['glass'],
   describe: (req) => {
-    const m = need(req.material, 'il materiale');
+    const m = glass(req);
     return {
       name: `${packageRoot(m)}.zip`,
       files: [
@@ -122,7 +136,7 @@ export const materialCssAdapter: ExportAdapter = {
       notes: ['Nessuna rifrazione e nessuna risposta alla pressione: lo dice anche il manifest.'],
     };
   },
-  build: (req) => buildPackage({ material: need(req.material, 'il materiale'), kind: 'css-only', ...(req.now ? { now: req.now } : {}) }),
+  build: async (req) => buildPackage({ material: glass(req), kind: 'css-only', ...(req.now ? { now: req.now } : {}) }),
 };
 
 export const componentReactAdapter: ExportAdapter = {
@@ -134,19 +148,28 @@ export const componentReactAdapter: ExportAdapter = {
   requires: 'component',
   describe: (req) => {
     const c = need(req.component, 'la componente');
+    const spec = need(COMPONENTS.get(c.type), `il tipo «${c.type}» registrato`);
+    if (!spec.export.formats.includes('component-react')) throw new Error(`Esportazione: «${spec.name}» non ha un export React.`);
     const n = reactNames(c);
+    const material = resolveDefinitionMaterial(c);
+    const off = unsupportedProperties(c);
+    const body = c.type === 'mobile-navbar' ? `struttura (${navbarView(c).children.length} voci), contenuti, layout, stati, interazioni, breakpoint, materiale` : 'struttura, contenuti, layout, stile, stati, interazioni, breakpoint, materiale';
     return {
       name: `${n.root}.zip`,
       files: [
         { path: 'index.js · index.d.ts', description: `<${n.component}>, tipo ${n.tabType}, configurazione` },
         { path: `src/${n.component}.tsx`, description: 'lo stesso componente come sorgente TSX' },
-        { path: 'component.json', description: `struttura (${c.root.children.length} tab), stati, interazioni, breakpoint, materiale` },
-        { path: 'material.json', description: `materiale applicato: ${c.material.document.name}` },
+        { path: 'component.json', description: body },
+        { path: 'material.json', description: `materiale applicato: ${material.name} (${material.family})` },
         { path: 'runtime/', description: 'runtime Jello: renderer della componente e del materiale, CSS, tipi' },
         { path: 'example/App.tsx · README.md · jello-manifest.json', description: 'integrazione, props, eventi, file con SHA-256' },
       ],
       dependencies: [RUNTIME_DEP(req.runtime?.version), { name: 'react, react-dom', version: '>=18', kind: 'peer', note: 'forniti dal progetto' }],
-      notes: [`Installabile con npm install ./${n.root}; nessun router richiesto: onChange riceve l’id della tab.`],
+      notes: [
+        c.type === 'mobile-navbar' ? `Installabile con npm install ./${n.root}; nessun router richiesto: onChange riceve l’id della tab.` : `Installabile con npm install ./${n.root}; usa lo stesso renderer dell’anteprima.`,
+        ...spec.export.notes.filter((x) => c.type !== 'mobile-navbar' || !x.startsWith('Le tab')),
+        ...off.map((u) => `Senza effetto con ${material.name}: ${u.path}.`),
+      ],
     };
   },
   build: (req) => buildReactPackage({ component: need(req.component, 'la componente'), runtime: need(req.runtime, 'il runtime (npm run build:lib)'), ...(req.now ? { now: req.now } : {}) }),
@@ -185,14 +208,14 @@ export const componentJsonAdapter: ExportAdapter = {
     const c = need(req.component, 'la componente');
     return {
       name: `${c.id}.jello-component.json`,
-      files: [{ path: `${c.id}.jello-component.json`, description: `documento jello-component v${c.schemaVersion} con il materiale incluso: si riapre nel builder senza perdite` }],
-      dependencies: [{ name: '@jello/runtime', version: '≥ ' + c.runtime.min, kind: 'peer', note: 'createBottomNavigation({ container, config }) lo renderizza' }],
+      files: [{ path: `${c.id}.jello-component.json`, description: `documento jello-component-definition v${c.schemaVersion} con il materiale incluso: si riapre nel builder senza perdite` }],
+      dependencies: [{ name: '@jello/runtime', version: '≥ ' + c.runtime.min, kind: 'peer', note: 'createComponent({ container, config }) lo renderizza' }],
       notes: ['Lo stesso formato che il builder salva: utilizzabile da strumenti e agenti.'],
     };
   },
   build: (req) => {
     const c = need(req.component, 'la componente');
-    return single(`${c.id}.jello-component.json`, serializeComponent(c) + '\n');
+    return single(`${c.id}.jello-component.json`, serializeDefinition(c) + '\n');
   },
 };
 
@@ -204,5 +227,11 @@ export function exportAdapter(id: string): ExportAdapter | undefined {
 
 /** Adapters usable with what is open: a component needs `component`, every one has a material. */
 export function adaptersFor(target: ExportTarget, req: ExportRequest): ExportAdapter[] {
-  return EXPORT_ADAPTERS.filter((a) => a.target === target && (a.requires === 'material' ? !!req.material : !!req.component));
+  const usable = (a: ExportAdapter): boolean => {
+    if (a.requires === 'material') return !!req.material && (!a.families || a.families.includes(req.material.family));
+    if (!req.component) return false;
+    // The definition's JSON is always available; the React package only for a type that has a template.
+    return a.id !== 'component-react' || !!COMPONENTS.get(req.component.type)?.export.formats.includes('component-react');
+  };
+  return EXPORT_ADAPTERS.filter((a) => a.target === target && usable(a));
 }

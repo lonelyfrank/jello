@@ -4,7 +4,7 @@
  * materials never download it.
  */
 
-import type { MaterialDocument, TextureSpec } from '../model/document';
+import type { GlassDocument, TextureSpec } from '../model/document';
 import type { SceneView, SceneViewOptions, TextureInput } from './scene-types';
 
 let loaded: Promise<typeof import('./webgl2/scene-view')> | null = null;
@@ -34,7 +34,7 @@ export function probeWebGL2(doc: Document = document): boolean {
  * DOM documents have no JSON form: the integrator passes `fallback`.
  */
 export function textureFromDocument(
-  doc: MaterialDocument,
+  doc: GlassDocument,
   resolve: (url: string) => string = (u) => u,
   fallback: TextureInput = { kind: 'pattern', pattern: 'grid', animated: false },
 ): TextureInput {

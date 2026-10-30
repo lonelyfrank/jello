@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { PARAM_INDEX, parseNumberInput, type NumberDescriptor } from '../../src/core/params';
 import { PRESETS } from '../../src/core/presets';
-import { isBuiltinId, legacyPreset } from '../../src/model';
+import { isBuiltinId } from '../../src/model';
+import { legacyPreset } from '../../src/migration';
 import { saturationMatrix } from '../../src/core/renderer/source-filter';
 import { applicability } from '../../src/lab/applicability';
 import { optionsFromQuery } from '../../src/lab/state';

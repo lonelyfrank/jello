@@ -6,9 +6,10 @@
  * storage is the session's job.
  */
 
-import { parseComponentText, type ComponentDocument } from '../components/document';
+import type { ComponentDefinition } from '../components';
+import { importComponentText } from '../migration';
 import { iconFromSvg } from '../components/icons';
-import { glassParams, parseMaterialText, type MaterialDocument } from '../model';
+import { glassParams, parseGlassMaterialText, type GlassDocument } from '../model';
 import { readProjectEntries, readZip, ZipError, type ReadPackage } from './package';
 import { warningFor } from './assets';
 import { uniqueName, uniqueToken } from './document';
@@ -20,8 +21,8 @@ export const MAX_FONT_BYTES = 4 * 1024 * 1024;
 export const MAX_PACKAGE_BYTES = 32 * 1024 * 1024;
 
 export type ImportItem =
-  | { kind: 'material'; file: string; size: number; doc: MaterialDocument; warnings: string[] }
-  | { kind: 'component'; file: string; size: number; doc: ComponentDocument; warnings: string[] }
+  | { kind: 'material'; file: string; size: number; doc: GlassDocument; warnings: string[] }
+  | { kind: 'component'; file: string; size: number; doc: ComponentDefinition; warnings: string[] }
   | { kind: 'project'; file: string; size: number; pkg: ReadPackage; warnings: string[] }
   | { kind: 'icon'; file: string; size: number; icon: IconAsset; warnings: string[] }
   | { kind: 'font'; file: string; size: number; font: FontFamilyAsset; bytes: Uint8Array; warnings: string[] }
@@ -90,11 +91,11 @@ export function inspectJsonText(file: string, text: string): ImportItem {
     return { kind: 'rejected', file, size, errors: [`JSON non valido: ${(err as Error).message}`] };
   }
   const format = (json as { format?: unknown } | null)?.format;
-  if (format === 'jello-component') {
-    const r = parseComponentText(text);
+  if (format === 'jello-component' || format === 'jello-component-definition') {
+    const r = importComponentText(text);
     return r.ok ? { kind: 'component', file, size, doc: r.doc, warnings: r.warnings } : { kind: 'rejected', file, size, errors: r.errors };
   }
-  const r = parseMaterialText(text);
+  const r = parseGlassMaterialText(text);
   return r.ok ? { kind: 'material', file, size, doc: r.doc, warnings: r.warnings } : { kind: 'rejected', file, size, errors: r.errors };
 }
 
@@ -128,15 +129,15 @@ export interface Conflict {
 }
 
 export interface Existing {
-  materials: readonly { id: string; name: string; doc: MaterialDocument }[];
-  components: readonly { id: string; name: string; doc: ComponentDocument }[];
+  materials: readonly { id: string; name: string; doc: GlassDocument }[];
+  components: readonly { id: string; name: string; doc: ComponentDefinition }[];
   assets: ProjectAssets;
 }
 
 /** Everything an import would add, flattened across files. */
 export interface Incoming {
-  materials: { key: string; doc: MaterialDocument }[];
-  components: { key: string; doc: ComponentDocument }[];
+  materials: { key: string; doc: GlassDocument }[];
+  components: { key: string; doc: ComponentDefinition }[];
   colors: { key: string; palette: string; color: ColorAsset }[];
   icons: { key: string; set: string; icon: IconAsset }[];
   fonts: { key: string; font: FontFamilyAsset; bytes: Uint8Array | null }[];
@@ -162,7 +163,7 @@ export function collect(items: readonly ImportItem[]): Incoming {
   return out;
 }
 
-function diffParams(a: MaterialDocument, b: MaterialDocument): number {
+function diffParams(a: GlassDocument, b: GlassDocument): number {
   const pa = glassParams(a) as unknown as Record<string, unknown>;
   const pb = glassParams(b) as unknown as Record<string, unknown>;
   return Object.keys(pa).filter((k) => pa[k] !== pb[k]).length;

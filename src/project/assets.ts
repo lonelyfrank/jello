@@ -3,7 +3,7 @@
  * `session.projects.updateAssets`. Tokens stay unique across colours and type.
  */
 
-import type { ComponentDocument } from '../components/document';
+import { definitionIcons, type ComponentDefinition } from '../components';
 import { tokenFor, uniqueName, uniqueToken, usedTokens } from './document';
 import type { ColorAsset, FontFamilyAsset, IconAsset, IconSet, ProjectAssets, TypeStyle } from './types';
 
@@ -57,23 +57,23 @@ export function tokenProblem(a: ProjectAssets, token: string, ownId: string): st
 }
 
 /** Where a component of the project uses exactly this colour. */
-export function colorUsage(components: readonly ComponentDocument[], hex: string): string[] {
+export function colorUsage(components: readonly ComponentDefinition[], hex: string): string[] {
   const want = hex.toLowerCase();
   const out: string[] = [];
-  const walk = (node: unknown, path: string, comp: ComponentDocument) => {
+  const walk = (node: unknown, path: string, comp: ComponentDefinition) => {
     if (typeof node === 'string') {
       if (node.toLowerCase() === want) out.push(`${comp.name} · ${path}`);
     } else if (Array.isArray(node)) node.forEach((x, i) => walk(x, `${path}[${i}]`, comp));
     else if (node && typeof node === 'object') for (const [k, v] of Object.entries(node)) walk(v, path ? `${path}.${k}` : k, comp);
   };
-  for (const c of components) walk(c.root, '', c);
+  for (const c of components) walk({ content: c.content, layout: c.layout, style: c.style, states: c.states, material: c.material.params }, '', c);
   return [...new Set(out)];
 }
 
 /** Where a component uses an icon by name. */
-export function iconUsage(components: readonly ComponentDocument[], name: string): string[] {
+export function iconUsage(components: readonly ComponentDefinition[], name: string): string[] {
   const out: string[] = [];
-  for (const c of components) for (const t of c.root.children) if (t.icon.kind !== 'none' && t.icon.name === name) out.push(`${c.name} · tab ${t.label}`);
+  for (const c of components) for (const i of definitionIcons(c)) if (i.icon.kind !== 'none' && i.icon.name === name) out.push(`${c.name} · ${i.owner}`);
   return out;
 }
 

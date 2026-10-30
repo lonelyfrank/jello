@@ -1,0 +1,85 @@
+/* Jello solid material.
+ *
+ * Layers, bottom to top:
+ *   .jello-solid  the surface: fill, border, shadow (aria-hidden, no events)
+ *   foreground    host children, never scaled; colored by --jsolid-fg
+ *
+ * No filter, no backdrop, no canvas: everything is a CSS variable written by
+ * runtime/solid-group.ts from the resolved state. Transitions touch color,
+ * border, shadow, opacity and transform only (no layout properties).
+ */
+
+/* Zero specificity: integrators can position hosts and foreground freely. */
+:where(.jello-solid-host) {
+  position: relative;
+  isolation: isolate;
+}
+:where(.jello-solid-host) > :where(:not(.jello-solid)) {
+  position: relative;
+  z-index: 1;
+}
+
+.jello-solid-host {
+  color: var(--jsolid-fg);
+  opacity: var(--jsolid-opacity, 1);
+  transition-property: color, opacity;
+  transition-duration: var(--jsolid-duration, 140ms);
+  transition-timing-function: var(--jsolid-ease, ease);
+}
+
+.jello-solid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  box-sizing: border-box;
+  border-radius: var(--jsolid-radius, 9999px);
+  border: var(--jsolid-border-w, 0px) solid var(--jsolid-border, transparent);
+  background-color: var(--jsolid-fill);
+  background-image: var(--jsolid-sheen, none);
+  box-shadow: var(--jsolid-shadow, none);
+  transform: scale(var(--jsolid-scale, 1));
+  transform-origin: 50% 50%;
+  pointer-events: none;
+  transition-property: background-color, border-color, box-shadow, transform;
+  transition-duration: var(--jsolid-duration, 140ms);
+  transition-timing-function: var(--jsolid-ease, ease);
+}
+
+/* Visible focus. Zero specificity: a host that styles its own focus wins. The ring takes the content color
+ * (readable on the fill by construction); set --jsolid-focus where the page behind needs another one. */
+:where(.jello-solid-host):focus-visible {
+  outline: 2px solid var(--jsolid-focus, var(--jsolid-fg));
+  outline-offset: 2px;
+}
+
+/* Reduced motion: the scale never animates (it is not applied) and color changes are brief. */
+@media (prefers-reduced-motion: reduce) {
+  .jello-solid-host {
+    transition-duration: min(var(--jsolid-duration, 140ms), 80ms);
+  }
+  .jello-solid {
+    transform: none;
+    transition-property: background-color, border-color, box-shadow;
+    transition-duration: min(var(--jsolid-duration, 140ms), 80ms);
+  }
+}
+
+/* Forced colors replace fills and drop shadows: keep the edge and the disabled look readable. */
+@media (forced-colors: active) {
+  .jello-solid {
+    border: max(var(--jsolid-border-w, 0px), 1px) solid ButtonText;
+    background-color: ButtonFace;
+  }
+  .jello-solid-host {
+    color: ButtonText;
+  }
+  :where(.jello-solid-host):focus-visible {
+    outline-color: Highlight;
+  }
+  .jello-solid-host[data-jello-state='disabled'] {
+    color: GrayText;
+  }
+  .jello-solid-host[data-jello-state='disabled'] > .jello-solid {
+    border-color: GrayText;
+  }
+}

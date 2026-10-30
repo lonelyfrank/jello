@@ -7,6 +7,12 @@
 
 import type { GlassSurface } from './surface';
 
+/** What press feedback needs from a surface: any family's surface can be bound. GlassSurface satisfies it. */
+export interface PressTarget {
+  readonly host: HTMLElement;
+  setPressed(pressed: boolean, point?: { x: number; y: number }): void;
+}
+
 type Cleanup = () => void;
 
 function on<K extends keyof HTMLElementEventMap>(
@@ -33,7 +39,7 @@ const PRESS_KEYS = new Set([' ', 'Enter']);
  * Press feedback for a control. No pointer capture: a native button must
  * still cancel its click when the pointer is released outside.
  */
-export function bindPress(surface: GlassSurface, el: HTMLElement = surface.host): Cleanup {
+export function bindPress(surface: PressTarget, el: HTMLElement = surface.host): Cleanup {
   let pointer: number | null = null;
   const release = () => {
     pointer = null;

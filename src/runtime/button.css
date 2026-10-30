@@ -1,0 +1,170 @@
+/* Jello Button. Every value comes from the component document through
+ * custom properties on the host (--jbtn-*); integrators can override them in
+ * their own stylesheet. Layers, bottom to top:
+ *   .jello-surface | .jello-solid   material (added by the material group)
+ *   ::after                         veil for hover and press on Glass (Solid draws its own states)
+ *   icon and label                  foreground, never filtered or scaled
+ */
+
+.jello-btn {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--jbtn-gap, 8px);
+  min-height: var(--jbtn-min-height, 44px);
+  min-width: 44px;
+  max-width: 100%;
+  margin: 0;
+  padding: var(--jbtn-pad-y, 10px) var(--jbtn-pad-x, 20px);
+  border: 0;
+  border-radius: var(--jbtn-radius, 9999px);
+  background: transparent;
+  color: var(--jbtn-color-secondary, #0c0c10);
+  font-family: var(--jbtn-font-family, system-ui, sans-serif);
+  font-size: var(--jbtn-font-size, 15px);
+  font-weight: var(--jbtn-font-weight, 600);
+  letter-spacing: var(--jbtn-letter-spacing, 0.1px);
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.jello-btn[hidden] {
+  display: none;
+}
+.jello-btn *,
+.jello-btn *::before,
+.jello-btn *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- width and alignment ---------- */
+.jello-btn[data-width='fill'] {
+  display: flex;
+  width: 100%;
+}
+.jello-btn[data-width='fixed'] {
+  width: var(--jbtn-width, 200px);
+}
+.jello-btn[data-align='start'] {
+  justify-content: flex-start;
+}
+.jello-btn[data-align='end'] {
+  justify-content: flex-end;
+}
+
+/* ---------- content ---------- */
+.jello-btn-icon {
+  width: var(--jbtn-icon, 20px);
+  height: var(--jbtn-icon, 20px);
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--jbtn-stroke, 1.8);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.jello-btn-icon[data-paint='fill'] {
+  fill: currentColor;
+  stroke: none;
+}
+.jello-btn-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- content color ---------- */
+/* Glass paints no content color: the component's, by variant. Solid's comes from the material
+ * (--jsolid-fg, set on the host by the Solid group); only a ghost button at rest, with no surface
+ * under it, reads on the page and takes the component's. Specificity beats solid.css on purpose. */
+.jello-btn[data-material='glass'][data-variant='primary'] {
+  color: var(--jbtn-color-primary, #ffffff);
+}
+.jello-btn[data-material='glass'][data-variant='secondary'] {
+  color: var(--jbtn-color-secondary, #0c0c10);
+}
+.jello-btn[data-material='glass'][data-variant='ghost'],
+.jello-btn[data-material='solid'][data-variant='ghost'][data-surface='rest'] {
+  color: var(--jbtn-color-ghost, #0c0c10);
+}
+.jello-btn[data-material='solid']:not([data-variant='ghost'][data-surface='rest']) {
+  color: var(--jsolid-fg);
+}
+
+/* ---------- ghost: the surface only appears with interaction ---------- */
+.jello-btn[data-variant='ghost'] > :is(.jello-surface, .jello-solid) {
+  transition: opacity 140ms ease;
+}
+.jello-btn[data-variant='ghost'] > .jello-solid {
+  transition-property: background-color, border-color, box-shadow, transform, opacity;
+}
+.jello-btn[data-variant='ghost'][data-surface='rest'] > :is(.jello-surface, .jello-solid) {
+  opacity: 0;
+}
+
+/* ---------- states drawn by the component (Glass: the material has no hover, and press is light and scale) ---------- */
+.jello-btn[data-material='glass']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: transparent;
+  pointer-events: none;
+  transition: background-color 140ms ease;
+}
+.jello-btn[data-material='glass'][data-hover]::after {
+  background: var(--jbtn-hover, rgb(255 255 255 / 0.22));
+}
+.jello-btn[data-material='glass'][data-pressed]::after {
+  background: var(--jbtn-press, rgb(0 0 0 / 0.08));
+}
+.jello-btn[data-material='glass'][data-disabled] {
+  opacity: var(--jbtn-disabled, 0.4);
+}
+.jello-btn[data-disabled] {
+  cursor: not-allowed;
+}
+/* Visible focus, ring in the component's own color; outranks the zero-specificity ring of solid.css. */
+.jello-btn:focus-visible,
+.jello-btn[data-preview-state='focus'] {
+  outline: var(--jbtn-focus-width, 2px) solid var(--jbtn-focus, #7a2fb8);
+  outline-offset: var(--jbtn-focus-offset, 2px);
+}
+.jello-btn[data-inert-preview] {
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jello-btn::after,
+  .jello-btn[data-variant='ghost'] > :is(.jello-surface, .jello-solid) {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .jello-btn {
+    color: ButtonText;
+  }
+  .jello-btn[data-disabled] {
+    color: GrayText;
+  }
+  .jello-btn:focus-visible,
+  .jello-btn[data-preview-state='focus'] {
+    outline-color: Highlight;
+  }
+  /* Forced colors give the surface a border of its own; a ghost button at rest keeps none. */
+  .jello-btn[data-variant='ghost'][data-surface='rest'] > :is(.jello-surface, .jello-solid) {
+    border-color: transparent;
+  }
+}

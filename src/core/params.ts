@@ -10,6 +10,18 @@
  * These are Jello's own parameters, not those of Apple's shader.
  */
 
+import {
+  checkValue,
+  onStep,
+  parseNumberInput,
+  type ColorDescriptor as GenericColorDescriptor,
+  type EnumDescriptor as GenericEnumDescriptor,
+  type InputResult,
+  type NumberDescriptor as GenericNumberDescriptor,
+} from './descriptors';
+
+export { checkValue, onStep, parseNumberInput, type InputResult };
+
 export type Profile = 'circle' | 'smooth' | 'linear' | 'bump';
 export type ShapeKind = 'capsule' | 'rounded';
 
@@ -49,36 +61,13 @@ export type ParamKey = keyof GlassParams;
  * - `motion`: read by the interaction loop only.
  */
 export type ParamStage = 'map' | 'filter' | 'surface' | 'motion';
+
 export type ParamGroup = 'shape' | 'optics' | 'material' | 'light' | 'shadow' | 'motion';
 
-interface BaseDescriptor<K extends ParamKey> {
-  key: K;
-  label: string;
-  group: ParamGroup;
-  affects: ParamStage;
-  description: string;
-}
-
-export interface NumberDescriptor<K extends ParamKey = ParamKey> extends BaseDescriptor<K> {
-  type: 'number';
-  unit: string;
-  min: number;
-  max: number;
-  step: number;
-  default: number;
-}
-
-export interface EnumDescriptor<K extends ParamKey = ParamKey> extends BaseDescriptor<K> {
-  type: 'enum';
-  options: readonly string[];
-  default: string;
-}
-
-export interface ColorDescriptor<K extends ParamKey = ParamKey> extends BaseDescriptor<K> {
-  type: 'color';
-  default: string;
-}
-
+/** Glass descriptors: the generic descriptor types (core/descriptors.ts) specialised on Glass keys, stages and groups. */
+export type NumberDescriptor<K extends ParamKey = ParamKey> = GenericNumberDescriptor<K, ParamStage, ParamGroup>;
+export type EnumDescriptor<K extends ParamKey = ParamKey> = GenericEnumDescriptor<K, ParamStage, ParamGroup>;
+export type ColorDescriptor<K extends ParamKey = ParamKey> = GenericColorDescriptor<K, ParamStage, ParamGroup>;
 export type ParamDescriptor = NumberDescriptor | EnumDescriptor | ColorDescriptor;
 
 const num = (
@@ -149,52 +138,6 @@ export function defaultParams(): GlassParams {
 
 export const FORMAT = 'jello-glass';
 export const FORMAT_VERSION = 1;
-
-const HEX = /^#[0-9a-f]{6}$/i;
-
-/** Returns an error message, or null when `value` is valid for `d`. */
-export function checkValue(d: ParamDescriptor, value: unknown): string | null {
-  switch (d.type) {
-    case 'number':
-      if (typeof value !== 'number' || !Number.isFinite(value)) return `${d.key}: atteso un numero`;
-      if (value < d.min || value > d.max) return `${d.key}: ${value} fuori intervallo [${d.min}, ${d.max}]`;
-      return null;
-    case 'enum':
-      if (typeof value !== 'string' || !d.options.includes(value)) {
-        return `${d.key}: atteso uno tra ${d.options.join(', ')}`;
-      }
-      return null;
-    case 'color':
-      if (typeof value !== 'string' || !HEX.test(value)) return `${d.key}: atteso un colore #rrggbb`;
-      return null;
-  }
-}
-
-/** True when `value` is `min + k·step` for an integer k (within float noise). */
-export function onStep(d: NumberDescriptor, value: number): boolean {
-  const k = (value - d.min) / d.step;
-  return Math.abs(k - Math.round(k)) < 1e-6;
-}
-
-export type InputResult = { ok: true; value: number } | { ok: false; error: string };
-
-/**
- * Validates text typed in a numeric field. Stricter than an import: the value
- * must be finite, inside the range and on the slider's step. Accepts a comma
- * as decimal separator.
- */
-export function parseNumberInput(d: NumberDescriptor, text: string): InputResult {
-  const t = text.trim().replace(',', '.');
-  if (t === '') return { ok: false, error: 'Valore vuoto' };
-  if (!/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(t)) return { ok: false, error: 'Non è un numero' };
-  const value = Number(t);
-  if (!Number.isFinite(value)) return { ok: false, error: 'Numero non finito' };
-  if (value < d.min || value > d.max) return { ok: false, error: `Fuori intervallo (${d.min} – ${d.max})` };
-  if (!onStep(d, value)) return { ok: false, error: `Non compatibile con il passo ${d.step}` };
-  // Snap away float noise (0.1 + 0.2) so the stored value is the step's value.
-  const digits = Math.max(0, Math.ceil(-Math.log10(d.step)) + 1);
-  return { ok: true, value: Number(value.toFixed(digits)) };
-}
 
 export type ParseResult =
   | { ok: true; params: GlassParams; warnings: string[] }

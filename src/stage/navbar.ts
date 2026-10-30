@@ -16,7 +16,7 @@
  */
 
 import { hexToRgb, type GlassContext, type GlassParams, type GlassSurface } from '../core';
-import { componentTemplate } from '../components/document';
+import { componentTemplate } from '../components';
 import { BottomNavigation } from '../runtime/bottom-navigation';
 import type { MaterialGroup } from '../runtime/materials';
 import type { NavId } from './view';
@@ -38,7 +38,7 @@ export class Navbar {
   constructor(options: NavbarOptions) {
     this.nav = new BottomNavigation({
       container: options.overlay,
-      config: componentTemplate('bottom-navigation')!.create(),
+      config: componentTemplate('mobile-navbar')!.create(),
       group: options.group,
       scroller: options.scroller,
       activeTab: options.selected,

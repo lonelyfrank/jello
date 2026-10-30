@@ -9,7 +9,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { unzip } from '../../src/export/zip';
 import { lab, openLab, settle } from './helpers';
 
-const BUILDER = 'workspace=builder&component=bottom-navigation&scene=app&animate=0';
+const BUILDER = 'workspace=builder&component=mobile-navbar&scene=app&animate=0';
 const preview = (page: Page) => page.locator('#stageMain nav.jello-bnav:not(.navbar)');
 const previewTabs = (page: Page) => page.locator('#stageMain nav.jello-bnav:not(.navbar) .jello-bnav-tab');
 const node = (page: Page, id: string) => page.locator(`#structureTree [data-node="${id}"]`);
@@ -60,9 +60,9 @@ test.describe('component builder', () => {
     await expect(page.locator('#paramsJson')).toBeAttached();
   });
 
-  test('the full flow: edit the Bottom Navigation demo, save preset and component, reopen, export', async ({ page }) => {
+  test('the full flow: edit the Mobile Navbar demo, save preset and component, reopen, export', async ({ page }) => {
     // 1–2. The official demo is open: three editable tabs.
-    await expect(page.locator('[data-template="bottom-navigation"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-template="mobile-navbar"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#cmpOrigin')).toHaveText(/Template/);
     await expect(previewTabs(page)).toHaveText(['Home', 'Explore', 'Profile']);
 
@@ -75,7 +75,7 @@ test.describe('component builder', () => {
     await page.locator('#tab-label').fill('Settings');
     await expect(previewTabs(page).nth(3)).toHaveText('Settings');
     await page.locator('label[for="tab-icon-settings"]').click();
-    await expect.poll(() => lab(page, `return h.builder.doc.root.children[3].icon`)).toEqual({ kind: 'builtin', name: 'settings' });
+    await expect.poll(() => lab(page, `return h.builder.view.children[3].icon`)).toEqual({ kind: 'builtin', name: 'settings' });
     await page.locator('#tab-value').fill('/settings');
     // Custom SVG: accepted when safe, refused with reasons otherwise.
     await page.locator('#tab-icon-upload').setInputFiles({ name: 'punto.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>') });
@@ -151,12 +151,12 @@ test.describe('component builder', () => {
     await page.locator('#exportOpen').click();
     await expect(page.locator('#exportDialog')).toBeVisible();
     await expect(page.locator('#export-target-component')).toBeChecked();
-    await expect(page.locator('#exportPlan')).toContainText('BottomNavigation');
+    await expect(page.locator('#exportPlan')).toContainText('MobileNavbar');
     await expect(page.locator('#exportDeps')).toContainText('react, react-dom');
     const zip = await download(page, () => page.locator('#exportGo').click());
-    expect(zip.name).toBe('jello-bottom-navigation-react.zip');
+    expect(zip.name).toBe('jello-mobile-navbar-react.zip');
     const files = new Map(unzip(zip.data).map((e) => [e.path, new TextDecoder().decode(e.data)]));
-    const root = 'jello-bottom-navigation-react/';
+    const root = 'jello-mobile-navbar-react/';
     expect(files.get(`${root}component.json`)!.trim()).toBe(saved.json);
     expect(files.get(`${root}index.d.ts`)).toContain('"home" | "explore" | "tab"');
     expect([...files.keys()].some((p) => p.startsWith(`${root}runtime/types/`))).toBe(true);
@@ -202,59 +202,58 @@ test.describe('component builder', () => {
 });
 
 test.describe('official templates and personal components', () => {
-  test('only Jello’s own template is official; unavailable types are marked as such', async ({ page }) => {
+  test('only Jello’s own templates are official; types without an implementation are marked as such', async ({ page }) => {
     await openLab(page, BUILDER);
     await controls(page);
-    await expect(page.locator('[data-template]')).toHaveCount(1);
-    await expect(page.locator('[data-template]')).toHaveAttribute('data-template', 'bottom-navigation');
-    expect((await lab<{ origin: string }[]>(page, 'return h.builder.components()')).filter((c) => c.origin === 'template')).toHaveLength(1);
+    await expect(page.locator('[data-template]')).toHaveCount(2);
+    await expect(page.locator('[data-template]')).toHaveText([/Mobile Navbar/, /Button/]);
+    expect((await lab<{ id: string; origin: string }[]>(page, 'return h.builder.components()')).filter((c) => c.origin === 'template').map((c) => c.id)).toEqual(['mobile-navbar', 'button']);
     await expect(page.locator('#sidebar')).not.toContainText(/darts|\bBT\b|cable/i);
-    await expect(page.locator('.soon-card')).toHaveText([/Desktop Navbar/, /Floating Dock/, /Flyout Menu/]);
+    // Planned, not offered: no editor, no template, nothing that looks like it works.
+    await expect(page.locator('.soon-card')).toHaveText([/Desktop Navbar/, /Input/]);
+    await expect(page.locator('.soon-card')).toHaveCount(2);
   });
 
   test('an old template link opens the generic demo, with a notice', async ({ page }) => {
     await openLab(page, 'workspace=builder&component=bt-darts&scene=app&animate=0');
     await expect(page.locator('#notice')).toContainText('non è più incluso');
-    expect(await lab(page, 'return h.builder.state.componentId')).toBe('bottom-navigation');
+    expect(await lab(page, 'return h.builder.state.componentId')).toBe('mobile-navbar');
     await expect(previewTabs(page)).toHaveText(['Home', 'Explore', 'Profile']);
   });
 
-  test('a personal component derived from the old demo stays personal and is never deleted', async ({ page }) => {
+  test('an old template link for the renamed type opens the same demo quietly', async ({ page }) => {
+    await openLab(page, 'workspace=builder&component=bottom-navigation&scene=app&animate=0');
+    expect(await lab(page, 'return h.builder.state.componentId')).toBe('mobile-navbar');
+    // No notice at all: the renamed template is the same thing, not a removed one.
+    await expect(page.locator('#notice')).toHaveCount(0);
+    await expect(previewTabs(page)).toHaveText(['Home', 'Explore', 'Profile']);
+  });
+
+  test('a component saved by the previous version (real v1 file) is converted, stays personal and is never deleted', async ({ page }) => {
     await openLab(page, BUILDER);
-    // A component as the earlier demo produced it: id and name of the old template, four tabs.
-    const doc = JSON.parse(await lab<string>(page, 'return h.builder.json()'));
-    const old = {
-      ...doc,
-      id: 'bt-darts',
-      name: 'BT Darts',
-      root: {
-        ...doc.root,
-        children: [
-          ...doc.root.children,
-          { kind: 'tab', id: 'results', label: 'Risultati', icon: { kind: 'builtin', name: 'results' }, value: null, disabled: false, style: { iconSize: null, fontSize: null, fontWeight: null, letterSpacing: null } },
-        ],
-      },
-      meta: { ...doc.meta, basedOn: 'bt-darts' },
-    };
-    await lab(page, `return h.builder.importComponent(${JSON.stringify(JSON.stringify(old))})`);
+    const old = readFileSync(new URL('../fixtures/legacy/bt-darts.component.json', import.meta.url), 'utf8');
+    await lab(page, `return h.builder.importComponent(${JSON.stringify(old)})`);
     await expect.poll(() => lab(page, 'return h.builder.state.componentId')).toBe('bt-darts');
     expect(await lab(page, 'return h.builder.state.origin')).toBe('user');
+    // Converted: the canonical definition is what the lab holds and saves.
+    expect(await lab(page, 'return [h.builder.doc.format, h.builder.doc.type]')).toEqual(['jello-component-definition', 'mobile-navbar']);
     await lab(page, 'await h.flush()');
     await page.reload();
     await page.waitForSelector('html[data-ready=true]');
     const list = await lab<{ id: string; origin: string }[]>(page, 'return h.builder.components()');
     expect(list).toContainEqual(expect.objectContaining({ id: 'bt-darts', origin: 'user' }));
-    expect(list.filter((c) => c.origin === 'template').map((c) => c.id)).toEqual(['bottom-navigation']);
+    expect(list.filter((c) => c.origin === 'template').map((c) => c.id)).toEqual(['mobile-navbar', 'button']);
     await lab(page, `h.builder.open('bt-darts')`);
-    await expect(previewTabs(page)).toHaveCount(4);
+    await expect(previewTabs(page)).toHaveText(['Matrice', 'Live', 'Risultati']);
     // Its icons, kept for compatibility, still render.
-    await expect(previewTabs(page).nth(3).locator('svg')).toHaveCount(1);
+    await expect(previewTabs(page).nth(2).locator('svg')).toHaveCount(1);
+    expect(await lab(page, 'return h.builder.view.defaultTab')).toBe('live');
   });
 });
 
 test.describe('personal materials in components', () => {
   const surfaceBlur = (page: Page) => preview(page).locator('.jello-surface').evaluate((el) => (el as HTMLElement).style.getPropertyValue('--jello-blur'));
-  const componentBlur = (page: Page) => lab<number>(page, 'return h.builder.doc.material.document.material.blur');
+  const componentBlur = (page: Page) => lab<number>(page, 'return h.builder.material().material.blur');
 
   async function setLabBlur(page: Page, v: number) {
     await page.locator('#ws-material').click();
@@ -276,9 +275,10 @@ test.describe('personal materials in components', () => {
 
     // Material Lab → component.
     await page.locator('#libUseInComponent').click();
-    expect(await lab(page, 'return h.workspace()')).toBe('builder');
+    // The button saves, then applies the material and switches workspace: wait for the outcome, not for the click.
+    await expect.poll(() => lab(page, 'return h.workspace()')).toBe('builder');
     await controls(page);
-    expect(await lab(page, 'return h.builder.doc.material.preset')).toBe(id);
+    await expect.poll(() => lab(page, 'return h.builder.doc.material.preset')).toBe(id);
     await expect.poll(() => surfaceBlur(page)).toBe('7px');
     await expect(page.locator('#cmpMaterialNote')).toHaveAttribute('data-link', 'linked');
     await expect(page.locator('#cmpMaterial')).toHaveValue(id);
@@ -307,8 +307,9 @@ test.describe('personal materials in components', () => {
 
     // A saved component that is closed follows too, and keeps it after a reload.
     await page.locator('#cmpSave').click();
+    await expect.poll(() => lab(page, 'return h.builder.state.origin')).toBe('user');
     const saved = await lab<string>(page, 'return h.builder.state.componentId');
-    await lab(page, `h.builder.open('bottom-navigation')`);
+    await lab(page, `h.builder.open('mobile-navbar')`);
     await setLabBlur(page, 15);
     await lab(page, 'await h.flush()');
     await page.goto(`./?workspace=builder&component=${saved}&scene=app&animate=0`);
@@ -325,9 +326,9 @@ test.describe('personal materials in components', () => {
     await page.locator('#num-blur').fill('6');
     await expect(page.locator('#libUseInComponent')).toContainText('Salva e usa');
     await page.locator('#libUseInComponent').click();
+    await expect.poll(() => lab(page, 'return h.builder.doc.material.preset')).toMatch(/^user-/);
     const preset = await lab<string>(page, 'return h.builder.doc.material.preset');
-    expect(preset).toMatch(/^user-/);
     expect(await lab(page, `return h.library().find((i) => i.id === '${preset}')?.origin`)).toBe('user');
-    expect(await componentBlur(page)).toBe(6);
+    await expect.poll(() => componentBlur(page)).toBe(6);
   });
 });

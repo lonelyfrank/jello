@@ -6,28 +6,29 @@
  *     index.js             the React component (compiled ESM, no JSX) + the configuration
  *     index.d.ts           props, tab id union, configuration type
  *     src/<Name>.tsx       the same component as TSX source, for projects that vendor it
- *     component.json       jello-component document (material included)
+ *     component.json       jello-component-definition (material included)
  *     material.json        the material alone (jello-material)
- *     runtime/             built Jello runtime: BottomNavigation renderer + material runtime + CSS + types
+ *     runtime/             built Jello runtime: the component's renderer + material runtime + CSS + types
  *     example/App.tsx      integration example
  *     README.md · jello-manifest.json
  *
- * The component is a thin wrapper: it mounts the runtime's BottomNavigation
- * (the same class the lab preview runs) and maps props to it. It imports
- * only ./runtime: nothing from Jello Studio, no router.
+ * The component is a thin wrapper: it mounts the runtime's renderer of the
+ * type (BottomNavigation for a mobile-navbar, JelloButton for a button: the
+ * same classes the lab preview runs) and maps props to it. It imports only
+ * ./runtime: nothing from Jello Studio, no router. The files of the wrapper
+ * are per type (this file: navbar; react-button.ts: button); everything else
+ * (package, material, runtime, manifest) is shared.
  *
  * Pure: strings in, files out (tests/unit/export.test.ts, tests/e2e/react-export.spec.ts).
  */
 
-import type { ComponentDocument } from '../components/document';
-import { serializeComponent } from '../components/document';
-import type { BnTab } from '../components/bottom-navigation/model';
-import { BN_FIELDS } from '../components/bottom-navigation/model';
+import { BN_FIELDS, navbarView, resolveDefinitionMaterial, serializeDefinition, toCanonicalPath, unsupportedProperties, type BnTab, type ComponentDefinition } from '../components';
 import { BACKEND_LABEL, BACKEND_REQUIRES, RUNTIME_VERSION, serializeMaterial, type Backend } from './model-deps';
 import { candidates, sha256Hex, type PackageFile, type PackageResult, type RuntimeBundle } from './package';
+import { buttonExample, buttonIndexDts, buttonIndexJs, buttonReadme, buttonTsx } from './react-button';
 
 export interface ReactPackageInput {
-  component: ComponentDocument;
+  component: ComponentDefinition;
   runtime: RuntimeBundle;
   now?: string;
 }
@@ -41,7 +42,7 @@ export interface ReactNames {
   root: string;
 }
 
-export function reactNames(doc: ComponentDocument): ReactNames {
+export function reactNames(doc: ComponentDefinition): ReactNames {
   const words = doc.name
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
@@ -49,11 +50,13 @@ export function reactNames(doc: ComponentDocument): ReactNames {
     .filter(Boolean);
   let base = words.map((w) => w[0]!.toUpperCase() + w.slice(1).toLowerCase()).join('') || 'Jello';
   if (/^\d/.test(base)) base = `Jello${base}`;
-  const component = /Nav(igation|bar)?$/.test(base) ? base : `${base}Navigation`;
-  // Named after the component, not its storage id: "Bottom Navigation" → @jello-export/bottom-navigation.
+  const isButton = doc.type === 'button';
+  const component = isButton ? (/Button$/.test(base) ? base : `${base}Button`) : /Nav(igation|bar)?$/.test(base) ? base : `${base}Navigation`;
+  // Named after the component, not its storage id: "Mobile Navbar" → @jello-export/mobile-navbar.
   const slugOf = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   const slug = slugOf(doc.name) || slugOf(doc.id) || 'component';
-  return { component, tabType: `${base}TabId`, packageName: `@jello-export/${slug}`, root: `jello-${slug}-react` };
+  // A navbar's second name is the union of its tab ids; a button's is the union of its variants.
+  return { component, tabType: isButton ? `${base}Variant` : `${base}TabId`, packageName: `@jello-export/${slug}`, root: `jello-${slug}-react` };
 }
 
 const enc = new TextEncoder();
@@ -65,55 +68,58 @@ export async function buildReactPackage(input: ReactPackageInput): Promise<Packa
   const files: PackageFile[] = [];
   const add = (path: string, text: string | Uint8Array) => files.push({ path: `${names.root}/${path}`, data: typeof text === 'string' ? enc.encode(text) : text });
 
-  const material = doc.material.document;
-  if (material.source.kind === 'texture') {
+  const material = resolveDefinitionMaterial(doc);
+  if (material.family === 'glass' && material.source.kind === 'texture') {
     warnings.push('Il materiale chiede una texture (WebGL2): sui componenti DOM il runtime usa il percorso automatico SVG/CSS.');
   }
+  const unsupported = unsupportedProperties(doc);
+  for (const u of unsupported) warnings.push(`Proprietà senza effetto con ${material.name}: ${u.path} — ${u.reason}`);
   for (const f of input.runtime.files) {
     if (f.path.includes('..') || f.path.startsWith('/') || /(^|\/)src\//.test(f.path)) throw new Error(`Percorso del runtime non ammesso nel pacchetto: ${f.path}`);
   }
   const hasTypes = input.runtime.files.some((f) => f.path === 'types/runtime/index.d.ts');
   if (!hasTypes) throw new Error('Pacchetto React: il runtime è stato costruito senza dichiarazioni TypeScript (npm run build:lib).');
-  const svgIcons = doc.root.children.filter((t) => t.icon.kind === 'svg').length;
+  const svgIcons = Object.values(doc.content).filter((c) => c.icon?.kind === 'svg').length;
 
   add('package.json', packageJson(doc, names));
-  add('index.js', indexJs(doc, names));
+  add('index.js', indexJs(doc, names, material.name));
   add('index.d.ts', indexDts(doc, names));
   add(`src/${names.component}.tsx`, tsxSource(doc, names));
-  add('component.json', serializeComponent(doc) + '\n');
+  add('component.json', serializeDefinition(doc) + '\n');
   add('material.json', serializeMaterial(material) + '\n');
   for (const f of input.runtime.files) add(`runtime/${f.path}`, f.data);
   add('example/App.tsx', exampleApp(doc, names));
-  add('README.md', readme(doc, names, warnings, svgIcons));
+  add('README.md', doc.type === 'button' ? buttonReadme(doc, names, warnings, material.name, material.family) : readme(doc, names, warnings, svgIcons, material.name, material.family));
 
   const listed = await Promise.all(files.map(async (f) => ({ path: f.path.slice(names.root.length + 1), bytes: f.data.length, sha256: await sha256Hex(f.data) })));
-  const backends = candidates(material);
+  // Solid is plain CSS: no backend to choose and nothing to fall back from.
+  const backends = material.family === 'glass' ? candidates(material) : [];
   const manifest = {
     format: 'jello-package' as const,
     version: 1 as const,
     kind: 'component-react',
     generatedBy: `Jello Material Lab ${RUNTIME_VERSION}`,
     createdAt: input.now ?? new Date().toISOString(),
-    component: { id: doc.id, name: doc.name, type: doc.type, typeVersion: doc.typeVersion, schemaVersion: doc.schemaVersion, file: 'component.json', tabs: doc.root.children.map((t) => t.id) },
+    component: { id: doc.id, name: doc.name, type: doc.type, typeVersion: doc.typeVersion, schemaVersion: doc.schemaVersion, file: 'component.json', ...(doc.type === 'mobile-navbar' ? { tabs: navbarView(doc).children.map((t) => t.id) } : {}), unsupported },
     material: { id: material.id, name: material.name, family: material.family, schemaVersion: material.schemaVersion, file: 'material.json', preset: doc.material.preset },
     runtime: { version: input.runtime.version, entry: 'runtime/jello.js', css: 'runtime/jello.css', types: 'runtime/types/runtime/index.d.ts' },
     react: { package: names.packageName, component: names.component, entry: 'index.js', types: 'index.d.ts', source: `src/${names.component}.tsx` },
     dependencies: { peer: { react: '>=18', 'react-dom': '>=18' }, bundled: ['runtime/ (@jello/runtime ' + input.runtime.version + ')'] },
-    backend: { requested: material.target.backend, fallback: material.target.fallback, candidates: backends.map((b: Backend) => ({ backend: b, label: BACKEND_LABEL[b], requires: BACKEND_REQUIRES[b] })) },
-    events: doc.root.interactions.events,
+    backend: material.family === 'glass' ? { requested: material.target.backend, fallback: material.target.fallback, candidates: backends.map((b: Backend) => ({ backend: b, label: BACKEND_LABEL[b], requires: BACKEND_REQUIRES[b] })) } : { requested: 'none', fallback: 'none', candidates: [] },
+    events: doc.type === 'mobile-navbar' ? navbarView(doc).interactions.events : doc.interactions.events,
     files: listed,
   };
   add('jello-manifest.json', JSON.stringify(manifest, null, 2) + '\n');
   return { root: names.root, files, manifest: manifest as unknown as PackageResult['manifest'], warnings };
 }
 
-function packageJson(doc: ComponentDocument, n: ReactNames): string {
+function packageJson(doc: ComponentDefinition, n: ReactNames): string {
   return (
     JSON.stringify(
       {
         name: n.packageName,
         version: '1.0.0',
-        description: `${doc.name}: BottomNavigation con materiale ${doc.material.document.name}, esportata da Jello.`,
+        description: `${doc.name}: ${doc.type === 'button' ? 'Button' : 'Mobile Navbar'} con materiale ${resolveDefinitionMaterial(doc).name}, esportato da Jello.`,
         type: 'module',
         main: './index.js',
         types: './index.d.ts',
@@ -135,19 +141,20 @@ function packageJson(doc: ComponentDocument, n: ReactNames): string {
 
 const tabUnion = (tabs: readonly BnTab[]) => tabs.map((t) => JSON.stringify(t.id)).join(' | ');
 
-function indexJs(doc: ComponentDocument, n: ReactNames): string {
+function indexJs(doc: ComponentDefinition, n: ReactNames, materialName: string): string {
+  if (doc.type === 'button') return buttonIndexJs(doc, n, materialName, serializeDefinition(doc));
   return `/**
- * ${doc.name} — componente React esportato da Jello (BottomNavigation, materiale ${doc.material.document.name}).
+ * ${doc.name} — componente React esportato da Jello (Mobile Navbar, materiale ${materialName}).
  * Usa solo il runtime incluso in ./runtime: lo stesso renderer dell'anteprima del laboratorio.
  * Le tab non sono pagine: onChange riceve l'id stabile della tab, la navigazione è dell'applicazione.
  */
 import { createElement, useEffect, useLayoutEffect, useRef } from 'react';
 import { createBottomNavigation } from './runtime/jello.js';
 
-/** Documento jello-component (materiale incluso), identico a component.json. */
-export const config = ${serializeComponent(doc)};
+/** Documento jello-component-definition (materiale incluso), identico a component.json. */
+export const config = ${serializeDefinition(doc)};
 
-export const tabs = config.root.children.map((t) => t.id);
+export const tabs = config.structure.children.filter((n) => n.role === 'item').map((n) => n.id);
 
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
@@ -205,18 +212,19 @@ export default ${n.component};
 `;
 }
 
-function indexDts(doc: ComponentDocument, n: ReactNames): string {
+function indexDts(doc: ComponentDefinition, n: ReactNames): string {
+  if (doc.type === 'button') return buttonIndexDts(doc, n);
   return `import type { ReactElement, RefObject } from 'react';
-import type { BackendRequest, BnLayout, BottomNavigationEvent, ComponentDocument } from './runtime/jello.js';
+import type { BackendRequest, BnLayout, BottomNavigationEvent, ComponentDefinition } from './runtime/jello.js';
 
-export type { BottomNavigationEvent, ComponentDocument } from './runtime/jello.js';
+export type { BottomNavigationEvent, ComponentDefinition } from './runtime/jello.js';
 
 /** Id stabili delle tab di ${doc.name} (non dipendono dalle etichette). */
-export type ${n.tabType} = ${tabUnion(doc.root.children)};
+export type ${n.tabType} = ${tabUnion(navbarView(doc).children)};
 
 export interface JelloBottomNavigationProps<TabId extends string = string> {
-  /** Documento jello-component da mostrare (default: quello esportato). */
-  config?: ComponentDocument;
+  /** Documento jello-component-definition da mostrare (default: quello esportato). */
+  config?: ComponentDefinition;
   /** Modalità controllata: la tab attiva è questa; cambia solo quando la cambi tu (onChange). */
   activeTab?: TabId;
   /** Modalità non controllata: tab attiva iniziale (default: root.defaultTab). */
@@ -243,8 +251,8 @@ export interface JelloBottomNavigationProps<TabId extends string = string> {
   'aria-label'?: string;
 }
 
-/** Documento jello-component esportato (materiale incluso). */
-export declare const config: ComponentDocument;
+/** Documento jello-component-definition esportato (materiale incluso). */
+export declare const config: ComponentDefinition;
 export declare const tabs: readonly ${n.tabType}[];
 
 export declare function JelloBottomNavigation<TabId extends string = string>(props: JelloBottomNavigationProps<TabId>): ReactElement;
@@ -255,7 +263,8 @@ export default ${n.component};
 `;
 }
 
-function tsxSource(doc: ComponentDocument, n: ReactNames): string {
+function tsxSource(doc: ComponentDefinition, n: ReactNames): string {
+  if (doc.type === 'button') return buttonTsx(doc, n);
   return `/**
  * ${doc.name} — sorgente TSX equivalente a index.js, per chi preferisce copiare il componente nel progetto.
  * Richiede "resolveJsonModule" (per component.json) e il runtime in ../runtime.
@@ -268,13 +277,13 @@ import {
   type BottomNavigation as BottomNavigationInstance,
   type BottomNavigationEvent,
   type BottomNavigationOptions,
-  type ComponentDocument,
+  type ComponentDefinition,
 } from '../runtime/jello.js';
 import exported from '../component.json';
 
-export const config = exported as ComponentDocument;
+export const config = exported as ComponentDefinition;
 
-export type ${n.tabType} = ${tabUnion(doc.root.children)};
+export type ${n.tabType} = ${tabUnion(navbarView(doc).children)};
 
 export interface ${n.component}Props {
   activeTab?: ${n.tabType};
@@ -338,8 +347,9 @@ export default ${n.component};
 `;
 }
 
-function exampleApp(doc: ComponentDocument, n: ReactNames): string {
-  const first = doc.root.defaultTab;
+function exampleApp(doc: ComponentDefinition, n: ReactNames): string {
+  if (doc.type === 'button') return buttonExample(doc, n);
+  const first = navbarView(doc).defaultTab;
   return `/**
  * Integrazione minima di ${doc.name} in un'app React (Vite, Next, CRA…).
  *
@@ -367,13 +377,13 @@ export function App() {
 `;
 }
 
-function readme(doc: ComponentDocument, n: ReactNames, warnings: string[], svgIcons: number): string {
-  const r = doc.root;
-  const m = doc.material.document;
+function readme(doc: ComponentDefinition, n: ReactNames, warnings: string[], svgIcons: number, materialName: string, family: string): string {
+  const r = navbarView(doc);
+  const off = unsupportedProperties(doc);
   const lines = [
     `# ${doc.name} · React`,
     '',
-    `BottomNavigation esportata da Jello Material Lab (runtime ${RUNTIME_VERSION}), con materiale **${m.name}** (${m.family}).`,
+    `Mobile Navbar esportata da Jello Material Lab (runtime ${RUNTIME_VERSION}), con materiale **${materialName}** (${family}).`,
     'Il pacchetto non dipende da Jello Studio: il runtime è incluso in `runtime/`.',
     '',
     '## Installazione',
@@ -421,11 +431,17 @@ function readme(doc: ComponentDocument, n: ReactNames, warnings: string[], svgIc
     '',
     '- `material.json` è il materiale (jello-material); `component.json` lo contiene, insieme a struttura, stati, interazioni e breakpoint.',
     '- La barra ha **una** superficie di materiale; testi, icone e indicatore restano in primo piano, mai filtrati.',
-    '- Backend: SVG (rifrazione della GlassSource) dove il browser applica filtri SVG agli elementi HTML, altrimenti CSS (backdrop-filter), poi opaco.',
+    family === 'glass'
+      ? '- Backend: SVG (rifrazione della GlassSource) dove il browser applica filtri SVG agli elementi HTML, altrimenti CSS (backdrop-filter), poi opaco.'
+      : '- Solid: una superficie CSS (colore, bordo, ombra), nessun filtro e nessuna GlassSource. Contenuto delle tab: colore del materiale; indicatore tinto con il colore della tab attiva.',
     '- `prefers-reduced-motion`: indicatore senza animazione, nessuna scala alla pressione. `prefers-reduced-transparency`, `prefers-contrast: more`, `forced-colors`: superficie opaca.',
     '- Tastiera: frecce, Home e Fine spostano il focus; Spazio e Invio attivano. Focus sempre visibile.',
     `- Overflow: ${r.responsive.overflow === 'scroll' ? 'le tab scorrono orizzontalmente' : 'le etichette si nascondono'} sotto ${r.responsive.minTabWidth} px per tab. Breakpoint: ${r.responsive.breakpoints.length ? r.responsive.breakpoints.map((b) => `${b.id} ≤ ${b.maxWidth} px`).join(', ') : 'nessuno'}.`,
     ...(svgIcons ? [`- ${svgIcons} icone SVG personalizzate, già ripulite (solo forme e attributi ammessi) e incluse in \`component.json\`.`] : []),
+    '',
+    '## Proprietà non applicate a questo materiale',
+    '',
+    ...(off.length ? ['Descritte nella definizione ma senza effetto con questo materiale (non vengono disegnate):', '', ...off.map((u) => `- \`${u.path}\` — ${u.reason}`)] : ['Nessuna: ogni proprietà descritta ha effetto con questo materiale.']),
     '',
     '## Proprietà del componente',
     '',
@@ -433,7 +449,7 @@ function readme(doc: ComponentDocument, n: ReactNames, warnings: string[], svgIc
     '| --- | --- |',
     ...BN_FIELDS.map((f) => {
       const v = f.path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], r);
-      return `| ${f.label} (\`${f.path}\`) | ${String(v)}${f.type === 'number' && f.unit ? ' ' + f.unit : ''} |`;
+      return `| ${f.label} (\`${toCanonicalPath(f.path)}\`) | ${String(v)}${f.type === 'number' && f.unit ? ' ' + f.unit : ''} |`;
     }),
     ...(warnings.length ? ['', '## Avvisi', '', ...warnings.map((w) => `- ${w}`)] : []),
     '',

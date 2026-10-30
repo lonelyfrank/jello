@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createGlassDocument, glassParams, withGlassParams } from '../../src/model';
-import { componentTemplate } from '../../src/components/document';
+import { componentTemplate, serializeDefinition, setButtonLink, switchMaterialFamily } from '../../src/components';
 import { contrast, formatHsl, formatOklch, grade, oklchToRgb, parseColor, rgbToOklch, hexToRgb } from '../../src/project/color';
 import { kitAssets, minimalAssets } from '../../src/project/defaults';
 import { createProject, parseProject, serializeProject, tokenFor, uniqueName, uniqueToken } from '../../src/project/document';
@@ -67,14 +67,31 @@ describe('project document', () => {
     expect(tokenFor('Viola Jello')).toBe('--jello-viola-jello');
     expect(tokenFor('Più chiaro!')).toBe('--jello-piu-chiaro');
     expect(uniqueToken('--jello-viola', new Set(['--jello-viola', '--jello-viola-2']))).toBe('--jello-viola-3');
-    expect(uniqueName('Navbar BT', new Set(['Navbar BT']))).toBe('Navbar BT 2');
-    expect(uniqueName('Navbar BT 2', new Set(['Navbar BT 2']))).toBe('Navbar BT 3');
+    expect(uniqueName('Navbar A', new Set(['Navbar A']))).toBe('Navbar A 2');
+    expect(uniqueName('Navbar A 2', new Set(['Navbar A 2']))).toBe('Navbar A 3');
   });
 });
 
 describe('.jello package', () => {
+  it('a package written by the previous version, with components in the old format, reads them as canonical definitions', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { convertComponentV1 } = await import('../../src/migration');
+    const old = JSON.parse(readFileSync('tests/fixtures/legacy/bt-darts.component.json', 'utf8'));
+    const expected = convertComponentV1(old);
+    expect(expected.ok).toBe(true);
+    const files = buildProjectPackage(project(), { materials: [], components: [componentTemplate('mobile-navbar')!.create()], colors: true, icons: 'none', fonts: false }).map((f) =>
+      f.path.startsWith('componenti/') ? { ...f, data: new TextEncoder().encode(JSON.stringify(old)) } : f,
+    );
+    const r = readProjectEntries(await readZip(packageBytes(files)));
+    expect(r.ok).toBe(true);
+    if (!r.ok || !expected.ok) return;
+    expect(r.value.components).toHaveLength(1);
+    expect(r.value.components[0]!.doc).toEqual(expected.doc);
+    expect(r.value.components[0]!.doc.type).toBe('mobile-navbar');
+  });
+
   it('round-trips materials, components and assets through a real ZIP', async () => {
-    const comp = componentTemplate('bottom-navigation')!.create();
+    const comp = componentTemplate('mobile-navbar')!.create();
     const files = buildProjectPackage(project(), { materials: [material('Glass personale')], components: [comp], colors: true, icons: 'used', fonts: true });
     const paths = files.map((f) => f.path);
     expect(paths).toContain('progetto.json');
@@ -91,6 +108,19 @@ describe('.jello package', () => {
     // Only the icons the component uses are kept.
     const used = usedIconNames([comp]);
     expect(r.value.project.assets.iconSets[0]!.icons.map((i) => i.name).sort()).toEqual([...used].sort());
+  });
+
+  it('carries a Button — Glass, Solid, an action and a link — and its icon through a real ZIP, losing nothing', async () => {
+    const cta = componentTemplate('button')!.create();
+    const link = setButtonLink(switchMaterialFamily({ ...cta, id: 'cmp-link', name: 'Collegamento' }, 'solid').definition, 'link', '/docs')!;
+    const files = buildProjectPackage(project(), { materials: [], components: [cta, link], colors: true, icons: 'used', fonts: false });
+    const r = readProjectEntries(await readZip(packageBytes(files)));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.value.components.map((c) => c.doc.type)).toEqual(['button', 'button']);
+    expect(r.value.components.map((c) => serializeDefinition(c.doc)).sort()).toEqual([serializeDefinition(cta), serializeDefinition(link)].sort());
+    expect(r.value.components.flatMap((c) => c.warnings)).toEqual([]);
+    expect([...usedIconNames([cta, link])]).toEqual(['play']);
   });
 
   it('is deterministic and rejects broken or unsafe archives', async () => {
@@ -113,8 +143,8 @@ describe('import', () => {
   const enc = (s: string) => new TextEncoder().encode(s);
 
   it('classifies files and rejects a partial material as a whole', async () => {
-    const good = JSON.stringify(createGlassDocument({ id: 'x', name: 'Navbar BT' }));
-    expect((await inspectFile('glass-bt.json', enc(good))).kind).toBe('material');
+    const good = JSON.stringify(createGlassDocument({ id: 'x', name: 'Navbar A' }));
+    expect((await inspectFile('glass-a.json', enc(good))).kind).toBe('material');
     const broken = await inspectFile('glass-rotto.json', enc('{"format":"jello-glass","schemaVersion":1,"material":{"blur":64}}'));
     expect(broken.kind).toBe('rejected');
     expect((await inspectFile('x.json', enc('{nope'))).kind).toBe('rejected');
@@ -126,9 +156,9 @@ describe('import', () => {
   });
 
   it('finds conflicts and keeps both, replaces or skips as chosen', async () => {
-    const existing = { materials: [{ id: 'user-1', name: 'Navbar BT', doc: material('Navbar BT', 10) }], components: [], assets: kitAssets() };
-    const incomingDoc = JSON.stringify(material('Navbar BT', 14));
-    const items = [await inspectFile('glass-bt.json', enc(incomingDoc))];
+    const existing = { materials: [{ id: 'user-1', name: 'Navbar A', doc: material('Navbar A', 10) }], components: [], assets: kitAssets() };
+    const incomingDoc = JSON.stringify(material('Navbar A', 14));
+    const items = [await inspectFile('glass-a.json', enc(incomingDoc))];
     const inc = collect(items);
     const conflicts = findConflicts(inc, existing);
     expect(conflicts).toHaveLength(1);
@@ -189,8 +219,8 @@ describe('asset edits', () => {
 
   it('finds the colour a component uses and the fixed colours of an icon', async () => {
     const { colorUsage, fixedColor, toCurrentColor, warningFor, iconUsage } = await import('../../src/project/assets');
-    const comp = componentTemplate('bottom-navigation')!.create();
-    expect(iconUsage([comp], 'home')[0]).toContain('Bottom Navigation · tab Home');
+    const comp = componentTemplate('mobile-navbar')!.create();
+    expect(iconUsage([comp], 'home')[0]).toContain('Mobile Navbar · Home');
     expect(iconUsage([comp], 'nope')).toEqual([]);
     const body = '<circle cx="12" cy="12" r="8" fill="none" stroke="#E8553F"/>';
     expect(fixedColor(body)).toBe('#E8553F');

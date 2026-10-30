@@ -23,7 +23,7 @@ import {
   supportReport,
   effectiveRadius,
   type Backend,
-  type MaterialDocument,
+  type GlassDocument,
 } from './model-deps';
 import { escapeHtml, exampleHtml, exampleScript } from './example';
 import { zip, type ZipEntry } from './zip';
@@ -49,7 +49,7 @@ export interface AssetData {
 }
 
 export interface PackageInput {
-  material: MaterialDocument;
+  material: GlassDocument;
   kind: PackageKind;
   /** Required for `runtime` packages. */
   runtime?: RuntimeBundle;
@@ -93,12 +93,12 @@ export interface PackageResult {
 const enc = new TextEncoder();
 const text = (s: string) => enc.encode(s);
 
-export function packageRoot(doc: MaterialDocument): string {
+export function packageRoot(doc: GlassDocument): string {
   return `jello-${doc.id.replace(/[^A-Za-z0-9._-]/g, '-')}`;
 }
 
 /** Backends a document can end up on, in the order the runtime tries them. */
-export function candidates(doc: MaterialDocument): Backend[] {
+export function candidates(doc: GlassDocument): Backend[] {
   const b = doc.target.backend;
   if (b === 'webgl2') return ['webgl2', 'css'];
   if (b === 'svg') return ['svg', 'css'];
@@ -187,7 +187,7 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
 }
 
 /** The material as an installable module: `npm install ./jello-<id>` → import { material, createGroup }. */
-function materialPackageJson(doc: MaterialDocument, runtimeVersion: string): string {
+function materialPackageJson(doc: GlassDocument, runtimeVersion: string): string {
   const slug = doc.id.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') || 'material';
   return (
     JSON.stringify(
@@ -207,7 +207,7 @@ function materialPackageJson(doc: MaterialDocument, runtimeVersion: string): str
   );
 }
 
-function materialModule(doc: MaterialDocument): string {
+function materialModule(doc: GlassDocument): string {
   return `/** ${doc.name} — materiale ${doc.family} esportato da Jello. Solo il materiale: nessuna componente. */
 import { createMaterialGroup } from './runtime/jello.js';
 
@@ -224,12 +224,12 @@ export function createGroup(options) {
 `;
 }
 
-const MATERIAL_DTS = `import type { MaterialDocument, MaterialGroup, MaterialGroupOptions } from './runtime/jello.js';
+const MATERIAL_DTS = `import type { GlassDocument, MaterialGroup, MaterialGroupOptions } from './runtime/jello.js';
 
-export type { MaterialDocument, MaterialGroup } from './runtime/jello.js';
+export type { GlassDocument, MaterialGroup } from './runtime/jello.js';
 
 /** Documento jello-material esportato. */
-export declare const material: MaterialDocument;
+export declare const material: GlassDocument;
 
 /** Gruppo di superfici con questo materiale sopra una GlassSource. */
 export declare function createGroup(options: Omit<MaterialGroupOptions, 'material'>): MaterialGroup;
@@ -239,7 +239,7 @@ export function packageZip(result: PackageResult): Uint8Array {
   return zip(result.files.map((f): ZipEntry => ({ path: f.path, data: f.data })));
 }
 
-function sourceInstructions(doc: MaterialDocument, kind: PackageKind): string {
+function sourceInstructions(doc: GlassDocument, kind: PackageKind): string {
   if (kind === 'css-only') {
     return 'Nessuna sorgente: il materiale usa backdrop-filter sul contenuto dietro l’elemento. Nessuna rifrazione.';
   }
@@ -257,7 +257,7 @@ function sourceInstructions(doc: MaterialDocument, kind: PackageKind): string {
   );
 }
 
-function cssOnlyNote(doc: MaterialDocument): string {
+function cssOnlyNote(doc: GlassDocument): string {
   const ignored = supportReport('css').filter((r) => r.level === 'ignored').map((r) => r.key);
   const used = ignored.filter((k) => {
     const v = glassParams(doc)[k];
@@ -270,7 +270,7 @@ function cssOnlyNote(doc: MaterialDocument): string {
 }
 
 /** Glass on the CSS backend as a static stylesheet: the same variables the runtime writes. */
-export function cssOnlyStylesheet(doc: MaterialDocument): string {
+export function cssOnlyStylesheet(doc: GlassDocument): string {
   const p = glassParams(doc);
   const cls = `jello-${doc.id.replace(/[^A-Za-z0-9_-]/g, '-')}`;
   const vars = surfaceVariables(p, `${effectiveRadius(p)}px`);
@@ -334,7 +334,7 @@ ${decl}
 `;
 }
 
-function cssOnlyExample(doc: MaterialDocument): string {
+function cssOnlyExample(doc: GlassDocument): string {
   const cls = `jello-${doc.id.replace(/[^A-Za-z0-9_-]/g, '-')}`;
   return `<!doctype html>
 <html lang="it">
@@ -360,7 +360,7 @@ body { margin: 0; min-height: 100vh; display: grid; place-items: center; font: 1
 `;
 }
 
-function readme(doc: MaterialDocument, m: Omit<Manifest, 'files'>, warnings: string[]): string {
+function readme(doc: GlassDocument, m: Omit<Manifest, 'files'>, warnings: string[]): string {
   const p = glassParams(doc);
   const lines: string[] = [];
   lines.push(`# ${doc.name}`, '');

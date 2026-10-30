@@ -1,35 +1,43 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addBreakpoint,
   addTab,
+  applyNavbarView,
+  BN_FIELDS,
   bindingState,
   bindMaterial,
-  materialRevision,
-  BN_FIELDS,
   COMPONENT_TEMPLATES,
   componentTemplate,
   createRoot,
   createTab,
   duplicateTab,
+  editNavbar,
+  glassMaterialOf,
+  getNavbarField,
   iconFromSvg,
+  materialRevision,
   moveTab,
-  parseComponent,
-  parseComponentText,
+  navbarView,
+  parseDefinition,
+  parseDefinitionText,
   parseSvg,
   removeTab,
-  resolveRoot,
-  serializeComponent,
+  resolveNavbar,
+  serializeDefinition,
+  setNavbarField,
   setRootField,
   tabStyle,
   uniqueId,
+  updateBreakpoint,
   updateTab,
-  withRootField,
-  type ComponentDocument,
+  type ComponentDefinition,
 } from '../../src/components';
 import { BUILTIN_MATERIALS, createGlassDocument, MATERIALS, materialDefinition, withGlassParams } from '../../src/model';
 import { defaultParams, serializeParams } from '../../src/core/params';
 
-const demo = () => componentTemplate('bottom-navigation')!.create();
+const demo = () => componentTemplate('mobile-navbar')!.create();
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
+const parse = (d: unknown) => parseDefinition(d);
 
 describe('material registry', () => {
   it('registers Glass with schema, defaults, presets, capabilities, fallbacks and export info', () => {
@@ -47,133 +55,178 @@ describe('material registry', () => {
 
   it('refuses duplicates and families that are only planned', () => {
     expect(() => MATERIALS.register(materialDefinition('glass')!)).toThrow(/già registrato/);
-    expect(() => MATERIALS.register({ ...materialDefinition('glass')!, id: 'gel' })).toThrow(/non è disponibile/);
-    expect(MATERIALS.list().map((d) => d.id)).toEqual(['glass']);
+    expect(() => MATERIALS.register({ ...materialDefinition('glass')!, id: 'jelly' })).toThrow(/non è disponibile/);
+    expect(MATERIALS.list().map((d) => d.id)).toEqual(['glass', 'solid']);
   });
 });
 
-describe('component document', () => {
-  it('templates are valid documents and survive serialize → parse without any loss', () => {
+describe('mobile-navbar definition', () => {
+  it('the official template is a valid document and survives serialize → parse without any loss', () => {
     for (const t of COMPONENT_TEMPLATES) {
       const doc = t.create();
-      const r = parseComponentText(serializeComponent(doc));
+      const r = parseDefinitionText(serializeDefinition(doc));
       expect(r.ok, t.id).toBe(true);
       if (r.ok) {
         expect(r.doc).toEqual(doc);
         expect(r.warnings).toEqual([]);
+        expect(r.migratedFrom).toBeNull();
       }
     }
   });
 
-  it('the only official template is the generic Bottom Navigation: Home, Explore, Profile', () => {
-    expect(COMPONENT_TEMPLATES.map((t) => [t.id, t.label])).toEqual([['bottom-navigation', 'Bottom Navigation']]);
+  it('the official templates are generic: the Mobile Navbar (Home, Explore, Profile) and the Button', () => {
+    expect(COMPONENT_TEMPLATES.map((t) => [t.id, t.label])).toEqual([
+      ['mobile-navbar', 'Mobile Navbar'],
+      ['button', 'Button'],
+    ]);
     expect(componentTemplate('bt-darts')).toBeUndefined();
-    expect(JSON.stringify(COMPONENT_TEMPLATES.map((t) => t.create()))).not.toMatch(/darts|\bbt\b|cable|matrice|risultati/i);
+    expect(componentTemplate('bottom-navigation')).toBeUndefined();
+    expect(JSON.stringify(COMPONENT_TEMPLATES.map((t) => t.create()))).not.toMatch(/darts|\bbt\b|cable|matrice|risultati|bottom-navigation/i);
     const d = demo();
-    expect(d.root.children.map((t) => [t.id, t.label, t.icon])).toEqual([
+    const v = navbarView(d);
+    expect(v.children.map((t) => [t.id, t.label, t.icon])).toEqual([
       ['home', 'Home', { kind: 'builtin', name: 'home' }],
       ['explore', 'Explore', { kind: 'builtin', name: 'compass' }],
       ['profile', 'Profile', { kind: 'builtin', name: 'user' }],
     ]);
-    expect(d.root.children.every((t) => t.value === null)).toBe(true);
-    expect(d.root.responsive.breakpoints).toEqual([]);
+    expect(v.children.every((t) => t.value === null)).toBe(true);
+    expect(v.responsive.breakpoints).toEqual([]);
+    expect(d.type).toBe('mobile-navbar');
     expect(d.material.preset).toBe('navbar');
-    expect(d.material.document.id).toBe('navbar');
-    expect(d.root.layout).toMatchObject({ height: 64, padding: 6, gap: 2, radius: 'capsule', offset: 12, maxWidth: 440 });
+    expect(glassMaterialOf(d).id).toBe('navbar');
+    expect(v.layout).toMatchObject({ height: 64, padding: 6, gap: 2, radius: 'capsule', offset: 12, maxWidth: 440 });
+  });
+
+  it('keeps structure, content, layout, material and states apart', () => {
+    const d = demo();
+    expect(d.structure).toMatchObject({ id: 'root', role: 'navbar' });
+    expect(d.structure.children!.map((c) => [c.id, c.role, c.children!.map((k) => k.role)])).toEqual([
+      ['home', 'item', ['icon', 'label']],
+      ['explore', 'item', ['icon', 'label']],
+      ['profile', 'item', ['icon', 'label']],
+    ]);
+    expect(d.content['home-label']).toEqual({ text: 'Home' });
+    expect(d.content['home-icon']).toEqual({ icon: { kind: 'builtin', name: 'home' } });
+    expect(d.content.root).toEqual({ text: 'Navigazione principale' });
+    expect(d.layout).toMatchObject({ placement: 'floating', height: 64 });
+    expect(d.states.focus?.style).toMatchObject({ width: 2 });
+    expect(d.states.active?.material).toBeUndefined();
+    expect(d.interactions.events).toEqual({ change: 'jello-change', press: 'jello-press', reselect: 'jello-reselect' });
+    expect(d.material).toMatchObject({ family: 'glass', preset: 'navbar', params: {} });
   });
 
   it('an edited component (custom tab, svg icon, breakpoint, overrides) round-trips exactly', () => {
-    let d = demo();
     const icon = iconFromSvg('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor"/></svg>', 'dot.svg');
     expect(icon.ok).toBe(true);
-    const added = addTab(d.root, { label: 'Classifica' });
+    const added = addTab(navbarView(demo()), { label: 'Classifica' });
     let root = updateTab(added.root, added.id, { icon: icon.ok ? icon.icon : { kind: 'none' }, value: '/classifica', style: { fontSize: 13 } as never });
     root = setRootField(root, 'layout.height', 70)!;
     root = { ...root, responsive: { ...root.responsive, breakpoints: [{ id: 'narrow', maxWidth: 400, overrides: { 'layout.labels': 'active', 'icon.size': 20 } }] } };
-    d = { ...d, root, meta: { ...d.meta, notes: 'prova' } };
-    const r = parseComponent(JSON.parse(serializeComponent(d)));
+    const d = { ...applyNavbarView(demo(), root), meta: { ...demo().meta, notes: 'prova' } };
+    const r = parse(JSON.parse(serializeDefinition(d)));
     expect(r.ok && r.doc).toEqual(d);
+    expect(r.ok && JSON.parse(JSON.stringify(navbarView(r.doc)))).toEqual(JSON.parse(JSON.stringify(root)));
+  });
+
+  it('applying the view of a definition back to it changes nothing', () => {
+    const d = demo();
+    expect(applyNavbarView(d, navbarView(d))).toEqual(d);
   });
 
   it('missing properties take defaults with a warning; unknown ones are reported and dropped', () => {
-    const raw = clone(demo()) as unknown as { root: Record<string, Record<string, unknown>>; extra?: number };
-    delete raw.root.layout!.gap;
-    (raw.root.layout as Record<string, unknown>).magic = 1;
+    const raw = clone(demo()) as unknown as Record<string, any>;
+    delete raw.layout.gap;
+    raw.layout.magic = 1;
     raw.extra = 1;
-    const r = parseComponent(raw);
+    const r = parse(raw);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.doc.root.layout.gap).toBe(2);
-    expect(r.warnings.join('\n')).toMatch(/root\.layout\.gap: assente/);
-    expect(r.warnings.join('\n')).toMatch(/root\.layout\.magic: proprietà sconosciuta/);
+    expect(r.doc.layout.gap).toBe(2);
+    expect(r.warnings.join('\n')).toMatch(/layout\.gap: assente/);
+    expect(r.warnings.join('\n')).toMatch(/layout\.magic: proprietà sconosciuta/);
     expect(r.warnings.join('\n')).toMatch(/extra: campo sconosciuto/);
-    expect('magic' in r.doc.root.layout).toBe(false);
+    expect('magic' in r.doc.layout).toBe(false);
   });
 
-  it('is atomic: every invalid value is reported and nothing is returned', () => {
+  it('is atomic: every invalid value is reported with its canonical path and nothing is returned', () => {
     const raw = clone(demo()) as unknown as Record<string, any>;
-    raw.root.layout.height = 999;
-    raw.root.states.focus.color = 'red';
-    raw.root.children[1].id = 'home';
-    raw.root.children[2].label = '';
-    const r = parseComponent(raw);
+    raw.layout.height = 999;
+    raw.states.focus.style.color = 'red';
+    raw.style.typography.fontSize = 1;
+    raw.interactions.events.press = 'Bad Name';
+    const r = parse(raw);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const all = r.errors.join('\n');
-    expect(all).toMatch(/root\.layout\.height: 999 fuori intervallo/);
-    expect(all).toMatch(/root\.states\.focus\.color/);
-    expect(all).toMatch(/"home" duplicato/);
-    expect(all).toMatch(/root\.children\.2/);
+    expect(all).toMatch(/layout\.height: 999 fuori intervallo/);
+    expect(all).toMatch(/states\.focus\.style\.color/);
+    expect(all).toMatch(/style\.typography\.fontSize/);
+    expect(all).toMatch(/interactions\.events\.press/);
+  });
+
+  it('a duplicated or empty item is refused with its place', () => {
+    const raw = clone(demo()) as unknown as Record<string, any>;
+    raw.structure.children[1].id = 'home';
+    expect(parse(raw)).toMatchObject({ ok: false, errors: [expect.stringMatching(/«home» è duplicato/)] });
+    const raw2 = clone(demo()) as unknown as Record<string, any>;
+    raw2.content['profile-label'].text = '';
+    expect(parse(raw2)).toMatchObject({ ok: false, errors: [expect.stringMatching(/content\.profile-label\.text/)] });
   });
 
   it('refuses newer versions, unknown types and an invalid embedded material', () => {
     const d = clone(demo()) as unknown as Record<string, any>;
-    expect(parseComponent({ ...d, schemaVersion: 2 })).toMatchObject({ ok: false, errors: [expect.stringMatching(/più recente/)] });
-    expect(parseComponent({ ...d, typeVersion: 5 })).toMatchObject({ ok: false, errors: [expect.stringMatching(/typeVersion 5/)] });
-    expect(parseComponent({ ...d, type: 'carousel' })).toMatchObject({ ok: false, errors: [expect.stringMatching(/sconosciuto/)] });
-    expect(parseComponent({ ...d, schemaVersion: 0 })).toMatchObject({ ok: false });
+    expect(parse({ ...d, schemaVersion: 2 })).toMatchObject({ ok: false, errors: [expect.stringMatching(/più recente/)] });
+    expect(parse({ ...d, typeVersion: 5 })).toMatchObject({ ok: false, errors: [expect.stringMatching(/typeVersion 5/)] });
+    expect(parse({ ...d, type: 'carousel' })).toMatchObject({ ok: false, errors: [expect.stringMatching(/sconosciuto/)] });
+    expect(parse({ ...d, schemaVersion: 0 })).toMatchObject({ ok: false });
     const bad = clone(d);
     bad.material.document.material.blur = 500;
-    const r = parseComponent(bad);
+    const r = parse(bad);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors[0]).toMatch(/^material\.document\.material\.blur/);
   });
 
-  it('migrates an embedded jello-glass v1 material (component keeps every other field)', () => {
+  it('migrates an embedded jello-glass v1 material (the component keeps every other field)', () => {
     const d = clone(demo()) as unknown as Record<string, any>;
     d.material.document = JSON.parse(serializeParams({ ...defaultParams(), blur: 9 }));
-    const r = parseComponent(d);
+    const r = parse(d);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.migratedFrom).toBe('jello-glass@1');
-    expect(r.doc.material.document.material.blur).toBe(9);
-    expect(r.doc.root).toEqual(demo().root);
+    expect(glassMaterialOf(r.doc).material.blur).toBe(9);
+    expect({ ...r.doc, material: demo().material }).toEqual({ ...demo(), material: demo().material });
   });
 
-  it('a defaultTab that is not a tab falls back to the first one', () => {
+  it('a default item that is not an item falls back to the first one', () => {
     const d = clone(demo());
-    d.root.defaultTab = 'nowhere';
-    const r = parseComponent(d);
-    expect(r.ok && r.doc.root.defaultTab).toBe('home');
+    d.interactions.behavior.defaultItem = 'nowhere';
+    const r = parse(d);
+    expect(r.ok && navbarView(r.doc).defaultTab).toBe('home');
+    expect(r.ok && r.warnings.join()).toMatch(/defaultItem/);
   });
 
   it('serialized documents contain no functions, only declarative events', () => {
-    const text = serializeComponent(demo());
+    const text = serializeDefinition(demo());
     expect(text).not.toMatch(/function|=>/);
-    expect(JSON.parse(text).root.interactions.events).toEqual({ change: 'jello-change', press: 'jello-press', reselect: 'jello-reselect' });
+    expect(JSON.parse(text).interactions.events).toEqual({ change: 'jello-change', press: 'jello-press', reselect: 'jello-reselect' });
   });
 
-  it('every described property has a valid default', () => {
-    const root = createRoot([createTab('a', 'A')]);
-    for (const f of BN_FIELDS) expect(setRootField(root, f.path, f.default), f.path).not.toBeNull();
-    expect(withRootField(demo(), 'layout.height', 20)).toBeNull();
+  it('every described property has a valid default, reachable by its canonical path', () => {
+    for (const f of BN_FIELDS) expect(setRootField(createRoot([createTab('a', 'A')]), f.path, f.default), f.path).not.toBeNull();
+    const d = demo();
+    expect(setNavbarField(d, 'layout.height', 70)?.layout.height).toBe(70);
+    expect(setNavbarField(d, 'style.typography.fontSize', 14)?.style).toMatchObject({ typography: { fontSize: 14 } });
+    expect(setNavbarField(d, 'states.focus.style.color', '#112233')?.states.focus?.style).toMatchObject({ color: '#112233' });
+    expect(getNavbarField(d, 'interactions.behavior.reselect')).toBe('event');
+    expect(setNavbarField(d, 'layout.height', 20)).toBeNull();
+    expect(setNavbarField(d, 'layout.nope', 1)).toBeNull();
   });
 });
 
 describe('editing tabs', () => {
   it('ids are stable, unique and independent from labels', () => {
     const d = demo();
-    const a = addTab(d.root, { after: 'explore' });
+    const a = addTab(navbarView(d), { after: 'explore' });
     expect(a.id).toBe('tab');
     expect(a.root.children.map((t) => t.id)).toEqual(['home', 'explore', 'tab', 'profile']);
     const b = addTab(a.root);
@@ -184,16 +237,35 @@ describe('editing tabs', () => {
     expect(uniqueId('42', [])).toBe('tab-42');
   });
 
+  it('the structure follows: a new item gets an icon slot and a label slot, ids derived and never colliding', () => {
+    let d = editNavbar(demo(), (r) => addTab(r, { label: 'Nuova' }).root);
+    expect(d.structure.children!.map((c) => c.id)).toEqual(['home', 'explore', 'profile', 'tab']);
+    expect(d.structure.children![3]!.children!.map((c) => c.id)).toEqual(['tab-icon', 'tab-label']);
+    expect(d.content['tab-label']).toEqual({ text: 'Nuova' });
+    // An item named like another item's slot does not steal it.
+    d = editNavbar(d, (r) => ({ ...r, children: [...r.children, createTab('tab-icon', 'Strana')] }));
+    const ids = JSON.stringify(d.structure).match(/"id":"[^"]+"/g)!;
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(parse(JSON.parse(serializeDefinition(d))).ok).toBe(true);
+  });
+
+  it('existing slot ids are kept across edits (labels change, ids do not)', () => {
+    const before = demo();
+    const after = editNavbar(before, (r) => updateTab(r, 'explore', { label: 'Scopri' }));
+    expect(after.structure).toEqual(before.structure);
+    expect(after.content['explore-label']).toEqual({ text: 'Scopri' });
+  });
+
   it('no arbitrary maximum: 30 tabs are a valid document', () => {
-    let root = demo().root;
-    for (let i = 0; i < 27; i++) root = addTab(root).root;
-    expect(root.children).toHaveLength(30);
-    expect(parseComponent({ ...demo(), root }).ok).toBe(true);
+    let d = demo();
+    for (let i = 0; i < 27; i++) d = editNavbar(d, (r) => addTab(r).root);
+    expect(navbarView(d).children).toHaveLength(30);
+    expect(parse(JSON.parse(serializeDefinition(d))).ok).toBe(true);
   });
 
   it('duplicate, move, remove (never the last tab) and default tab follow', () => {
-    const d = demo();
-    const dup = duplicateTab(d.root, 'explore');
+    const root = navbarView(demo());
+    const dup = duplicateTab(root, 'explore');
     expect(dup.id).toBe('explore-copia');
     expect(dup.root.children[2]).toMatchObject({ id: 'explore-copia', label: 'Explore (copia)', icon: { kind: 'builtin', name: 'compass' } });
     const moved = moveTab(dup.root, 'profile', 0);
@@ -206,27 +278,51 @@ describe('editing tabs', () => {
   });
 
   it('per-tab overrides inherit from the root when null', () => {
-    const root = demo().root;
+    const root = navbarView(demo());
     const t = updateTab(root, 'explore', { style: { iconSize: 30 } as never }).children[1]!;
     expect(tabStyle(root, t)).toEqual({ iconSize: 30, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.1 });
+    const d = editNavbar(demo(), (r) => updateTab(r, 'explore', { style: { iconSize: 30 } as never }));
+    expect(d.style.items).toEqual({ explore: { iconSize: 30 } });
+  });
+
+  it('a tab without an icon or a label has no slot for it, and comes back', () => {
+    let d = editNavbar(demo(), (r) => updateTab(r, 'home', { icon: { kind: 'none' } }));
+    expect(d.structure.children![0]!.children!.map((c) => c.role)).toEqual(['label']);
+    expect('home-icon' in d.content).toBe(false);
+    d = editNavbar(d, (r) => updateTab(r, 'home', { icon: { kind: 'builtin', name: 'star' } }));
+    expect(d.structure.children![0]!.children!.map((c) => c.id)).toEqual(['home-icon', 'home-label']);
   });
 });
 
 describe('responsive', () => {
   it('breakpoints apply from the widest to the narrowest', () => {
-    const root = {
-      ...demo().root,
-      responsive: {
-        ...demo().root.responsive,
-        breakpoints: [
-          { id: 'tablet', maxWidth: 800, overrides: { 'layout.height': 60, 'layout.labels': 'active' } },
-          { id: 'phone', maxWidth: 420, overrides: { 'layout.height': 56 } },
-        ],
-      },
-    };
-    expect(resolveRoot(root, 1200)).toMatchObject({ breakpoint: null, root: { layout: { height: 64, labels: 'show' } } });
-    expect(resolveRoot(root, 768)).toMatchObject({ breakpoint: 'tablet', root: { layout: { height: 60, labels: 'active' } } });
-    expect(resolveRoot(root, 390)).toMatchObject({ breakpoint: 'phone', root: { layout: { height: 56, labels: 'active' } } });
+    let d = demo();
+    d = editNavbar(d, (r) => {
+      const t = addBreakpoint(r, 800);
+      let x = updateBreakpoint(t.root, t.id, { set: ['layout.height', 60] });
+      x = updateBreakpoint(x, t.id, { set: ['layout.labels', 'active'] });
+      const p = addBreakpoint(x, 420);
+      return updateBreakpoint(p.root, p.id, { set: ['layout.height', 56] });
+    });
+    expect((d.responsive.breakpoints as { overrides: object }[]).map((b) => b.overrides)).toEqual([{ 'layout.height': 60, 'layout.labels': 'active' }, { 'layout.height': 56 }]);
+    expect(resolveNavbar(d, 1200)).toMatchObject({ breakpoint: null, root: { layout: { height: 64, labels: 'show' } } });
+    expect(resolveNavbar(d, 768)).toMatchObject({ breakpoint: 'bp-800', root: { layout: { height: 60, labels: 'active' } } });
+    expect(resolveNavbar(d, 390)).toMatchObject({ breakpoint: 'bp-420', root: { layout: { height: 56, labels: 'active' } } });
+  });
+
+  it('breakpoint overrides are stored under canonical names and validated', () => {
+    const d = editNavbar(demo(), (r) => {
+      const t = addBreakpoint(r, 500);
+      return updateBreakpoint(t.root, t.id, { set: ['typography.fontSize', 13] });
+    });
+    expect((d.responsive.breakpoints as { overrides: object }[])[0]!.overrides).toEqual({ 'style.typography.fontSize': 13 });
+    expect(navbarView(d).responsive.breakpoints[0]!.overrides).toEqual({ 'typography.fontSize': 13 });
+    const bad = clone(d) as unknown as Record<string, any>;
+    bad.responsive.breakpoints[0].overrides['style.typography.fontSize'] = 99;
+    expect(parse(bad)).toMatchObject({ ok: false, errors: [expect.stringMatching(/overrides\.style\.typography\.fontSize/)] });
+    bad.responsive.breakpoints[0].overrides = { 'layout.anchor': 'inline', 'style.typography.fontSize': 13 };
+    const r = parse(bad);
+    expect(r.ok && r.warnings.join()).toMatch(/layout\.anchor: non sovrascrivibile/);
   });
 });
 
@@ -268,9 +364,9 @@ describe('svg icons', () => {
   });
 
   it('a stored component with tampered svg is refused at parse time', () => {
-    const d = clone(demo()) as ComponentDocument;
-    d.root.children[0]!.icon = { kind: 'svg', name: 'x', viewBox: '0 0 1 1', body: '<path d="M0 0" onload="alert(1)"/>', paint: 'fill' };
-    const r = parseComponent(d);
+    const d = clone(demo()) as unknown as Record<string, any>;
+    d.content['home-icon'].icon = { kind: 'svg', name: 'x', viewBox: '0 0 1 1', body: '<path d="M0 0" onload="alert(1)"/>', paint: 'fill' };
+    const r = parse(d);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors.join()).toMatch(/onload non ammesso/);
   });
@@ -305,12 +401,12 @@ describe('material binding', () => {
   });
 
   it('the revision survives serialization; documents without it still parse', () => {
-    const d = { ...demo(), material: bindMaterial(personal(4), 'user-1') };
-    const r = parseComponent(JSON.parse(serializeComponent(d)));
+    const d: ComponentDefinition = { ...demo(), material: bindMaterial(personal(4), 'user-1') };
+    const r = parse(JSON.parse(serializeDefinition(d)));
     expect(r.ok && r.doc.material).toEqual(d.material);
     const raw = clone(d) as unknown as { material: Record<string, unknown> };
     delete raw.material.revision;
-    const old = parseComponent(raw);
+    const old = parse(raw);
     expect(old.ok && old.doc.material.revision).toBeNull();
     expect(old.ok && bindingState(old.doc.material, personal(9))).toBe('modified');
   });

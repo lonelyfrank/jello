@@ -29,9 +29,10 @@ o rifiutato con tutti i motivi (import atomico): valori mancanti prendono il val
 sono segnalati, chiavi sconosciute sono ignorate e segnalate, versioni più recenti (schema,
 famiglia, `runtime.min`) sono rifiutate con un messaggio che nomina entrambe le versioni.
 
-**Famiglie.** `glass` è disponibile. `gel` è registrata come *in sviluppo*: il parser la rifiuta
-(«non è ancora disponibile») e il laboratorio la mostra disattivata. Una famiglia futura avrà la
-propria sezione `material`, senza ereditare l’ottica del vetro.
+**Famiglie.** `glass` e `solid` sono disponibili (Solid: [Material Core](material-core.md); il
+documento Solid non ha `quality`, `source` né `target`). `jelly` è registrata come *in sviluppo*: il
+parser la rifiuta («non è ancora disponibile») e il laboratorio la mostra disattivata. Una famiglia
+futura avrà la propria sezione `material`, senza ereditare l’ottica del vetro.
 
 **Migrazione da `jello-glass` v1.** I file v1 (`{ format, version: 1, params }`) sono migrati
 senza perdere parametri (24 su 24, verificato su tutti i preset e su un file personalizzato in
@@ -185,7 +186,7 @@ navbar del laboratorio, non la copia di un altro materiale.
 ### Preset rimossi
 
 `cable` e `bt` erano approssimazioni di materiali di altri progetti, distribuite durante la fase
-sperimentale: non fanno più parte della libreria ufficiale. `src/model/legacy.ts` conserva solo
+sperimentale: non fanno più parte della libreria ufficiale. `src/migration/legacy.ts` conserva solo
 i loro id e parametri, per compatibilità:
 
 - un URL con `preset=` o `material=` uno di questi id, o un progetto salvato che l’aveva aperto,

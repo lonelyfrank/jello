@@ -59,6 +59,13 @@ pressione; lo dice il manifest, il README e il messaggio nel laboratorio.
 
 ## 3. Componente React + TypeScript
 
+Vale per ogni componente registrata ([Component Engine](component-engine.md)): Mobile Navbar e Button, con
+materiale Glass o Solid. Gli esempi sotto sono della Mobile Navbar; il Button ha un involucro analogo
+(`<NomeButton>`: props `label`/figlio, `disabled`, `onPress`, `onHover`, `onFocus`, `sourceRef`, `backend`,
+`className`; tipo `NomeVariant`) che monta `createButton` del runtime. Con Solid non serve `sourceRef`, il
+manifest dichiara `backend: none` e il README elenca le proprietà della definizione senza effetto con quel
+materiale (anche negli avvisi dell'export). Il pacchetto del solo materiale (sezione 2) è di Glass.
+
 ```
 jello-<nome>-react/
   package.json          @jello-export/<nome>: ESM, tipi, peer react/react-dom ≥ 18, ./style.css

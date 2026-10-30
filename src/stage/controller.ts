@@ -15,15 +15,15 @@ import { computeLensMap, type LensGeometry } from '../core/geometry';
 import type { ContextStatus } from '../core/context';
 import { encodeMapAsPng, type FilterStats } from '../core/renderer/source-filter';
 import type { GlassSurface } from '../core/surface';
-import type { MaterialDocument } from '../model/document';
+import type { GlassDocument } from '../model/document';
 import { engineParams, type GroupStatus, type UpdateReport } from '../runtime/glass-group';
 import type { SceneStatus } from '../runtime/scene-types';
-import type { BottomNavigation, BottomNavigationOptions } from '../runtime/bottom-navigation';
-import type { ComponentDocument } from '../components/document';
+import type { ComponentInstance } from '../runtime/component-types';
+import { resolveDefinitionMaterial, type ComponentDefinition } from '../components';
 import { Dock } from './dock';
 import { renderScene, type SceneId } from './scenes';
 import { SceneStage } from './scene-stage';
-import { buildStage, Stage } from './stage';
+import { buildStage, Stage, type ComponentHandlers } from './stage';
 import { VERIFICATION } from './verification';
 import type { NavId, ViewOptions } from './view';
 
@@ -57,7 +57,7 @@ export interface PreviewReport {
 
 export interface ControllerOptions {
   root: HTMLElement;
-  material: MaterialDocument;
+  material: GlassDocument;
   options: ViewOptions;
   onRequest(r: PreviewRequest): void;
   /** Resolves `example:` and `asset:` image URLs of scene textures. */
@@ -88,7 +88,7 @@ export class PreviewController {
   private sceneStage: SceneStage | null = null;
   private readonly dock: Dock;
   private readonly opts: ViewOptions;
-  private doc: MaterialDocument;
+  private doc: GlassDocument;
   private localImage: string | null = null;
   private capsuleAt: { x: number; y: number } | null = null;
   private readonly host: ControllerOptions;
@@ -161,7 +161,7 @@ export class PreviewController {
     return { ...this.opts };
   }
 
-  get material(): MaterialDocument {
+  get material(): GlassDocument {
     return this.doc;
   }
 
@@ -181,7 +181,7 @@ export class PreviewController {
     return this.compareStage ? [this.main, this.compareStage] : [this.main];
   }
 
-  setMaterial(doc: MaterialDocument): UpdateReport {
+  setMaterial(doc: GlassDocument): UpdateReport {
     this.doc = doc;
     return this.applyMaterial();
   }
@@ -189,20 +189,21 @@ export class PreviewController {
   // ---------- builder component ----------
 
   /** The builder's component, if one is shown instead of the demo object. */
-  get component(): BottomNavigation | null {
+  get component(): ComponentInstance | null {
     return this.main.component;
   }
 
   /**
    * Shows a component document on the main stage, on the same material group
    * and renderer as every demo object. The material shown is the
-   * component's; compare and the capsule dock are off while it is shown.
+   * component's; compare and the capsule dock are off while it is shown. The
+   * stage's group is Glass: a component with another family draws itself
+   * with its own group and leaves the stage's untouched.
    */
-  showComponent(config: ComponentDocument, handlers: Pick<BottomNavigationOptions, 'onChange' | 'onTabPress' | 'onReselect' | 'activeTab'> = {}): BottomNavigation {
+  showComponent(config: ComponentDefinition, handlers: ComponentHandlers = {}): ComponentInstance {
     this.setCompare(false);
     this.dock.unmount();
-    this.doc = config.material.document;
-    this.applyMaterial();
+    this.followGlass(config);
     const nav = this.main.showComponent({ config, ...handlers });
     for (const off of this.componentListeners.splice(0)) off();
     const ro = new ResizeObserver(() => this.scheduleReport());
@@ -214,19 +215,24 @@ export class PreviewController {
     return nav;
   }
 
-  updateComponent(config: ComponentDocument): void {
+  updateComponent(config: ComponentDefinition): void {
     const nav = this.main.component;
     if (!nav) return;
-    if (config.material.document !== this.doc) {
-      this.doc = config.material.document;
-      this.applyMaterial();
-    }
+    this.followGlass(config);
     nav.update(config);
     this.scheduleReport();
   }
 
+  /** The stage's Glass group follows the component's material while that is Glass. */
+  private followGlass(config: ComponentDefinition): void {
+    const material = resolveDefinitionMaterial(config);
+    if (material.family !== 'glass' || material === this.doc) return;
+    this.doc = material;
+    this.applyMaterial();
+  }
+
   /** Back to the demo object and the given material (the Material Lab's). */
-  hideComponent(material: MaterialDocument): void {
+  hideComponent(material: GlassDocument): void {
     if (!this.main.component) return;
     for (const off of this.componentListeners.splice(0)) off();
     this.main.hideComponent();

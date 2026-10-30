@@ -98,6 +98,37 @@ describe('other boundaries', () => {
   });
 });
 
+describe('legacy migration module', () => {
+  /** Where a file may reach `src/migration/`: only code that takes data from outside. */
+  const ALLOWED = [/^src\/lab\//, /^src\/project\/(importer|package)\.ts$/, /^src\/migration\//];
+
+  function sources(dir: string): string[] {
+    return readdirSync(join(repo, dir), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? sources(join(dir, e.name)) : /\.tsx?$/.test(e.name) ? [join(dir, e.name)] : []));
+  }
+
+  it('only the lab and the project importers import it; the runtime, model, exporters, stage and preview never do', () => {
+    const importers = sources('src').filter((f) => /from\s*['"](\.\.?\/)+migration(\/[^'"]*)?['"]/.test(strip(readFileSync(join(repo, f), 'utf8'))));
+    expect(importers.length).toBeGreaterThan(0);
+    for (const f of importers) expect(ALLOWED.some((re) => re.test(f)), f).toBe(true);
+  });
+
+  it('nothing the public runtime, the exporters or the templates reach contains an identifier of another application', () => {
+    for (const entry of ['src/runtime/index.ts', 'src/export/adapters.ts', 'src/components/index.ts', 'src/stage/controller.ts', 'src/preview/main.ts']) {
+      const g = graph(entry);
+      expect(g.files.filter((f) => f.startsWith('src/migration/')), entry).toEqual([]);
+      for (const f of g.files.filter((x) => /\.tsx?$/.test(x))) {
+        expect(strip(readFileSync(join(repo, f), 'utf8')), f).not.toMatch(/['"`](cable|bt|bt-darts)['"`]/);
+      }
+    }
+  });
+
+  it('is only a table and converters: no DOM, no React, no storage', () => {
+    const g = graph('src/migration/index.ts');
+    for (const f of g.files) expect(f, f).toMatch(/^src\/(core|model|components|migration)\//);
+    expect(g.packages.sort()).toEqual(['zod']);
+  });
+});
+
 describe('built library (when present)', () => {
   const lib = join(repo, 'dist-lib');
   it.skipIf(!existsSync(join(lib, 'manifest.json')))('contains no React, editor, relay or repository paths', () => {
@@ -106,6 +137,8 @@ describe('built library (when present)', () => {
       const code = readFileSync(f, 'utf8');
       expect(code, f).not.toMatch(/from\s*["']react/);
       expect(code, f).not.toMatch(/src\/lab|tools\/relay|jello-lab/);
+      // Legacy identifiers live in the lab's migration module, never in what a consumer installs.
+      expect(code, f).not.toMatch(/["'`](cable|bt-darts)["'`]|jello-component["'`]/);
     }
     const manifest = JSON.parse(readFileSync(join(lib, 'manifest.json'), 'utf8')) as { files: string[] };
     expect(manifest.files.some((f) => f.endsWith('.map'))).toBe(false);

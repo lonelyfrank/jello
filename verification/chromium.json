@@ -4,7 +4,7 @@
   "environment": "linux x64, Playwright 1.64.1, headless, progetto \"chromium\", viewport desktop",
   "mobileEmulated": false,
   "date": "2026-10-30",
-  "runtime": "0.2.0",
+  "runtime": "0.3.0",
   "backend": "svg",
   "checks": [
     "refraction visible on grid (blur 0, tint 0)",
@@ -28,7 +28,7 @@
     "leftMeanDifference": 42.19268476621413,
     "rightMeanDifference": 46.385746606334884,
     "foregroundRimDifference": 0,
-    "navbarForegroundRimDifference": 0.009415028628770434,
+    "navbarForegroundRimDifference": 0.020335281270291102,
     "edgeBlurContrastNormalized": 6.020152466948715,
     "edgeBlurContrastUnnormalized": 22.82801032844422,
     "innerBlurContrast": 6.22951891113572

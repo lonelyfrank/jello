@@ -10,7 +10,7 @@
  */
 
 import type { PatternId } from '../model/document';
-import type { MaterialDocument } from '../model/document';
+import type { GlassDocument } from '../model/document';
 import type { QualityProfile } from '../model/quality';
 import type { ParamKey } from '../core/params';
 import type { SupportLevel } from '../model/support';
@@ -23,7 +23,7 @@ export type TextureInput =
 
 export interface SceneViewOptions {
   canvas: HTMLCanvasElement;
-  material: MaterialDocument;
+  material: GlassDocument;
   source: TextureInput;
   /** Top-left of the lens in CSS px of the canvas; default: centred. */
   lens?: { x: number; y: number };
@@ -94,7 +94,7 @@ export interface SceneUpdate {
 export interface SceneView {
   readonly status: SceneStatus;
   readonly canvas: HTMLCanvasElement;
-  setMaterial(doc: MaterialDocument): SceneUpdate;
+  setMaterial(doc: GlassDocument): SceneUpdate;
   setSource(source: TextureInput): Promise<void>;
   setLens(x: number, y: number, immediate?: boolean): void;
   setAnimated(on: boolean): void;

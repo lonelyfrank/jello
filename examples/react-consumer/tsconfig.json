@@ -3,7 +3,11 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "jsx": "react-jsx",
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -11,8 +15,15 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "types": ["vite/client"],
+    "types": [
+      "vite/client"
+    ],
     "noEmit": true
   },
-  "include": ["src", "vendor/jello-bottom-navigation-react/src"]
+  "include": [
+    "src",
+    "vendor/jello-mobile-navbar-react/src",
+    "vendor/jello-call-to-action-react/src",
+    "vendor/jello-solid-link-react/src"
+  ]
 }

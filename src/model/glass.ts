@@ -11,10 +11,10 @@
  * parameter cannot be left out of the document by accident.
  */
 
+import { checkKeys, type KeysCheck } from '../core/descriptors';
 import {
   PARAMS,
   PARAM_INDEX,
-  checkValue,
   defaultParams,
   type GlassParams,
   type ParamDescriptor,
@@ -75,11 +75,7 @@ export function joinSections(s: GlassSections): GlassParams {
   return out as unknown as GlassParams;
 }
 
-export interface SectionCheck {
-  values: Record<string, unknown>;
-  errors: string[];
-  warnings: string[];
-}
+export type SectionCheck = KeysCheck;
 
 /**
  * Validates one section against the descriptor table. Same policy as the
@@ -87,34 +83,10 @@ export interface SectionCheck {
  * default (warning), an unknown key is ignored (warning).
  */
 export function checkSection(section: SectionId, input: unknown): SectionCheck {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  const values: Record<string, unknown> = {};
-  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
-    return { values, errors: [`${section}: atteso un oggetto`], warnings };
-  }
-  const src = input as Record<string, unknown>;
-  for (const key of SECTION_KEYS[section]) {
-    const d = PARAM_INDEX[key];
-    if (!(key in src)) {
-      warnings.push(`${section}.${key}: assente, uso il valore iniziale`);
-      values[key] = d.default;
-      continue;
-    }
-    const error = checkValue(d, src[key]);
-    if (error) errors.push(`${section}.${error}`);
-    else values[key] = d.type === 'color' ? String(src[key]).toLowerCase() : src[key];
-  }
-  for (const key of Object.keys(src)) {
-    if (!SECTION_KEYS[section].includes(key as ParamKey)) {
-      warnings.push(
-        key in PARAM_INDEX
-          ? `${section}.${key}: appartiene alla sezione ${sectionOf(key as ParamKey)}, ignorato qui`
-          : `${section}.${key}: parametro sconosciuto, ignorato`,
-      );
-    }
-  }
-  return { values, errors, warnings };
+  return checkKeys(descriptorsOf(section), input, {
+    scope: section,
+    elsewhere: (key) => (key in PARAM_INDEX ? `appartiene alla sezione ${sectionOf(key as ParamKey)}, ignorato qui` : null),
+  });
 }
 
 /** Stages touched by a set of keys: lets renderers keep cheap updates cheap. */

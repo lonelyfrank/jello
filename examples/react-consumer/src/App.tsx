@@ -4,21 +4,28 @@
  * report which tab was chosen. Navigation is the app's own state.
  */
 import { useRef, useState } from 'react';
-import { BottomNavigation, config, tabs, type BottomNavigationTabId, type BottomNavigationEvent } from '@jello-export/bottom-navigation';
+import { MobileNavbar, config, tabs, type MobileNavbarTabId, type BottomNavigationEvent } from '@jello-export/mobile-navbar';
+import { CallToActionButton, type ButtonEvent } from '@jello-export/call-to-action';
+import { SolidLinkButton } from '@jello-export/solid-link';
 
 declare global {
   interface Window {
-    __consumer: { selected: BottomNavigationTabId; events: string[] };
+    __consumer: { selected: MobileNavbarTabId; events: string[]; buttons: string[] };
   }
 }
 
-const LABEL = Object.fromEntries(config.root.children.map((t) => [t.id, t.label])) as Record<BottomNavigationTabId, string>;
-window.__consumer = { selected: config.root.defaultTab as BottomNavigationTabId, events: [] };
+// The exported definition: items are the children of the root, their label is the text of their label slot.
+const DEFAULT_TAB = config.interactions.behavior.defaultItem as MobileNavbarTabId;
+const LABEL = Object.fromEntries(config.structure.children!.map((n) => [n.id, config.content[n.children!.find((c) => c.role === 'label')!.id]!.text])) as Record<MobileNavbarTabId, string>;
+window.__consumer = { selected: DEFAULT_TAB, events: [], buttons: [] };
 
 export function App() {
   const content = useRef<HTMLElement>(null);
-  const [tab, setTab] = useState<BottomNavigationTabId>(config.root.defaultTab as BottomNavigationTabId);
-  const log = (name: string) => (id: BottomNavigationTabId, e: BottomNavigationEvent) => window.__consumer.events.push(`${name}:${id}:${e.value ?? ''}`);
+  const [tab, setTab] = useState<MobileNavbarTabId>(DEFAULT_TAB);
+  const [off, setOff] = useState(false);
+  const [label, setLabel] = useState<string | undefined>(undefined);
+  const button = (name: string) => (e: ButtonEvent) => window.__consumer.buttons.push(`${name}:${e.trigger}:${e.value ?? ''}:${e.href ?? ''}`);
+  const log = (name: string) => (id: MobileNavbarTabId, e: BottomNavigationEvent) => window.__consumer.events.push(`${name}:${id}:${e.value ?? ''}`);
   return (
     <>
       <main ref={content} className="content" id="content" tabIndex={0} aria-labelledby="title">
@@ -33,7 +40,18 @@ export function App() {
           ))}
         </ol>
       </main>
-      <BottomNavigation
+      {/* The exported buttons: one Glass action over the content, one Solid link that needs no source. */}
+      <div className="actions">
+        <CallToActionButton sourceRef={content} disabled={off} {...(label ? { label } : {})} onPress={button('press')} onHover={button('hover')} onFocus={button('focus')} />
+        <SolidLinkButton>Documentazione</SolidLinkButton>
+        <label className="toggle">
+          <input id="off" type="checkbox" checked={off} onChange={(e) => setOff(e.target.checked)} /> Disabilita
+        </label>
+        <button id="relabel" type="button" onClick={() => setLabel('Vai')}>
+          Cambia testo
+        </button>
+      </div>
+      <MobileNavbar
         sourceRef={content}
         activeTab={tab}
         onChange={(id, e) => {

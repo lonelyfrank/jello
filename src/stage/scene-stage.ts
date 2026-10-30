@@ -9,7 +9,7 @@
  * same texture as DOM with a CSS surface on it, and says why.
  */
 
-import type { MaterialDocument } from '../model/document';
+import type { GlassDocument } from '../model/document';
 import { createGlassGroup, engineParams, type GlassGroup } from '../runtime/glass-group';
 import { createSceneView } from '../runtime/scene';
 import type { SceneStatus, SceneView, TextureInput } from '../runtime/scene-types';
@@ -34,14 +34,14 @@ export class SceneStage {
   readonly label: HTMLElement;
   private view: SceneView | null = null;
   private pending: Promise<void> | null = null;
-  private doc: MaterialDocument;
+  private doc: GlassDocument;
   private o: SceneStageOptions;
   private fallback: { group: GlassGroup; surface: GlassSurface; source: HTMLElement } | null = null;
   private suspended = true;
   private destroyed = false;
   private off: (() => void) | null = null;
 
-  constructor(root: HTMLElement, doc: MaterialDocument, o: SceneStageOptions) {
+  constructor(root: HTMLElement, doc: GlassDocument, o: SceneStageOptions) {
     this.root = root;
     this.doc = doc;
     this.o = o;
@@ -88,7 +88,7 @@ export class SceneStage {
     this.fallback?.group.suspend();
   }
 
-  setMaterial(doc: MaterialDocument): void {
+  setMaterial(doc: GlassDocument): void {
     this.doc = doc;
     this.view?.setMaterial(doc);
     if (this.fallback) this.fallback.group.setMaterial(this.cssDoc(doc));
@@ -210,7 +210,7 @@ export class SceneStage {
     el.style.backgroundImage = this.o.texture === 'image' ? `url("${this.o.imageUrl}")` : '';
   }
 
-  private cssDoc(doc: MaterialDocument): MaterialDocument {
+  private cssDoc(doc: GlassDocument): GlassDocument {
     return { ...doc, target: { ...doc.target, backend: 'css' } };
   }
 

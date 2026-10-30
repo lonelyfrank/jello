@@ -10,7 +10,7 @@
  * Layout is read only when the selection, the component or a size changes.
  */
 
-import type { BottomNavigation } from '../runtime/bottom-navigation';
+import type { ComponentInstance } from '../runtime/component-types';
 
 export class ComponentOverlay {
   private readonly box: HTMLDivElement;
@@ -22,7 +22,7 @@ export class ComponentOverlay {
 
   constructor(
     private readonly stage: HTMLElement,
-    private readonly nav: BottomNavigation,
+    private readonly nav: ComponentInstance,
     private readonly onPick: (id: string) => void,
   ) {
     const doc = stage.ownerDocument;
@@ -41,8 +41,7 @@ export class ComponentOverlay {
       if (!this.picking) return;
       e.preventDefault();
       e.stopPropagation();
-      const tab = (e.target as Element | null)?.closest<HTMLElement>('.jello-bnav-tab');
-      this.onPick(tab?.dataset.tab ?? 'root');
+      this.onPick(this.nav.nodeAt(e.target));
     };
     nav.host.addEventListener('click', pick, true);
     this.cleanups.push(

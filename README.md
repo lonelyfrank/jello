@@ -8,12 +8,15 @@ Jello è un laboratorio di materiali e componenti UI, riutilizzabili su web desk
 mobile e app Android basate su WebView. Due modalità condividono lo stesso motore di anteprima:
 
 - **Material Lab** — si creano, modificano, verificano, salvano ed esportano materiali; **Glass**
-  è il primo materiale funzionante (preset ufficiali: Jello · iniziale, Ottica nuda, Satinato,
-  Lente marcata, Jello · navbar), **Gel/Jelly** è in sviluppo e non è utilizzabile.
-- **Component Builder** — si configura una componente che usa un materiale (oggi **Bottom
-  Navigation**, dalla demo generica Home · Explore · Profile), la si salva nella libreria e la si esporta come
-  componente **React + TypeScript** installabile, oppure si esporta il solo materiale.
-  Vedi [Component Builder e componenti](docs/component-builder.md).
+  è il materiale con editor (preset ufficiali: Jello · iniziale, Ottica nuda, Satinato,
+  Lente marcata, Jello · navbar); **Solid** (superficie piena con bordo, ombra, elevazione e
+  stati) è disponibile nel runtime e nelle componenti (non ancora nel Material Lab); **Jelly** è in
+  sviluppo e non è utilizzabile. Vedi [Material Core](docs/material-core.md).
+- **Component Builder** — si configura una componente che usa un materiale (**Button / CTA** e **Mobile
+  Navbar**, con **Glass** o **Solid** senza perdere contenuto, layout e stati), la si salva nella libreria e la si
+  esporta come componente **React + TypeScript** installabile, oppure si esporta il solo materiale Glass.
+  Vedi [Component Builder e componenti](docs/component-builder.md) e [Component Engine](docs/component-engine.md); il formato delle componenti è
+  `jello-component-definition` ([Component Definition](docs/component-definition.md)).
 
 Si ispira ai principi di Apple Liquid Glass (lente, luce che segue la geometria, risposta al
 tocco) ma **non** ne replica lo shader: parametri e modello ottico sono di Jello.

@@ -5,8 +5,8 @@
  * project that owns them); this class owns the project documents.
  */
 
-import { bindMaterial, componentTemplate, type ComponentDocument } from '../components/document';
-import { builtinMaterial, type MaterialDocument } from '../model';
+import { bindMaterial, componentTemplate, resolveDefinitionMaterial, type ComponentDefinition } from '../components';
+import { builtinMaterial, type GlassDocument } from '../model';
 import { newToken } from '../sync/protocol';
 import { createProject, uniqueName } from '../project/document';
 import { kitAssets, minimalAssets, stagePalette, statePalette, brandPalette } from '../project/defaults';
@@ -127,21 +127,21 @@ export class ProjectActions {
 
   // ---------- creating ----------
 
-  private async addMaterial(doc: MaterialDocument, projectId: string): Promise<StoredMaterial> {
+  private async addMaterial(doc: GlassDocument, projectId: string): Promise<StoredMaterial> {
     const rec: StoredMaterial = { id: doc.id, doc, projectId, createdAt: now(), updatedAt: now() };
     await this.host.repo.putMaterial(rec);
     this.host.userMaterials.set(rec.id, rec);
     return rec;
   }
 
-  private async addComponent(doc: ComponentDocument, projectId: string): Promise<StoredComponent> {
+  private async addComponent(doc: ComponentDefinition, projectId: string): Promise<StoredComponent> {
     const rec: StoredComponent = { id: doc.id, doc, projectId, createdAt: now(), updatedAt: now() };
     await this.host.repo.putComponent(rec);
     this.host.userComponents.set(rec.id, rec);
     return rec;
   }
 
-  private copyOfPreset(presetId: string): MaterialDocument | null {
+  private copyOfPreset(presetId: string): GlassDocument | null {
     const b = builtinMaterial(presetId);
     if (!b) return null;
     return { ...b.doc, id: matId(), meta: { ...b.doc.meta, basedOn: presetId, createdAt: now(), updatedAt: now() } };
@@ -179,7 +179,7 @@ export class ProjectActions {
         if (m) await this.addMaterial(m, id);
       }
       if (spec.navbar !== false) {
-        const t = componentTemplate('bottom-navigation')!.create();
+        const t = componentTemplate('mobile-navbar')!.create();
         await this.addComponent({ ...t, id: cmpId(), name: 'Navbar', meta: { ...t.meta, basedOn: t.id, createdAt: now(), updatedAt: now() } }, id);
       }
     } else if (spec.start === 'empty') {
@@ -187,7 +187,7 @@ export class ProjectActions {
       if (m) await this.addMaterial({ ...m, name: 'Glass' }, id);
     } else if (spec.start === 'duplicate' && source) {
       for (const rec of [...this.host.userMaterials.values()].filter((m) => m.projectId === source!.id)) {
-        const copy: MaterialDocument = { ...rec.doc, id: matId(), meta: { ...rec.doc.meta, createdAt: now(), updatedAt: now() } };
+        const copy: GlassDocument = { ...rec.doc, id: matId(), meta: { ...rec.doc.meta, createdAt: now(), updatedAt: now() } };
         favMap.set(rec.id, copy.id);
         await this.addMaterial(copy, id);
       }
@@ -296,7 +296,7 @@ export class ProjectActions {
       } else {
         const name = takenC.has(c.doc.name) ? uniqueName(c.doc.name, takenC) : c.doc.name;
         takenC.add(name);
-        await this.addComponent({ ...c.doc, id: cmpId(), name, material: c.doc.material.preset ? c.doc.material : bindMaterial(c.doc.material.document, null), meta: { ...c.doc.meta, updatedAt: now() } }, proj.id);
+        await this.addComponent({ ...c.doc, id: cmpId(), name, material: c.doc.material.preset ? c.doc.material : bindMaterial(resolveDefinitionMaterial(c.doc), null), meta: { ...c.doc.meta, updatedAt: now() } }, proj.id);
       }
       out.components++;
     }
@@ -321,7 +321,7 @@ export class ProjectActions {
   // ---------- export ----------
 
   /** Materials and components of the active project as documents. */
-  contents(): { materials: MaterialDocument[]; components: ComponentDocument[] } {
+  contents(): { materials: GlassDocument[]; components: ComponentDefinition[] } {
     const id = this.state.projectId;
     return {
       materials: [...this.host.userMaterials.values()].filter((m) => m.projectId === id).map((m) => m.doc),

@@ -18,34 +18,53 @@
  */
 
 import {
+  applyControl,
   BUILTIN_MATERIALS,
   builtinMaterial,
+  MATERIALS,
+  type ControlTarget,
+  type MaterialDocument,
   createGlassDocument,
   glassParams,
   isBuiltinId,
-  LEGACY_TEMPLATES,
-  legacyPreset,
-  parseMaterialText,
+  parseGlassMaterialText,
   serializeMaterial,
   toLegacyV1,
   withGlassParams,
   type BackendRequest,
-  type MaterialDocument,
+  type GlassDocument,
   type QualitySettings,
 } from '../model';
 import { defaultParams, type GlassParams, type ParamKey } from '../core/params';
 import { buildPackage, packageZip, type PackageKind, type RuntimeBundle } from '../export/package';
 import { exportAdapter, type ExportRequest } from '../export/adapters';
 import {
+  addButtonBreakpoint,
+  applyNavbarView,
+  bindComponentMaterial,
   bindingState,
   bindMaterial,
   COMPONENT_TEMPLATES,
+  hasMaterialOverrides,
   componentTemplate,
-  parseComponentText,
-  serializeComponent,
-  withRootField,
-  type ComponentDocument,
-} from '../components/document';
+  COMPONENTS,
+  navbarView,
+  removeButtonBreakpoint,
+  resolveDefinitionMaterial,
+  serializeDefinition,
+  setButtonDisabled,
+  setButtonIcon,
+  setButtonLink,
+  setButtonText,
+  setButtonValue,
+  setRootField,
+  switchMaterialFamily,
+  updateButtonBreakpoint,
+  type ButtonOverridePath,
+  type ButtonSemantics,
+  type ComponentDefinition,
+} from '../components';
+import { importComponentText, legacyPreset, legacyTemplate } from '../migration';
 import {
   addBreakpoint,
   addTab,
@@ -59,9 +78,10 @@ import {
   type BnRoot,
   type BnTab,
   type BnTabStyle,
-} from '../components/bottom-navigation/model';
+} from '../components';
 import { iconFromSvg, SVG_MAX_BYTES, type IconRef } from '../components/icons';
-import type { PreviewState } from '../runtime/bottom-navigation';
+import type { BottomNavigation } from '../runtime/bottom-navigation';
+import type { PreviewState } from '../runtime/component-types';
 import { ComponentOverlay } from '../stage/component-overlay';
 import { PreviewController, type PreviewRequest } from '../stage/controller';
 import { PHOTO } from '../stage/scenes';
@@ -112,8 +132,21 @@ function componentId(): string {
   return `cmp-${newToken().slice(0, 10).toLowerCase()}`;
 }
 
-function builderState(doc: ComponentDocument, componentId: string, origin: BuilderState['origin'], modified: boolean): BuilderState {
-  return { doc, componentId, origin, modified, selection: 'root', previewTab: doc.root.defaultTab, previewState: null, pick: false, messages: null };
+/** The states of a component without the overrides of its material (their own style stays). */
+function withoutMaterialOverrides(states: ComponentDefinition['states']): ComponentDefinition['states'] {
+  const out: ComponentDefinition['states'] = {};
+  for (const [k, v] of Object.entries(states) as [keyof ComponentDefinition['states'], NonNullable<ComponentDefinition['states'][keyof ComponentDefinition['states']]>][]) {
+    if (v.style) out[k] = { style: v.style };
+  }
+  return out;
+}
+
+const isNavbar = (doc: ComponentDefinition) => doc.type === 'mobile-navbar';
+/** Tabs of a navbar; any other component has none. */
+const tabsOf = (doc: ComponentDefinition) => (isNavbar(doc) ? navbarView(doc).children : []);
+
+function builderState(doc: ComponentDefinition, componentId: string, origin: BuilderState['origin'], modified: boolean): BuilderState {
+  return { doc, componentId, origin, modified, selection: 'root', previewTab: isNavbar(doc) ? navbarView(doc).defaultTab : '', previewState: null, pick: false, messages: null };
 }
 
 const PATH_OF_BACKEND: Record<BackendRequest, ViewOptions['path'] | null> = { auto: 'auto', svg: 'refraction', css: 'satin', webgl2: null };
@@ -185,16 +218,16 @@ export class LabSession {
     const scopedComponents = allComponents.filter((c) => c.projectId === projectId);
     const userComps = new Map(scopedComponents.map((c) => [c.id, c]));
     const notes: string[] = [];
-    const wantedComponent = query.get('component') ?? project?.componentId ?? 'bottom-navigation';
+    const wantedComponent = query.get('component') ?? project?.componentId ?? 'mobile-navbar';
     let builder: BuilderState;
     if (userComps.has(wantedComponent)) builder = builderState(userComps.get(wantedComponent)!.doc, wantedComponent, 'user', false);
     else {
       // A template that is no longer official opens as the generic one; an unsaved draft of it is kept.
-      const legacyTemplate = LEGACY_TEMPLATES[wantedComponent];
-      const t = componentTemplate(legacyTemplate ?? wantedComponent) ?? componentTemplate('bottom-navigation')!;
+      const legacyT = legacyTemplate(wantedComponent);
+      const t = componentTemplate(legacyT?.replacement ?? wantedComponent) ?? componentTemplate('mobile-navbar')!;
       const draft = project?.componentDraft && project.componentId === wantedComponent ? project.componentDraft : null;
       builder = builderState(draft ? { ...draft, id: t.id } : t.create(), t.id, 'template', draft !== null);
-      if (legacyTemplate) {
+      if (legacyT?.reason === 'removed') {
         notes.push(
           draft
             ? `Il template «${wantedComponent}» non è più incluso: la tua bozza resta aperta, salvala nella libreria per tenerla.`
@@ -203,7 +236,7 @@ export class LabSession {
       }
     }
 
-    let doc: MaterialDocument = builtinMaterial(boot.preset)!.doc;
+    let doc: GlassDocument = builtinMaterial(boot.preset)!.doc;
     let materialId = boot.preset;
     let origin: 'builtin' | 'user' = 'builtin';
     let modified = false;
@@ -356,7 +389,7 @@ export class LabSession {
   /** Requested backend. WebGL2 materials describe a texture source; DOM backends a DOM source. */
   setBackend(backend: BackendRequest): void {
     const doc = this.state.doc;
-    const source: MaterialDocument['source'] =
+    const source: GlassDocument['source'] =
       backend === 'webgl2' ? { kind: 'texture', texture: this.textureSpec() } : { kind: 'dom' };
     this.applyDoc({ ...doc, target: { ...doc.target, backend }, source });
     const path = PATH_OF_BACKEND[backend];
@@ -372,13 +405,13 @@ export class LabSession {
     this.applyDoc({ ...this.state.doc, meta: { ...this.state.doc.meta, notes } });
   }
 
-  private textureSpec(): Extract<MaterialDocument['source'], { kind: 'texture' }>['texture'] {
+  private textureSpec(): Extract<GlassDocument['source'], { kind: 'texture' }>['texture'] {
     const o = this.state.options;
     if (o.texture === 'image') return { kind: 'image', url: this.image ? `asset:${this.image.hash}` : 'example:tulips' };
     return { kind: 'pattern', pattern: 'grid', animated: o.animate };
   }
 
-  private applyDoc(doc: MaterialDocument, opts: { dirty?: boolean } = {}) {
+  private applyDoc(doc: GlassDocument, opts: { dirty?: boolean } = {}) {
     // In the builder the preview shows the component's material; the Material Lab's waits.
     const report = this.state.workspace === 'material' ? this.controller?.setMaterial(doc) : undefined;
     const modified = opts.dirty === false ? false : this.state.origin === 'builtin' ? true : this.state.modified;
@@ -389,7 +422,7 @@ export class LabSession {
   }
 
   /** Personal material edited: the library card shows the new name/params at once. */
-  private syncLibrary(doc: MaterialDocument): LibraryItem[] {
+  private syncLibrary(doc: GlassDocument): LibraryItem[] {
     const s = this.state;
     if (s.origin !== 'user') return s.library;
     return s.library.map((i) => (i.id === s.materialId ? { ...i, name: doc.name, doc } : i));
@@ -437,7 +470,7 @@ export class LabSession {
     this.loadDocIntoView(item.doc);
   }
 
-  private loadDocIntoView(doc: MaterialDocument) {
+  private loadDocIntoView(doc: GlassDocument) {
     this.applyDoc(doc, { dirty: false });
     const path = PATH_OF_BACKEND[doc.target.backend];
     if (path && path !== this.state.options.path) this.setOption('path', path, false);
@@ -463,7 +496,7 @@ export class LabSession {
 
   async duplicate(): Promise<void> {
     const src = this.state.doc;
-    const doc: MaterialDocument = {
+    const doc: GlassDocument = {
       ...src,
       id: userId(),
       name: `Copia di ${src.name}`.slice(0, 80),
@@ -511,7 +544,7 @@ export class LabSession {
     this.notify('Materiale personale eliminato.');
   }
 
-  private async addUser(doc: MaterialDocument, message: string) {
+  private async addUser(doc: GlassDocument, message: string) {
     const rec: StoredMaterial = { id: doc.id, doc, ...this.owner(), createdAt: now(), updatedAt: now() };
     this.userMaterials.set(doc.id, rec);
     this.store.set({ library: [...this.state.library, userItem(rec)], materialId: doc.id, origin: 'user', modified: false, libraryTab: 'mine' });
@@ -576,14 +609,14 @@ export class LabSession {
   // ---------- import / export ----------
 
   importText(text: string): void {
-    const r = parseMaterialText(text);
+    const r = parseGlassMaterialText(text);
     if (!r.ok) {
       this.store.set({ importMessages: { ok: false, messages: r.errors } });
       return;
     }
     // Atomic: from here on the document is complete and valid.
     const taken = isBuiltinId(r.doc.id) || this.userMaterials.has(r.doc.id);
-    const doc: MaterialDocument = { ...r.doc, id: taken ? userId() : r.doc.id, meta: { ...r.doc.meta, createdAt: r.doc.meta.createdAt ?? now(), updatedAt: now() } };
+    const doc: GlassDocument = { ...r.doc, id: taken ? userId() : r.doc.id, meta: { ...r.doc.meta, createdAt: r.doc.meta.createdAt ?? now(), updatedAt: now() } };
     const messages = [...(r.migratedFrom ? [`Migrato da ${r.migratedFrom} a jello-material v2, nessun parametro perso.`] : []), ...r.warnings];
     if (taken) messages.push(`id «${r.doc.id}» già in uso: salvato come «${doc.id}».`);
     this.store.set({ importMessages: { ok: true, messages } });
@@ -785,7 +818,7 @@ export class LabSession {
       this.loadDocIntoView(builtinMaterial('jello')!.doc);
     }
     const b = s.builder;
-    if (b.origin === 'user' && !s.components.some((i) => i.id === b.componentId)) this.openComponent('bottom-navigation');
+    if (b.origin === 'user' && !s.components.some((i) => i.id === b.componentId)) this.openComponent('mobile-navbar');
     this.autosaver.schedule();
     this.scheduleUrl();
   }
@@ -816,6 +849,13 @@ export class LabSession {
     this.syncSelection();
   }
 
+  /** The preview shows `doc`: updated in place, or mounted again when it is another type of component. */
+  private syncPreview(doc: ComponentDefinition) {
+    const shown = this.controller?.component;
+    if (shown && shown.type !== doc.type) this.showBuilderPreview();
+    else this.controller?.updateComponent(doc);
+  }
+
   private hideBuilderPreview() {
     this.overlay?.destroy();
     this.overlay = null;
@@ -833,12 +873,12 @@ export class LabSession {
   }
 
   /** The only path a component edit takes: preview first, then the store, then autosave. */
-  private applyComponent(doc: ComponentDocument, opts: { dirty?: boolean } = {}) {
+  private applyComponent(doc: ComponentDefinition, opts: { dirty?: boolean } = {}) {
     const b = this.state.builder;
     const modified = opts.dirty === false ? false : b.origin === 'template' ? true : b.modified;
-    if (this.state.workspace === 'builder') this.controller?.updateComponent(doc);
-    const previewTab = doc.root.children.some((t) => t.id === b.previewTab) ? b.previewTab : doc.root.defaultTab;
-    const selection = b.selection === 'root' || b.selection === 'material' || doc.root.children.some((t) => t.id === b.selection) ? b.selection : 'root';
+    if (this.state.workspace === 'builder') this.syncPreview(doc);
+    const previewTab = tabsOf(doc).some((t) => t.id === b.previewTab) ? b.previewTab : isNavbar(doc) ? navbarView(doc).defaultTab : '';
+    const selection = b.selection === 'root' || b.selection === 'material' || tabsOf(doc).some((t) => t.id === b.selection) ? b.selection : 'root';
     const components = b.origin === 'user' ? this.state.components.map((i) => (i.id === b.componentId ? { ...i, name: doc.name, doc } : i)) : this.state.components;
     this.store.set({ builder: { ...b, doc, modified, previewTab, selection }, components });
     this.syncSelection();
@@ -846,15 +886,16 @@ export class LabSession {
     this.scheduleUrl();
   }
 
-  private withRoot(root: BnRoot): ComponentDocument {
-    return { ...this.state.builder.doc, root };
+  /** The definition with an edited view written back (structure, content, layout, style, states, interactions). */
+  private withRoot(root: BnRoot): ComponentDefinition {
+    return applyNavbarView(this.state.builder.doc, root);
   }
 
   // ---------- selection and preview simulation ----------
 
   selectElement(id: string): void {
     const doc = this.state.builder.doc;
-    if (id !== 'root' && id !== 'material' && !doc.root.children.some((t) => t.id === id)) return;
+    if (id !== 'root' && id !== 'material' && !tabsOf(doc).some((t) => t.id === id)) return;
     this.patchBuilder({ selection: id, previewState: null });
     this.syncSelection();
   }
@@ -871,18 +912,26 @@ export class LabSession {
   }
 
   setPreviewTab(id: string): void {
-    if (!this.state.builder.doc.root.children.some((t) => t.id === id)) return;
+    if (!tabsOf(this.state.builder.doc).some((t) => t.id === id)) return;
     this.patchBuilder({ previewTab: id });
-    this.controller?.component?.setActiveTab(id);
+    this.navbarInstance()?.setActiveTab(id);
+  }
+
+  /** The mounted navbar, when the open component is one. */
+  private navbarInstance(): BottomNavigation | null {
+    const c = this.controller?.component;
+    return c?.type === 'mobile-navbar' ? (c as BottomNavigation) : null;
   }
 
   private syncSelection() {
     const b = this.state.builder;
     const id = b.selection === 'material' ? 'root' : b.selection;
-    const tab = b.doc.root.children.find((t) => t.id === id);
+    const tab = tabsOf(b.doc).find((t) => t.id === id);
     this.overlay?.setSelected(id, tab ? tab.label : b.doc.name);
     this.overlay?.refresh();
-    this.controller?.component?.previewState(tab ? tab.id : null, tab ? b.previewState : null);
+    // A navbar shows a state on the selected tab; a button, which has no parts, on itself.
+    const target = tab ? tab.id : !isNavbar(b.doc) && b.selection === 'root' ? 'root' : null;
+    this.controller?.component?.previewState(target, target ? b.previewState : null);
   }
 
   // ---------- structure ----------
@@ -892,32 +941,109 @@ export class LabSession {
     if (clean) this.applyComponent({ ...this.state.builder.doc, name: clean });
   }
 
-  /** A described root property (layout.height, states.focus.color…). Invalid values are refused. */
+  /**
+   * A described property. A navbar takes the path of its view (`layout.height`, `states.focus.color`…);
+   * any other component the canonical path of the definition (`layout.size`, `states.hover.style.background`…).
+   * Invalid values are refused.
+   */
   setComponentField(path: string, value: unknown): boolean {
-    const next = withRootField(this.state.builder.doc, path, value);
+    const doc = this.state.builder.doc;
+    if (isNavbar(doc)) {
+      const root = setRootField(navbarView(doc), path, value);
+      if (!root) return false;
+      this.applyComponent(this.withRoot(root));
+      return true;
+    }
+    const next = COMPONENTS.get(doc.type)?.setField(doc, path, value) ?? null;
     if (!next) return false;
     this.applyComponent(next);
     return true;
   }
 
+  // ---------- button ----------
+
+  /** Edits the open button with a pure operation of src/components/button.ts; a refused edit changes nothing. */
+  private editButton(edit: (doc: ComponentDefinition) => ComponentDefinition | null): boolean {
+    const doc = this.state.builder.doc;
+    if (doc.type !== 'button') return false;
+    const next = edit(doc);
+    if (!next) return false;
+    this.applyComponent(next);
+    return true;
+  }
+
+  setButtonText(text: string): boolean {
+    return this.editButton((d) => setButtonText(d, text));
+  }
+
+  setButtonIcon(icon: IconRef | null): boolean {
+    return this.editButton((d) => setButtonIcon(d, icon));
+  }
+
+  /** Custom SVG icon for the button: sanitized (allowlist), refused with every reason otherwise. */
+  async uploadButtonIcon(file: File): Promise<boolean> {
+    if (file.size > SVG_MAX_BYTES) {
+      this.patchBuilder({ messages: { ok: false, messages: [`«${file.name}»: SVG troppo grande (massimo ${SVG_MAX_BYTES / 1024} KB).`] } });
+      return false;
+    }
+    const r = iconFromSvg(await file.text(), file.name);
+    if (!r.ok) {
+      this.patchBuilder({ messages: { ok: false, messages: [`«${file.name}» rifiutato:`, ...r.errors] } });
+      return false;
+    }
+    this.setButtonIcon(r.icon);
+    this.patchBuilder({ messages: { ok: true, messages: [`Icona «${r.icon.name}» applicata (${r.icon.paint === 'fill' ? 'riempimento' : 'tratto'}).`, ...r.warnings] } });
+    return true;
+  }
+
+  /** `link` needs an address; without a valid one the change is refused with the reason. */
+  setButtonSemantics(semantics: ButtonSemantics, href?: string | null): boolean {
+    const ok = this.editButton((d) => setButtonLink(d, semantics, href));
+    if (!ok && semantics === 'link') this.notify('Un collegamento ha bisogno di un indirizzo: un percorso (/…), un’ancora (#…) o un URL http(s).');
+    return ok;
+  }
+
+  setButtonDisabled(disabled: boolean): boolean {
+    return this.editButton((d) => setButtonDisabled(d, disabled));
+  }
+
+  setButtonValue(value: string | null): boolean {
+    return this.editButton((d) => setButtonValue(d, value));
+  }
+
+  addButtonBreakpoint(maxWidth = 360): void {
+    this.editButton((d) => addButtonBreakpoint(d, maxWidth).def);
+  }
+
+  updateButtonBreakpoint(id: string, patch: { maxWidth?: number; set?: [ButtonOverridePath, number | string | null] }): void {
+    this.editButton((d) => updateButtonBreakpoint(d, id, patch));
+  }
+
+  removeButtonBreakpoint(id: string): void {
+    this.editButton((d) => removeButtonBreakpoint(d, id));
+  }
+
   setComponentRoot(patch: Partial<Pick<BnRoot, 'label' | 'semantics' | 'defaultTab'>>): void {
-    const root = this.state.builder.doc.root;
+    if (!isNavbar(this.state.builder.doc)) return;
+    const root = navbarView(this.state.builder.doc);
     if (patch.defaultTab !== undefined && !root.children.some((t) => t.id === patch.defaultTab)) return;
     if (patch.label !== undefined && !patch.label.trim()) return;
     this.applyComponent(this.withRoot({ ...root, ...patch }));
   }
 
   addTab(): string {
+    if (!isNavbar(this.state.builder.doc)) return '';
     const b = this.state.builder;
-    const after = b.doc.root.children.some((t) => t.id === b.selection) ? b.selection : undefined;
-    const r = addTab(b.doc.root, after ? { after } : {});
+    const after = navbarView(b.doc).children.some((t) => t.id === b.selection) ? b.selection : undefined;
+    const r = addTab(navbarView(b.doc), after ? { after } : {});
     this.applyComponent(this.withRoot(r.root));
     this.selectElement(r.id);
     return r.id;
   }
 
   removeTab(id: string): void {
-    const root = this.state.builder.doc.root;
+    if (!isNavbar(this.state.builder.doc)) return;
+    const root = navbarView(this.state.builder.doc);
     if (root.children.length <= 1) {
       this.notify('Una navigazione ha almeno una tab: aggiungine un’altra prima di eliminare questa.');
       return;
@@ -929,26 +1055,30 @@ export class LabSession {
   }
 
   duplicateTab(id: string): void {
-    const r = duplicateTab(this.state.builder.doc.root, id);
+    if (!isNavbar(this.state.builder.doc)) return;
+    const r = duplicateTab(navbarView(this.state.builder.doc), id);
     this.applyComponent(this.withRoot(r.root));
     this.selectElement(r.id);
   }
 
   /** delta -1: one place towards the start; +1: towards the end. */
   moveTab(id: string, delta: number): void {
-    const root = this.state.builder.doc.root;
+    if (!isNavbar(this.state.builder.doc)) return;
+    const root = navbarView(this.state.builder.doc);
     const i = root.children.findIndex((t) => t.id === id);
     if (i < 0) return;
     this.applyComponent(this.withRoot(moveTab(root, id, i + delta)));
   }
 
   updateTab(id: string, patch: Partial<Pick<BnTab, 'label' | 'icon' | 'value' | 'disabled'>>): void {
+    if (!isNavbar(this.state.builder.doc)) return;
     if (patch.label !== undefined && (!patch.label.trim() || patch.label.length > 40)) return;
-    this.applyComponent(this.withRoot(updateTab(this.state.builder.doc.root, id, patch)));
+    this.applyComponent(this.withRoot(updateTab(navbarView(this.state.builder.doc), id, patch)));
   }
 
   setTabStyle(id: string, key: keyof BnTabStyle, value: number | null): void {
-    this.applyComponent(this.withRoot(updateTab(this.state.builder.doc.root, id, { style: { [key]: value } as Partial<BnTabStyle> as BnTabStyle })));
+    if (!isNavbar(this.state.builder.doc)) return;
+    this.applyComponent(this.withRoot(updateTab(navbarView(this.state.builder.doc), id, { style: { [key]: value } as Partial<BnTabStyle> as BnTabStyle })));
   }
 
   setTabIcon(id: string, icon: IconRef): void {
@@ -972,40 +1102,116 @@ export class LabSession {
   }
 
   addBreakpoint(maxWidth = 480): void {
-    this.applyComponent(this.withRoot(addBreakpoint(this.state.builder.doc.root, maxWidth).root));
+    if (!isNavbar(this.state.builder.doc)) return;
+    this.applyComponent(this.withRoot(addBreakpoint(navbarView(this.state.builder.doc), maxWidth).root));
   }
 
   updateBreakpoint(id: string, patch: { maxWidth?: number; set?: [BnOverrideKey, number | string | null] }): void {
-    this.applyComponent(this.withRoot(updateBreakpoint(this.state.builder.doc.root, id, patch)));
+    if (!isNavbar(this.state.builder.doc)) return;
+    this.applyComponent(this.withRoot(updateBreakpoint(navbarView(this.state.builder.doc), id, patch)));
   }
 
   removeBreakpoint(id: string): void {
-    this.applyComponent(this.withRoot(removeBreakpoint(this.state.builder.doc.root, id)));
+    if (!isNavbar(this.state.builder.doc)) return;
+    this.applyComponent(this.withRoot(removeBreakpoint(navbarView(this.state.builder.doc), id)));
   }
 
   // ---------- the component's material ----------
 
-  setComponentParam<K extends ParamKey>(key: K, value: GlassParams[K]): void {
+  /**
+   * One control of the component's material, Glass or Solid alike (`inspectorModel` lists them, `applyControl`
+   * validates one). The value is stored as an override of the component (`material.params`, or
+   * `states.<state>.material` for a state), over the material it is linked to: the preset and the variant's
+   * accent stay what they are, and «Ripristina» takes the overrides away. An invalid value is refused and reported.
+   */
+  setComponentControl(target: ControlTarget, value: unknown): boolean {
     const doc = this.state.builder.doc;
-    const m = doc.material.document;
-    const p = glassParams(m);
-    if (p[key] === value) return;
-    this.applyComponent({ ...doc, material: { ...doc.material, document: withGlassParams(m, { ...p, [key]: value }) } });
+    const def = MATERIALS.get(doc.material.family);
+    if (!def) return false;
+    const r = applyControl(def, resolveDefinitionMaterial(doc), target, value);
+    if (!r.ok) {
+      this.notify(r.error);
+      return false;
+    }
+    // Read back what was accepted (colors are normalised), and store only that.
+    const read = def.read(r.doc);
+    const stored = target.state ? read.states[target.state]?.[target.key] : read.params[target.key];
+    if (stored === undefined) return false;
+    if (target.state) {
+      const entry = doc.states[target.state] ?? {};
+      if (entry.material?.[target.key] === stored) return true;
+      this.applyComponent({ ...doc, states: { ...doc.states, [target.state]: { ...entry, material: { ...entry.material, [target.key]: stored } } } });
+    } else {
+      if (doc.material.params[target.key] === stored) return true;
+      this.applyComponent({ ...doc, material: { ...doc.material, params: { ...doc.material.params, [target.key]: stored } } });
+    }
+    return true;
+  }
+
+  setComponentParam<K extends ParamKey>(key: K, value: GlassParams[K]): void {
+    this.setComponentControl({ key }, value);
+  }
+
+  /** A library entry (personal or built-in Glass) or a built-in preset of any other family. */
+  private materialPreset(id: string): { doc: MaterialDocument; name: string } | undefined {
+    const item = this.state.library.find((i) => i.id === id);
+    if (item) return { doc: item.doc, name: item.name };
+    const b = MATERIALS.preset(id);
+    return b ? { doc: b.doc, name: b.doc.name } : undefined;
+  }
+
+  /**
+   * The component takes the material as it is: content, structure, layout,
+   * states' style and interactions stay; the previous material's own state
+   * overrides are dropped when the family changes, and the notice says which.
+   */
+  private bindToComponent(binding: ComponentDefinition['material'], then?: string): boolean {
+    const doc = this.state.builder.doc;
+    let r;
+    try {
+      r = bindComponentMaterial(doc, binding);
+    } catch (e) {
+      this.notify((e as Error).message);
+      return false;
+    }
+    // Choosing a material gives the component that material: the overrides made over the previous one are not carried along.
+    const replaced = [...(Object.keys(doc.material.params).length ? ['material.params'] : []), ...Object.entries(doc.states).filter(([, v]) => v?.material).map(([k]) => `states.${k}.material`)];
+    this.applyComponent({ ...r.definition, states: withoutMaterialOverrides(r.definition.states) });
+    const dropped = [...new Set([...r.dropped, ...replaced])];
+    const notes = [then, dropped.length ? `Modifiche locali al materiale precedente non riportate: ${dropped.join(', ')}.` : undefined].filter(Boolean);
+    if (notes.length) this.notify(notes.join(' '));
+    return true;
   }
 
   /** Applies a library material (built-in or personal) to the component, linked to it. */
   applyMaterialPreset(id: string): void {
-    const item = this.state.library.find((i) => i.id === id);
-    if (!item) return;
-    this.applyComponent({ ...this.state.builder.doc, material: bindMaterial(item.doc, id) });
+    const preset = this.materialPreset(id);
+    if (!preset) return;
+    this.bindToComponent(bindMaterial(preset.doc, id));
   }
 
-  /** Back to the preset's current content (the component follows it again), or to the defaults without a preset. */
+  /** Changes the component's material family: the family's own initial material, everything else kept. */
+  setComponentFamily(family: string): void {
+    const doc = this.state.builder.doc;
+    if (family === doc.material.family) return;
+    let r;
+    try {
+      r = switchMaterialFamily(doc, family);
+    } catch (e) {
+      this.notify((e as Error).message);
+      return;
+    }
+    this.applyComponent(r.definition);
+    const name = MATERIALS.get(family)?.name ?? family;
+    this.notify(`Materiale: ${name}.${r.dropped.length ? ` Non riportato dal materiale precedente: ${r.dropped.join(', ')}.` : ' Contenuto, struttura, layout e stati restano.'}`);
+  }
+
+  /** Back to the preset's current content (the component follows it again), or to the material without the component's overrides when it has no preset. */
   resetComponentMaterial(): void {
     const doc = this.state.builder.doc;
-    const preset = doc.material.preset ? this.state.library.find((i) => i.id === doc.material.preset) : undefined;
-    if (preset) return this.applyMaterialPreset(preset.id);
-    this.applyComponent({ ...doc, material: { ...doc.material, document: withGlassParams(doc.material.document, defaultParams()) } });
+    const id = doc.material.preset;
+    if (id && this.materialPreset(id)) return this.applyMaterialPreset(id);
+    this.applyComponent({ ...doc, states: withoutMaterialOverrides(doc.states), material: { ...doc.material, params: {} } });
   }
 
   /**
@@ -1017,7 +1223,7 @@ export class LabSession {
     const b = this.state.builder;
     if (b.doc.material.preset !== id) return;
     const item = this.state.library.find((i) => i.id === id);
-    if (!item || bindingState(b.doc.material, item.doc) !== 'outdated') return;
+    if (!item || bindingState(b.doc.material, item.doc, hasMaterialOverrides(b.doc)) !== 'outdated') return;
     this.applyComponent({ ...b.doc, material: bindMaterial(item.doc, id) });
   }
 
@@ -1028,7 +1234,7 @@ export class LabSession {
     let components = this.state.components;
     for (const rec of this.userComponents.values()) {
       if (rec.id === this.state.builder.componentId || rec.doc.material.preset !== id) continue;
-      if (bindingState(rec.doc.material, item.doc) !== 'outdated') continue;
+      if (bindingState(rec.doc.material, item.doc, hasMaterialOverrides(rec.doc)) !== 'outdated') continue;
       const next: StoredComponent = { ...rec, doc: { ...rec.doc, material: bindMaterial(item.doc, id) }, updatedAt: now() };
       await this.repo.putComponent(next);
       this.userComponents.set(next.id, next);
@@ -1065,8 +1271,12 @@ export class LabSession {
     const clean = name.trim().slice(0, 80);
     if (!clean) return null;
     const doc = this.state.builder.doc;
-    const src = doc.material.document;
-    const m: MaterialDocument = { ...src, id: userId(), name: clean, meta: { ...src.meta, basedOn: doc.material.preset ?? src.meta.basedOn, createdAt: now(), updatedAt: now() } };
+    const src = resolveDefinitionMaterial(doc);
+    if (src.family !== 'glass') {
+      this.notify('I preset personali sono disponibili per Glass: il materiale Solid resta incluso nella componente.');
+      return null;
+    }
+    const m: GlassDocument = { ...src, id: userId(), name: clean, meta: { ...src.meta, basedOn: doc.material.preset ?? src.meta.basedOn, createdAt: now(), updatedAt: now() } };
     const rec: StoredMaterial = { id: m.id, doc: m, ...this.owner(), createdAt: now(), updatedAt: now() };
     try {
       await this.repo.putMaterial(rec);
@@ -1093,8 +1303,8 @@ export class LabSession {
     this.store.set({ builder: builderState(doc, id, item.origin, false) });
     this.syncBuilderMaterial();
     if (this.state.workspace === 'builder') {
-      this.controller?.updateComponent(doc);
-      this.controller?.component?.setActiveTab(doc.root.defaultTab, false);
+      this.syncPreview(doc);
+      if (isNavbar(doc)) this.navbarInstance()?.setActiveTab(navbarView(doc).defaultTab, false);
       this.overlay?.setPicking(false);
     }
     this.syncSelection();
@@ -1134,32 +1344,32 @@ export class LabSession {
     }
     this.userComponents.delete(id);
     this.store.set({ components: this.state.components.filter((i) => i.id !== id) });
-    if (this.state.builder.componentId === id) this.openComponent('bottom-navigation');
+    if (this.state.builder.componentId === id) this.openComponent('mobile-navbar');
     this.notify('Componente eliminata dalla libreria.');
   }
 
   importComponentText(text: string): boolean {
-    const r = parseComponentText(text);
+    const r = importComponentText(text);
     if (!r.ok) {
       this.patchBuilder({ messages: { ok: false, messages: ['Import rifiutato: nessuna modifica applicata.', ...r.errors] } });
       return false;
     }
     const taken = this.userComponents.has(r.doc.id) || componentTemplate(r.doc.id) !== undefined;
-    const doc: ComponentDocument = { ...r.doc, id: taken ? componentId() : r.doc.id, meta: { ...r.doc.meta, createdAt: r.doc.meta.createdAt ?? now(), updatedAt: now() } };
+    const doc: ComponentDefinition = { ...r.doc, id: taken ? componentId() : r.doc.id, meta: { ...r.doc.meta, createdAt: r.doc.meta.createdAt ?? now(), updatedAt: now() } };
     const messages = [...(r.migratedFrom ? [`Migrato da ${r.migratedFrom}.`] : []), ...r.warnings, ...(taken ? [`id «${r.doc.id}» già in uso: salvata come «${doc.id}».`] : [])];
     void this.addUserComponent(doc, `Importata «${doc.name}».`).then(() => this.patchBuilder({ messages: { ok: true, messages } }));
     return true;
   }
 
   componentJson(): string {
-    return serializeComponent(this.state.builder.doc);
+    return serializeDefinition(this.state.builder.doc);
   }
 
-  private async addUserComponent(doc: ComponentDocument, message: string) {
+  private async addUserComponent(doc: ComponentDefinition, message: string) {
     const rec: StoredComponent = { id: doc.id, doc, ...this.owner(), createdAt: now(), updatedAt: now() };
     this.userComponents.set(doc.id, rec);
     this.store.set({ components: [...this.state.components, componentItem(rec)], builder: { ...builderState(doc, doc.id, 'user', false), selection: this.state.builder.selection, pick: this.state.builder.pick } });
-    if (this.state.workspace === 'builder') this.controller?.updateComponent(doc);
+    if (this.state.workspace === 'builder') this.syncPreview(doc);
     this.syncSelection();
     await this.autosaver.flush();
     const s = this.state.save;
@@ -1177,7 +1387,7 @@ export class LabSession {
     const s = this.state;
     const builder = s.workspace === 'builder';
     return {
-      material: builder ? s.builder.doc.material.document : s.doc,
+      material: builder ? resolveDefinitionMaterial(s.builder.doc) : s.doc,
       ...(builder ? { component: s.builder.doc } : {}),
       resolveAsset: (url) => this.assetBytes(url),
     };

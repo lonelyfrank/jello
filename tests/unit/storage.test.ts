@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { builtinMaterial, createGlassDocument, serializeMaterial } from '../../src/model';
 import { serializeParams, defaultParams } from '../../src/core/params';
 import { Autosaver, type SaveState } from '../../src/lab/storage/autosave';
-import { componentTemplate } from '../../src/components/document';
+import { componentTemplate } from '../../src/components';
 import { DB_VERSION, MemoryRepository, openRepository, StorageError, toStorageError, type Repository } from '../../src/lab/storage/repository';
 import { optionsFromQuery } from '../../src/lab/state';
 
@@ -67,7 +67,7 @@ describe('IndexedDB repository', () => {
     await repo.putAsset({ hash: 'a'.repeat(64), type: 'image/png', blob: new Blob(['x']), name: 'x.png' });
     expect((await repo.getAsset('a'.repeat(64)))?.name).toBe('x.png');
     // Version 3 added the components store; materials of version 1 are still there.
-    const demo = componentTemplate('bottom-navigation')!.create();
+    const demo = componentTemplate('mobile-navbar')!.create();
     await repo.putComponent({ id: 'cmp-1', doc: { ...demo, id: 'cmp-1' }, createdAt: iso, updatedAt: iso });
     expect((await repo.listComponents()).items.map((c) => c.id)).toEqual(['cmp-1']);
     expect((await repo.listMaterials()).items).toHaveLength(1);

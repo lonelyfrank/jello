@@ -1,5 +1,6 @@
 /**
- * One parameter control, generated from its descriptor (core/params.ts).
+ * One parameter control, generated from its descriptor (core/descriptors.ts):
+ * the same component renders Glass, Solid and any later family.
  * Numeric fields keep the first milestone's contract: slider + text field,
  * comma or dot, ↑/↓ by one step (Shift ×10); invalid text is reported
  * (aria-invalid) and never reaches the renderer; leaving the field restores
@@ -7,7 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { parseNumberInput, type NumberDescriptor, type ParamDescriptor } from '../../core/params';
+import { parseNumberInput, type Descriptor, type NumberDescriptor } from '../../core/descriptors';
 import type { Applicability } from '../applicability';
 import { ColorField, useProjectTokens } from './ColorPicker';
 
@@ -17,28 +18,31 @@ export const formatValue = (d: NumberDescriptor, v: number) => String(Number(v.t
 const formatRange = (d: NumberDescriptor) => `${d.min} – ${d.max}${d.unit ? ` ${d.unit}` : ''} · passo ${d.step}`.replace(/-(?=\d)/g, '−');
 
 export interface ParamFieldProps {
-  d: ParamDescriptor;
+  d: Descriptor;
   value: number | string;
   applicability: Applicability | undefined;
   /** Support note of the running backend ("ignorato", "approssimato"). */
   support: { level: string; note: string } | undefined;
   onChange(value: number | string): void;
+  /** Prefix of the element ids when the same key appears twice in a panel (a state's override of a material key). */
+  idKey?: string;
 }
 
-export function ParamField({ d, value, applicability: a, support, onChange }: ParamFieldProps) {
+export function ParamField({ d, value, applicability: a, support, onChange, idKey }: ParamFieldProps) {
   const tokens = useProjectTokens();
+  const k = idKey ?? d.key;
   const disabled = !!a?.disabled;
   const state = a ? (a.disabled ? 'no' : 'inactive') : 'yes';
   const note = a?.note;
   const supportNote = support && support.level !== 'supported' ? `${support.level === 'ignored' ? 'Ignorato' : 'Approssimato'} da questo backend: ${support.note}` : null;
   const label = (
-    <label htmlFor={`param-${d.key}`} id={`label-${d.key}`}>
+    <label htmlFor={`param-${k}`} id={`label-${k}`}>
       {d.label}
     </label>
   );
   const notes = (
     <>
-      <p className="param-note" id={`note-${d.key}`} hidden={!note}>
+      <p className="param-note" id={`note-${k}`} hidden={!note}>
         {note ?? ''}
       </p>
       {supportNote && (
@@ -49,19 +53,19 @@ export function ParamField({ d, value, applicability: a, support, onChange }: Pa
     </>
   );
 
-  if (d.type === 'number') return <NumberField d={d} value={value as number} disabled={disabled} state={state} label={label} notes={notes} onChange={onChange} />;
+  if (d.type === 'number') return <NumberField k={k} d={d} value={value as number} disabled={disabled} state={state} label={label} notes={notes} onChange={onChange} />;
   if (d.type === 'enum') {
     return (
-      <div className="field param" data-param-field={d.key} data-applicable={state} data-support={support?.level}>
+      <div className="field param" data-param-field={k} data-applicable={state} data-support={support?.level}>
         <div className="field-head">{label}</div>
-        <select id={`param-${d.key}`} data-param={d.key} aria-describedby={`desc-${d.key}`} value={String(value)} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
+        <select id={`param-${k}`} data-param={k} aria-describedby={`desc-${k}`} value={String(value)} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
           {d.options.map((o) => (
             <option key={o} value={o}>
               {o}
             </option>
           ))}
         </select>
-        <p className="param-desc" id={`desc-${d.key}`}>
+        <p className="param-desc" id={`desc-${k}`}>
           {d.description}
         </p>
         {notes}
@@ -69,12 +73,12 @@ export function ParamField({ d, value, applicability: a, support, onChange }: Pa
     );
   }
   return (
-    <div className="field param" data-param-field={d.key} data-applicable={state} data-support={support?.level}>
+    <div className="field param" data-param-field={k} data-applicable={state} data-support={support?.level}>
       <div className="field-head">
         {label}
-        <ColorField id={`param-${d.key}`} label={d.label} hex={String(value)} withAlpha={false} disabled={disabled} {...(tokens ? { tokens } : {})} onChange={(hex) => onChange(hex)} />
+        <ColorField id={`param-${k}`} label={d.label} hex={String(value)} withAlpha={false} disabled={disabled} {...(tokens ? { tokens } : {})} onChange={(hex) => onChange(hex)} />
       </div>
-      <p className="param-desc" id={`desc-${d.key}`}>
+      <p className="param-desc" id={`desc-${k}`}>
         {d.description}
       </p>
       {notes}
@@ -83,6 +87,7 @@ export function ParamField({ d, value, applicability: a, support, onChange }: Pa
 }
 
 function NumberField(props: {
+  k: string;
   d: NumberDescriptor;
   value: number;
   disabled: boolean;
@@ -91,7 +96,7 @@ function NumberField(props: {
   notes: React.ReactNode;
   onChange(v: number): void;
 }) {
-  const { d, value, disabled, state, label, notes, onChange } = props;
+  const { k, d, value, disabled, state, label, notes, onChange } = props;
   const [text, setText] = useState(() => formatValue(d, value));
   const [invalid, setInvalid] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -115,21 +120,21 @@ function NumberField(props: {
   };
 
   return (
-    <div className="field param" data-param-field={d.key} data-applicable={state}>
+    <div className="field param" data-param-field={k} data-applicable={state}>
       <div className="field-head">
         {label}
         <span className="num">
           <input
-            id={`num-${d.key}`}
+            id={`num-${k}`}
             type="text"
             inputMode="decimal"
             autoComplete="off"
             spellCheck={false}
             className="num-input"
-            aria-labelledby={`label-${d.key} unit-${d.key}`}
-            aria-describedby={`desc-${d.key} err-${d.key}`}
+            aria-labelledby={`label-${k} unit-${k}`}
+            aria-describedby={`desc-${k} err-${k}`}
             aria-invalid={invalid ? true : undefined}
-            data-param-number={d.key}
+            data-param-number={k}
             value={text}
             disabled={disabled}
             onChange={(e) => {
@@ -167,19 +172,19 @@ function NumberField(props: {
               }
             }}
           />
-          <span className="unit" id={`unit-${d.key}`}>
+          <span className="unit" id={`unit-${k}`}>
             {d.unit || '·'}
           </span>
         </span>
       </div>
       <input
-        id={`param-${d.key}`}
+        id={`param-${k}`}
         type="range"
         min={d.min}
         max={d.max}
         step={d.step}
-        data-param={d.key}
-        aria-describedby={`desc-${d.key}`}
+        data-param={k}
+        aria-describedby={`desc-${k}`}
         value={value}
         disabled={disabled}
         onChange={(e) => {
@@ -190,8 +195,8 @@ function NumberField(props: {
           apply(v);
         }}
       />
-      <p className="param-desc" id={`desc-${d.key}`}>{`${d.description} ${formatRange(d)}.`}</p>
-      <p className="param-error" id={`err-${d.key}`} aria-live="polite" hidden={!message}>
+      <p className="param-desc" id={`desc-${k}`}>{`${d.description} ${formatRange(d)}.`}</p>
+      <p className="param-error" id={`err-${k}`} aria-live="polite" hidden={!message}>
         {message ?? ''}
       </p>
       {notes}

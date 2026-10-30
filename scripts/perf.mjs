@@ -24,7 +24,7 @@
  *   node scripts/perf.mjs --suite navbar          # navbar suite
  */
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { cpus, release, totalmem } from 'node:os';
 import { chromium, firefox } from '@playwright/test';
 
@@ -233,7 +233,7 @@ const date = new Date().toISOString().slice(0, 10);
 const out = {
   date,
   suite,
-  runtime: '0.2.0',
+  runtime: /RUNTIME_VERSION = '([^']+)'/.exec(readFileSync(new URL('../src/model/version.ts', import.meta.url), 'utf8'))[1],
   environment,
   conditions: `scena "${suite === 'capsule' ? 'blocks' : suite === 'scene' ? 'pattern WebGL2' : 'app'}", ${DURATION} ms per scenario`,
   note:

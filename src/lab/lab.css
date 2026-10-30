@@ -393,7 +393,10 @@
   opacity: 0.8;
   box-shadow: none;
 }
-.sphere-soon[data-material='gel'] {
+.sphere-soon[data-material='solid'] {
+  background: radial-gradient(circle at 35% 30%, #fff 0 8%, #e4e7ec 30%, #98a2b3 75%, #475467 100%);
+}
+.sphere-soon[data-material='jelly'] {
   background: radial-gradient(circle at 35% 30%, #f4fffa 0 8%, #9fe8c9 30%, #3a8d6e 75%, #163a2e 100%);
 }
 .sphere-soon[data-material='metal'] {

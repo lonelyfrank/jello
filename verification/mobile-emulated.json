@@ -4,7 +4,7 @@
   "environment": "linux x64, Playwright 1.64.1, headless, progetto \"mobile-emulated\", viewport mobile emulato",
   "mobileEmulated": true,
   "date": "2026-10-30",
-  "runtime": "0.2.0",
+  "runtime": "0.3.0",
   "backend": "svg",
   "checks": [
     "refraction visible on grid (blur 0, tint 0)",
@@ -28,7 +28,7 @@
     "leftMeanDifference": 41.841250507512534,
     "rightMeanDifference": 43.19222086223445,
     "foregroundRimDifference": 0.0003665847241989042,
-    "navbarForegroundRimDifference": 0.019821228467933195,
+    "navbarForegroundRimDifference": 0.0198368644619915,
     "edgeBlurContrastNormalized": 6.102001071297949,
     "edgeBlurContrastUnnormalized": 17.43120264335377,
     "innerBlurContrast": 5.80939971555708

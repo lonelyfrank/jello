@@ -6,10 +6,10 @@
  */
 
 import { PRESETS } from '../core/presets';
-import { createGlassDocument, type MaterialDocument } from './document';
+import { createGlassDocument, type GlassDocument } from './document';
 
 export interface BuiltinMaterial {
-  doc: MaterialDocument;
+  doc: GlassDocument;
   /** True when the preset approximates another project's treatment. */
   approximation: boolean;
   note: string;

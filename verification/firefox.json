@@ -4,7 +4,7 @@
   "environment": "linux x64, Playwright 1.64.1, headless, progetto \"firefox\", viewport desktop",
   "mobileEmulated": false,
   "date": "2026-10-30",
-  "runtime": "0.2.0",
+  "runtime": "0.3.0",
   "backend": "svg",
   "checks": [
     "refraction visible on grid (blur 0, tint 0)",

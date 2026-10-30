@@ -157,7 +157,7 @@ export function uniqueToken(base: string, taken: ReadonlySet<string>): string {
   return `${base}-${Date.now()}`;
 }
 
-/** "Navbar BT" → "Navbar BT 2" → "Navbar BT 3"… */
+/** "Navbar" → "Navbar 2" → "Navbar 3"… */
 export function uniqueName(base: string, taken: ReadonlySet<string>): string {
   if (!taken.has(base)) return base;
   const stem = base.replace(/ \d+$/, '');

@@ -17,7 +17,7 @@ import { computeLensMap, geometryKey, type LensGeometry } from '../../core/geome
 import { changedKeys, effectiveRadius, type GlassParams } from '../../core/params';
 import { isSettled, snapSpring, spring, stepSpring } from '../../core/spring';
 import { hexToRgb } from '../../core/surface';
-import type { MaterialDocument } from '../../model/document';
+import type { GlassDocument } from '../../model/document';
 import { stagesFor } from '../../model/glass';
 import { resolveQuality, type QualityProfile } from '../../model/quality';
 import { supportReport } from '../../model/support';
@@ -236,7 +236,7 @@ export class WebGLSceneView implements SceneView {
     };
   }
 
-  setMaterial(doc: MaterialDocument): SceneUpdate {
+  setMaterial(doc: GlassDocument): SceneUpdate {
     const next = engineParams(doc);
     const changed = changedKeys(this.params, next);
     const stages = stagesFor(changed);

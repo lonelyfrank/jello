@@ -40,12 +40,19 @@ export class Autosaver {
     }, this.delay);
   }
 
-  /** Writes now (explicit "Salva", page hide). */
+  /**
+   * Writes now (explicit "Salva", page hide) and resolves once what the state
+   * is *at this call* has been written. A write already in flight began from
+   * an older state: waiting for it is not enough, so a new one follows it
+   * (resolving with the in-flight one left a reload reading the previous state).
+   */
   async flush(): Promise<void> {
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
     }
+    // `running` never rejects: failures are turned into the `error` state inside it.
+    while (this.running) await this.running;
     await this.run();
   }
 

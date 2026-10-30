@@ -805,3 +805,17 @@
     text-shadow: none;
   }
 }
+
+/* A component that does not position itself (a button) is centred in the overlay; the component itself takes input. */
+.component-slot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+}
+.component-slot > * {
+  pointer-events: auto;
+}

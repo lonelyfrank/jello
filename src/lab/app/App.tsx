@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { COMPONENTS } from '../../components';
 import { PATH_LABEL } from '../../stage/controller';
 import type { SaveState } from '../storage/autosave';
 import type { LabSession } from '../session';
@@ -138,7 +139,7 @@ export function App({ session }: { session: LabSession }) {
                 <>
                   <span>Componenti</span>
                   <span aria-hidden="true">/</span>
-                  <span>Bottom Navigation</span>
+                  <span id="crumbType">{COMPONENTS.get(builder.doc.type)?.name ?? builder.doc.type}</span>
                   <span aria-hidden="true">/</span>
                   <span className="crumb-current" id="crumbComponent" aria-current="page">
                     {builder.doc.name}

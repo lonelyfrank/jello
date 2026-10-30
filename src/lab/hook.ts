@@ -5,6 +5,7 @@
  */
 
 import type { GlassParams } from '../core/params';
+import { navbarView, resolveDefinitionMaterial } from '../components';
 import { glassParams } from '../model';
 import { createSceneView, sceneBackendLoaded } from '../runtime/scene';
 import type { NavId, ViewOptions } from '../stage/view';
@@ -110,20 +111,32 @@ export function installHook(session: LabSession): void {
       get doc() {
         return session.state.builder.doc;
       },
+      /** The component's material, resolved (embedded document, preset or defaults, then parameters). */
+      material: () => resolveDefinitionMaterial(session.state.builder.doc),
+      /** The derived, read-only view of the navbar (what the renderer reads); null for any other component. */
+      get view() {
+        const d = session.state.builder.doc;
+        return d.type === 'mobile-navbar' ? navbarView(d) : null;
+      },
       get state() {
         const b = session.state.builder;
         return { componentId: b.componentId, origin: b.origin, modified: b.modified, selection: b.selection, previewTab: b.previewTab, previewState: b.previewState, pick: b.pick };
       },
       components: () => session.state.components.map((c) => ({ id: c.id, name: c.name, origin: c.origin })),
-      /** The component mounted in the preview (the runtime's BottomNavigation). */
+      /** The component mounted in the preview (the runtime's renderer of its type). */
       get nav() {
         const n = c().component;
-        return n ? { active: n.activeTab, mounted: n.mounted, status: n.status, tabs: [...n.host.querySelectorAll<HTMLElement>('.jello-bnav-tab')].map((t) => t.dataset.tab) } : null;
+        if (!n) return null;
+        const active = 'activeTab' in n ? (n as { activeTab: string }).activeTab : null;
+        return { type: n.type, family: n.status.family, active, mounted: n.mounted, status: n.status, tabs: [...n.host.querySelectorAll<HTMLElement>('.jello-bnav-tab')].map((t) => t.dataset.tab) };
       },
       select: (id: string) => session.selectElement(id),
       addTab: () => session.addTab(),
       setField: (path: string, value: unknown) => session.setComponentField(path, value),
       setParam: (key: keyof GlassParams, value: never) => session.setComponentParam(key, value),
+      setControl: (key: string, value: unknown, state?: 'hover' | 'pressed' | 'active' | 'disabled') => session.setComponentControl({ key, ...(state ? { state } : {}) }, value),
+      setFamily: (family: string) => session.setComponentFamily(family),
+      applyPreset: (id: string) => session.applyMaterialPreset(id),
       open: (id: string) => session.openComponent(id),
       save: () => session.saveComponent(),
       json: () => session.componentJson(),

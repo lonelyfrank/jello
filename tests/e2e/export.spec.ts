@@ -55,7 +55,7 @@ test('the runtime package contains the built runtime, the material, a manifest a
   expect(paths.some((p) => /^jello-navbar\/runtime\/chunks\/scene-view-.*\.js$/.test(p))).toBe(true);
   expect(paths.every((p) => !p.includes('src/') && !p.endsWith('.map'))).toBe(true);
   const manifest = JSON.parse(new TextDecoder().decode(files.get('jello-navbar/jello-manifest.json')));
-  expect(manifest).toMatchObject({ format: 'jello-package', kind: 'runtime', runtime: { version: '0.2.0' }, material: { id: 'navbar' } });
+  expect(manifest).toMatchObject({ format: 'jello-package', kind: 'runtime', runtime: { version: '0.3.0' }, material: { id: 'navbar' } });
   expect(manifest.backend.candidates.map((c: { backend: string }) => c.backend)).toEqual(['svg', 'css']);
   const material = JSON.parse(new TextDecoder().decode(files.get('jello-navbar/material.json')));
   expect(material).toEqual(await lab(page, `return h.material()`));

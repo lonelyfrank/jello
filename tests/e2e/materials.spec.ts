@@ -69,7 +69,8 @@ test.describe('library and local persistence', () => {
     expect(await lab<number>(page, `return h.params.band`)).toBe(30);
     await page.locator('#libDelete').click();
     await page.locator('#confirmDelete').click();
-    expect(await lab<string>(page, `return h.materialId()`)).toBe('jello');
+    // Deleting is asynchronous (IndexedDB): wait for the fallback instead of reading right after the click.
+    await expect.poll(() => lab<string>(page, `return h.materialId()`)).toBe('jello');
     await reopen(page);
     const lib = await lab<{ id: string }[]>(page, `return h.library()`);
     expect(lib.some((m) => m.id === id)).toBe(false);
@@ -85,7 +86,7 @@ test.describe('library and local persistence', () => {
     await expect(page.locator('#importMessages')).toHaveAttribute('data-ok', 'false');
     await expect(page.locator('#importMessages')).toContainText('versione più recente');
     expect(await lab(page, `return h.material()`)).toEqual(before);
-    await page.locator('#paramsJson').fill(JSON.stringify({ ...doc, family: 'gel' }));
+    await page.locator('#paramsJson').fill(JSON.stringify({ ...doc, family: 'jelly' }));
     await page.locator('#importParams').click();
     await expect(page.locator('#importMessages')).toContainText('non è ancora disponibile');
   });

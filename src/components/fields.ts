@@ -67,6 +67,23 @@ export interface RadiusField extends Base {
 export type FieldDescriptor = NumberField | EnumField | ColorField | BooleanField | TextField | RadiusField;
 
 export const COLOR = /^#[0-9a-f]{6}([0-9a-f]{2})?$/i;
+/** DOM event names a host listens to. */
+export const EVENT_NAME_PATTERN = /^[a-z][a-z0-9-]{0,39}$/;
+
+/** Descriptor builders shared by every component type's property table. */
+export const numberField = (path: string, section: InspectorSection, label: string, unit: string, min: number, max: number, step: number, def: number, description: string): NumberField => ({
+  type: 'number',
+  path,
+  section,
+  label,
+  unit,
+  min,
+  max,
+  step,
+  default: def,
+  description,
+});
+export const choices = (...pairs: [string, string][]) => pairs.map(([value, label]) => ({ value, label }));
 
 /** Error message, or null when `value` is valid for `f`. */
 export function checkField(f: FieldDescriptor, value: unknown): string | null {

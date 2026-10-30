@@ -20,7 +20,7 @@ import { bindDrag, bindPress, type DragOptions } from '../core/interaction';
 import { changedKeys, type GlassParams, type ParamKey, type ParamStage } from '../core/params';
 import type { PathRequest, RenderPath, VerificationRecord } from '../core/renderer/capabilities';
 import type { GlassSurface, Sizing } from '../core/surface';
-import { glassParams, type MaterialDocument } from '../model/document';
+import { glassParams, type GlassDocument } from '../model/document';
 import { stagesFor } from '../model/glass';
 import { resolveQuality, type QualityProfile } from '../model/quality';
 import { supportReport, type Backend, type BackendRequest, type SupportLevel } from '../model/support';
@@ -29,7 +29,7 @@ import { RUNTIME_VERSION } from '../model/version';
 export interface GlassGroupOptions {
   /** Opaque element whose content the SVG backend refracts. */
   source: HTMLElement;
-  material: MaterialDocument;
+  material: GlassDocument;
   /** Overrides `material.target.backend`. */
   backend?: BackendRequest;
   /** Use refraction only where a raster verification record matches the engine. */
@@ -71,14 +71,14 @@ export interface UpdateReport {
 const PATH_OF: Record<BackendRequest, PathRequest> = { auto: 'auto', svg: 'refraction', css: 'satin', webgl2: 'auto' };
 
 /** Engine parameters with the quality profile applied (chroma off on Economy). */
-export function engineParams(doc: MaterialDocument): GlassParams {
+export function engineParams(doc: GlassDocument): GlassParams {
   const p = glassParams(doc);
   return resolveQuality(doc.quality).chroma ? p : { ...p, chroma: 0 };
 }
 
 export class GlassGroup {
   readonly context: GlassContext;
-  private doc: MaterialDocument;
+  private doc: GlassDocument;
   private params: GlassParams;
   private requested: BackendRequest;
   private pathOverride: PathRequest | null = null;
@@ -108,7 +108,7 @@ export class GlassGroup {
     if (options.autoSuspend ?? true) this.watchVisibility(options.source);
   }
 
-  get material(): MaterialDocument {
+  get material(): GlassDocument {
     return this.doc;
   }
 
@@ -155,7 +155,7 @@ export class GlassGroup {
   }
 
   /** Applies a new document. Only geometry changes regenerate maps. */
-  setMaterial(doc: MaterialDocument): UpdateReport {
+  setMaterial(doc: GlassDocument): UpdateReport {
     const before = this.context.stats.mapRegenerations;
     const next = engineParams(doc);
     const changed = changedKeys(this.params, next);

@@ -6,7 +6,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BUILTIN_MATERIALS, parseMaterialText, serializeMaterial } from '../../model';
-import { parseComponentText, serializeComponent } from '../../components/document';
+import { serializeDefinition } from '../../components';
+import { importComponentText } from '../../migration';
 import { CHOICE_LABEL, collect, findConflicts, inspectFile, inspectJsonText, ITEM_LABEL, summarize, type Choice, type Conflict, type ImportItem } from '../../project/importer';
 import { buildProjectPackage, estimateBytes, formatBytes, usedIconNames, type PackageSelection } from '../../project/package';
 import { countColors, countIcons, PLATFORM_LABEL, type Platform, type PreviewTheme } from '../../project/types';
@@ -667,7 +668,7 @@ function ExportFlow({ session }: { session: LabSession }) {
       {
         label: 'Componenti e riferimenti',
         work: () => {
-          for (const c of sel.components) if (!parseComponentText(serializeComponent(c)).ok) throw new Error(`«${c.name}» non supera la verifica`);
+          for (const c of sel.components) if (!importComponentText(serializeDefinition(c)).ok) throw new Error(`«${c.name}» non supera la verifica`);
           return `${sel.components.length} ${sel.components.length === 1 ? 'componente' : 'componenti'}`;
         },
       },

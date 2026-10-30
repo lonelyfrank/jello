@@ -14,9 +14,9 @@ un solo filtro, una sola superficie dopo cambi ripetuti di modalità).
 
 ## Flusso
 
-1. **Component Builder** → *Componenti → Template ufficiali Jello → Bottom Navigation*: la demo
+1. **Component Builder** → *Componenti → Template ufficiali Jello → Mobile Navbar*: la demo
    generica con tre tab (Home, Explore, Profile), tutta modificabile.
-2. *Struttura* (colonna sinistra): seleziona la radice o una tab; **+ Tab**, ←/→ per riordinare,
+2. *Struttura* (colonna sinistra): seleziona la radice o una voce; **+ Tab**, ←/→ per riordinare,
    **Duplica**, **Elimina** (non l’ultima).
 3. Inspector (destra), contestuale all’elemento selezionato, in sezioni richiudibili:
    Struttura · Layout · Aspetto · Tipografia · Materiale · Stati · Interazioni · Responsive. Le
@@ -106,50 +106,29 @@ nav.jello-bnav               una superficie di materiale per tutta la barra
 - **Risorse**: `unmount()` rilascia superficie (la lente esce dal filtro), listener e observer;
   `destroy()` anche il DOM e il gruppo, se creato dalla componente.
 
-## Documento `jello-component`
+## Documento della componente
 
-Lo stesso formato per builder, libreria, export e — in futuro — CLI, server MCP e agenti AI.
+Il builder, la libreria, i progetti, l'export e il runtime usano un solo formato:
+`jello-component-definition`, descritto in [Component Definition](component-definition.md) (struttura,
+contenuti, layout, materiale e parametri, stati, interazioni). Il vecchio `jello-component` (tipo
+`bottom-navigation`) si può ancora aprire: viene convertito all'ingresso e salvato nella forma nuova.
 
-```jsonc
-{
-  "format": "jello-component", "schemaVersion": 1,
-  "type": "bottom-navigation", "typeVersion": 1,
-  "id": "bottom-navigation", "name": "Bottom Navigation", "runtime": { "min": "0.2.0" },
-  "material": { "family": "glass", "preset": "navbar", "revision": "1a2b3c4d", "document": { /* jello-material v2 completo */ } },
-  "root": {
-    "kind": "bottom-navigation", "id": "root", "label": "Navigazione principale",
-    "semantics": "navigation", "defaultTab": "home",
-    "layout": {…}, "appearance": {…}, "typography": {…}, "icon": {…},
-    "states": { "active": {…}, "hover": {…}, "pressed": {…}, "focus": {…}, "disabled": {…} },
-    "interactions": { "pressFeedback": true, "wheelForward": true, "reselect": "event",
-                      "events": { "change": "jello-change", "press": "jello-press", "reselect": "jello-reselect" } },
-    "motion": {…},
-    "responsive": { "overflow": "scroll", "minTabWidth": 56, "breakpoints": [ { "id": "compact", "maxWidth": 360, "overrides": { "layout.labels": "active" } } ] },
-    "children": [ { "kind": "tab", "id": "home", "label": "Home", "icon": { "kind": "builtin", "name": "home" },
-                    "value": null, "disabled": false, "style": { "iconSize": null, "fontSize": null, "fontWeight": null, "letterSpacing": null } } ]
-  },
-  "meta": { "createdAt": null, "updatedAt": null, "basedOn": "bottom-navigation", "notes": "" }
-}
-```
+In breve, per la Mobile Navbar (il tipo che il builder modifica oggi):
 
-- **Una tabella di descrittori** (`BN_FIELDS`, `src/components/bottom-navigation/model.ts`) dà
-  per ogni proprietà percorso, sezione dell’inspector, etichetta, unità, intervallo, passo e default:
-  validazione, controlli dell’editor e README dell’export sono generati da lì.
+- **Una tabella di descrittori** (`BN_FIELDS`, [`src/components/navbar.ts`](../src/components/navbar.ts))
+  dà per ogni proprietà percorso, sezione dell'inspector, etichetta, unità, intervallo, passo e
+  default: validazione, controlli dell'editor e README dell'export sono generati da lì. I percorsi
+  canonici sono in `NAVBAR_FIELDS` / `definitionFields('mobile-navbar')`.
 - **Il materiale viaggia dentro la componente**: riaprire o esportare non dipende dalla libreria;
   `material.preset` e `material.revision` conservano il legame (sezione precedente). `revision` è
   facoltativo: un documento senza è considerato «modificato» e non segue il preset da solo.
-- **Nessuna funzione nel JSON**: le interazioni sono nomi di eventi e valori delle tab.
-- **Validazione** (Zod per involucro, tab e breakpoint; descrittori per le proprietà): atomica,
-  con tutti i motivi. Valore mancante → default + avviso; sconosciuto → ignorato + avviso; non valido
-  → documento rifiutato. Id delle tab unici, `defaultTab` esistente, SVG ripuliti di nuovo.
-- **Migrazioni**: `ENVELOPE_MIGRATIONS` (per `schemaVersion`) e `TYPE_MIGRATIONS` (per
-  `typeVersion` di ogni tipo) sono catene di passi `n → n+1`; versioni più recenti rifiutate con un
-  messaggio. Oggi la versione 1 è l’unica pubblicata, quindi le tabelle sono vuote; il materiale
-  incluso usa le migrazioni esistenti (un `jello-glass` v1 dentro una componente viene migrato).
-  Una versione 2 aggiungerà il passo e un test che legge un documento v1 salvato.
-- **Persistenza**: IndexedDB versione 3 aggiunge lo store `components`; i dati delle versioni 1–2
-  restano. Ogni componente letta viene rivalidata; quelle illeggibili sono elencate, non scartate in
-  silenzio.
+- **Nessuna funzione nel JSON**: le interazioni sono nomi di eventi e valori delle voci.
+- **Validazione atomica**, con tutti i motivi: valore mancante → default + avviso; sconosciuto →
+  ignorato + avviso; non valido → rifiutato. Id delle voci unici, voce predefinita esistente, SVG
+  ripuliti di nuovo.
+- **Persistenza**: IndexedDB versione 3 ha lo store `components`; ogni componente letta viene
+  rivalidata (e, se è nel formato precedente, convertita); quelle illeggibili sono elencate, non
+  scartate in silenzio.
 
 ## Icone SVG caricate
 
@@ -163,30 +142,40 @@ Il tipo di disegno (tratto o riempimento) è rilevato e applicato con `currentCo
 ## Registri
 
 - `src/model/registry.ts` — **materiali**: id, nome, versione, schema dei parametri, default, preset,
-  backend con requisiti, catena di fallback, informazioni per l’export. Registrato: Glass. Gel/Jelly
-  è una famiglia *pianificata*: mostrata come «in sviluppo», non registrabile.
+  backend con requisiti, catena di fallback, informazioni per l’export, capacità, stati e
+  interazioni ([Material Core](material-core.md)). Registrati: Glass e Solid. Jelly è una famiglia
+  *pianificata*: mostrata come «in sviluppo», non registrabile. Le componenti si disegnano con Glass o Solid:
+  il cambio di materiale conserva contenuto, struttura, layout, stati e interazioni.
 - `src/runtime/materials.ts` — runtime dei materiali per famiglia (`createMaterialGroup`).
-- `src/components/registry.ts` — **tipi di componente**: Bottom Navigation disponibile; Desktop
-  Navbar, Floating Dock, Flyout Menu elencati come «in arrivo», senza implementazioni fittizie.
+- `src/components/registry.ts` — **componenti** (`COMPONENTS`): proprietà, valori iniziali, stati, interazioni,
+  materiali compatibili, proprietà senza effetto per famiglia, renderer ed export ([Component Engine](component-engine.md)).
+  Registrati: Button e Mobile Navbar. `DEFINITION_TYPES` (`definition.ts`) conserva lo schema anche di Desktop
+  Navbar e Input, elencati come «in arrivo», senza implementazioni fittizie.
+- `src/runtime/components.ts` — renderer dei componenti per tipo (`createComponent`).
 
 ## Libreria: ufficiale e personale
 
 | | Dove | Modificabile |
 | --- | --- | --- |
-| **Template ufficiali Jello** | in codice (`COMPONENT_TEMPLATES`): oggi solo *Bottom Navigation* | no: le modifiche sono una bozza finché non si salvano |
+| **Template ufficiali Jello** | in codice (`COMPONENT_TEMPLATES`): *Mobile Navbar* e *Button* | no: le modifiche sono una bozza finché non si salvano |
 | **Componenti salvate** | IndexedDB, store `components` | sì, salvataggio automatico |
 | **Preset materiali personali** | IndexedDB, store `materials` | sì (Material Lab) |
 
-Il template `bt-darts` della fase sperimentale non è più ufficiale. Un link o un progetto che lo
-nomina apre *Bottom Navigation* (con un avviso); una sua bozza non salvata resta aperta, da salvare
-nella libreria. Le componenti personali che ne derivano — anche con id `bt-darts`, se importate —
-restano componenti personali: non vengono cancellate né distribuite come template. Le loro icone
-(`live`, `matrix`, `results`) restano nel set incluso per compatibilità.
+Il template `bt-darts` della fase sperimentale non è più ufficiale, e `bottom-navigation` è il
+vecchio nome di `mobile-navbar`. Un link o un progetto che nomina uno dei due apre *Mobile Navbar*
+(per `bt-darts` con un avviso; per `bottom-navigation` in silenzio, è lo stesso template); una bozza non
+salvata resta aperta, da salvare nella libreria. Le componenti personali che ne derivano — anche con id
+`bt-darts`, se importate — restano componenti personali: non vengono cancellate né distribuite come
+template. Le loro icone (`live`, `matrix`, `results`) restano nel set incluso per compatibilità. La
+tabella è isolata in `src/migration/legacy.ts` ([Component Definition](component-definition.md#dati-legacy)).
 
 ## Limiti attuali
 
-- Un solo tipo di componente (Bottom Navigation) e un solo materiale (Glass).
+- Due tipi di componente con editor (Mobile Navbar, Button); nel Material Lab si edita solo Glass, e i preset
+  personali sono solo Glass (una componente Solid tiene le proprie modifiche).
+- Il layout dell'inspector non è quello definitivo: la nuova interfaccia (Studio) è M3.
 - Nessun drag-and-drop nella struttura: riordino con ←/→ (accessibile da tastiera).
 - Il builder non ha il confronto A/B né la scena WebGL2 (la componente è DOM).
 - La barra *agganciata* usa raggio 0: la lente ha un raggio unico, non solo gli angoli superiori.
-- Badge, sottomenu e tab con link (`<a href>`) non sono ancora previsti dallo schema.
+- Badge e sottomenu non sono previsti dallo schema; le tab della navbar non sono collegamenti (`<a href>`): il
+  collegamento esiste nel Button (`semantics: 'link'`).

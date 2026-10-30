@@ -12,9 +12,12 @@ import { bindDrag } from '../core/interaction';
 import type { GlassParams } from '../core/params';
 import type { PathRequest, VerificationRecord } from '../core/renderer/capabilities';
 import type { GlassSurface } from '../core/surface';
-import type { MaterialDocument } from '../model/document';
+import type { GlassDocument } from '../model/document';
 import { createGlassGroup, engineParams, type GlassGroup } from '../runtime/glass-group';
 import { BottomNavigation, type BottomNavigationOptions } from '../runtime/bottom-navigation';
+import { JelloButton } from '../runtime/button';
+import type { ComponentInstance } from '../runtime/component-types';
+import type { ComponentDefinition } from '../components';
 import { ButtonDemo, CardDemo, DialogDemo, type StageObject } from './components';
 import { Navbar } from './navbar';
 import type { NavId, ObjectKind } from './view';
@@ -57,6 +60,9 @@ export function buildStage(doc: Document, role: 'main' | 'compare'): HTMLElement
   return fig;
 }
 
+/** What the editor listens to while a component is shown (a navbar's tabs; a button reports nothing to the editor). */
+export type ComponentHandlers = Pick<BottomNavigationOptions, 'onChange' | 'onTabPress' | 'onReselect' | 'activeTab'>;
+
 export class Stage {
   readonly root: HTMLElement;
   readonly source: HTMLElement;
@@ -71,15 +77,17 @@ export class Stage {
   bounds = { width: 0, height: 0 };
   private kind: ObjectKind | null = null;
   /** Component of the builder, mounted instead of the demo object (same group, same renderer). */
-  private componentNav: BottomNavigation | null = null;
+  private componentNav: ComponentInstance | null = null;
+  /** Centred box a non-navbar component is laid out in (a navbar positions itself). */
+  private componentSlot: HTMLElement | null = null;
   private capsuleSurface: GlassSurface | null = null;
   private capsuleCleanups: (() => void)[] = [];
   private readonly cleanups: (() => void)[] = [];
-  private doc: MaterialDocument;
+  private doc: GlassDocument;
   private params: GlassParams;
   private readonly options: StageOptions;
 
-  constructor(options: StageOptions, doc: MaterialDocument) {
+  constructor(options: StageOptions, doc: GlassDocument) {
     this.options = options;
     this.doc = doc;
     this.params = engineParams(doc);
@@ -139,22 +147,44 @@ export class Stage {
     }
   }
 
-  get component(): BottomNavigation | null {
+  get component(): ComponentInstance | null {
     return this.componentNav;
   }
 
   /**
    * Mounts a builder component on this stage's material group. The demo
-   * object is unmounted first, so exactly one thing owns the stage.
+   * object is unmounted first, so exactly one thing owns the stage. A navbar
+   * positions itself in the overlay; a button is centred in a box of its own,
+   * and its links are inert (the editor never navigates away).
    */
-  showComponent(options: Omit<BottomNavigationOptions, 'container' | 'group' | 'scroller' | 'anchor'>): BottomNavigation {
+  showComponent(options: ComponentHandlers & { config: ComponentDefinition }): ComponentInstance {
     this.hideComponent();
     this.unmountObject();
-    const nav = new BottomNavigation({ ...options, container: this.overlay, group: this.group, scroller: this.scroller, anchor: 'container' });
-    nav.mount();
-    this.componentNav = nav;
+    let instance: ComponentInstance;
+    if (options.config.type === 'button') {
+      const slot = this.overlay.ownerDocument.createElement('div');
+      slot.className = 'component-slot';
+      this.overlay.append(slot);
+      this.componentSlot = slot;
+      instance = new JelloButton({ container: slot, config: options.config, group: this.group, inertLinks: true });
+    } else {
+      const { config, activeTab, onChange, onTabPress, onReselect } = options;
+      instance = new BottomNavigation({
+        config,
+        container: this.overlay,
+        group: this.group,
+        scroller: this.scroller,
+        anchor: 'container',
+        ...(activeTab !== undefined ? { activeTab } : {}),
+        ...(onChange ? { onChange } : {}),
+        ...(onTabPress ? { onTabPress } : {}),
+        ...(onReselect ? { onReselect } : {}),
+      });
+    }
+    instance.mount();
+    this.componentNav = instance;
     this.root.dataset.object = 'component';
-    return nav;
+    return instance;
   }
 
   /** Removes the builder component (surface, listeners, DOM). The caller re-mounts an object. */
@@ -162,6 +192,8 @@ export class Stage {
     if (!this.componentNav) return;
     this.componentNav.destroy();
     this.componentNav = null;
+    this.componentSlot?.remove();
+    this.componentSlot = null;
     delete this.root.dataset.object;
   }
 
@@ -204,18 +236,18 @@ export class Stage {
     surface.setPosition(c.x, c.y, true);
   }
 
-  setMaterial(doc: MaterialDocument) {
+  setMaterial(doc: GlassDocument) {
     this.doc = doc;
     const report = this.group.setMaterial(doc);
     this.params = engineParams(doc);
     this.capsuleSurface?.setParams(this.params);
     if (this.kind && this.kind !== 'capsule') this.demo(this.kind)?.setParams(this.params);
-    this.componentNav?.setMaterial();
+    if (this.componentNav instanceof BottomNavigation) this.componentNav.setMaterial();
     this.keepInside();
     return report;
   }
 
-  get material(): MaterialDocument {
+  get material(): GlassDocument {
     return this.doc;
   }
 

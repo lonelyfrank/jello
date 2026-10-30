@@ -195,6 +195,10 @@ export class GlassSurface {
     this.layer.remove();
     this.host.classList.remove('jello-host');
     this.host.removeAttribute('data-pressed');
+    // Nothing of the surface stays on a host that another material may draw next.
+    this.host.removeAttribute('data-jello-path');
+    this.host.removeAttribute('data-jello-sizing');
+    this.host.style.removeProperty('--jello-host-radius');
     this.host.style.removeProperty('transform');
   }
 

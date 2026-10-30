@@ -271,3 +271,22 @@
     outline-color: Highlight;
   }
 }
+
+/* ---------- Solid ---------- */
+/* The content color is the material's (--jsolid-fg); the Glass legibility halo is not drawn on a plain fill
+ * and the indicator is tinted with the active color, so it reads on any Solid fill (NAVBAR_UNSUPPORTED). */
+.jello-bnav[data-material='solid'] {
+  color: var(--jsolid-fg);
+}
+.jello-bnav[data-material='solid'] .jello-bnav-tab {
+  text-shadow: none;
+}
+.jello-bnav[data-material='solid'] .jello-bnav-indicator {
+  background: rgb(0 0 0 / 0.08);
+  box-shadow: none;
+}
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  .jello-bnav[data-material='solid'] .jello-bnav-indicator {
+    background: color-mix(in srgb, var(--jbn-active, #0a54bd) 14%, transparent);
+  }
+}
