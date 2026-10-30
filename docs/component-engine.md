@@ -15,7 +15,8 @@ visibilità, disponibilità e azioni serializzabili. Riutilizza slot, icone,
 descrittori, materiali e breakpoint. [Audit del codice](navbar-audit.md).
 Il Builder Mobile usa queste operazioni; `BnRoot` resta la vista del suo renderer.
 Desktop ha un profilo completo e validato, senza ereditare il posizionamento
-inferiore, e resta pianificata nel medesimo `COMPONENTS` fino a M5.2.
+inferiore. Da M5.2 è registrata in `COMPONENTS` con renderer dedicato, anteprima
+tecnica nello stesso Stage e capability JSON. [Desktop Renderer](desktop-navbar-renderer.md).
 
 ## Che cosa c'è
 
@@ -32,8 +33,8 @@ inferiore, e resta pianificata nel medesimo `COMPONENTS` fino a M5.2.
 ## Component Registry
 
 ```ts
-COMPONENTS.list();                    // [button, mobile-navbar]            (registrati = disponibili)
-COMPONENTS.planned();                 // [desktop-navbar, input]            (schema sì, implementazione no)
+COMPONENTS.list();                    // [button, mobile-navbar, desktop-navbar]            (registrati = disponibili)
+COMPONENTS.planned();                 // [input]            (schema sì, implementazione no)
 const spec = COMPONENTS.get('button');
 spec.fields;                          // descrittori delle proprietà: percorso, tipo, unità, intervallo, default, sezione dell'inspector
 spec.create();                        // una definizione nuova, valida, con i valori iniziali
@@ -50,11 +51,11 @@ quelli del tipo, una famiglia registrata senza preset iniziale o con un preset i
 «non supportata» che non è descritta, un `create()` che non rilegge se stesso senza avvisi, un valore iniziale
 che `setField` rifiuta, `defaults()` diverso dai descrittori, nomi di evento non validi.
 
-**Desktop Navbar e Input** restano nello schema (`DEFINITION_TYPES`) e in `COMPONENTS.planned()`:
-elencati come «in arrivo» nel Builder, senza template, senza editor, senza renderer. Un file che li
-contiene si legge. Da M5.1 Desktop valida e conserva anche layout, responsive,
-stili, azioni e comportamento. Solo Input continua a ignorare queste proprietà
-**con un avviso**.
+**Desktop Navbar** usa `DesktopNavigation` e `MaterialBinding`: tre regioni,
+azioni select/navigate/consumer, tastiera, breakpoint, overflow e lifecycle.
+La preview tecnica è disponibile; il Builder completo e gli adapter React/Vanilla
+sono previsti per M5.3. **Input** resta pianificato: il documento si legge, ma le
+proprietà prive di renderer sono ignorate con un avviso.
 
 Il runtime lega ogni voce al proprio renderer come fa per i materiali:
 [`createComponent({ container, config, source? })`](../src/runtime/components.ts) sceglie la classe dal
@@ -273,4 +274,4 @@ famiglia), il runtime, sorgente TSX e tipi, esempio, README e manifest.
 - **WebKit** non è stato eseguito (vedi [Compatibilità](compatibility.md)).
 - **Jelly** deve fornire `accent` e un renderer nella `RUNTIMES` di `materials.ts` e nel `surface-binding`
   (la checklist di Material Core è aggiornata).
-- Layout a tre colonne, Desktop Navbar, Input: M3 e successivi.
+- Editor Desktop completo e relativi adapter: M5.3. Input resta pianificato.

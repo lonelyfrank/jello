@@ -29,9 +29,9 @@ const errorsOf = (input: unknown) => {
 };
 
 describe('definition types', () => {
-  it('declares the four types; only the mobile navbar has a renderer and an editor so far', () => {
+  it('declares four types and marks Button, Mobile and Desktop as implemented', () => {
     expect(DEFINITION_TYPES.map((t) => t.type)).toEqual(TYPES);
-    expect(DEFINITION_TYPES.filter((t) => t.implemented).map((t) => t.type)).toEqual(['button', 'mobile-navbar']);
+    expect(DEFINITION_TYPES.filter((t) => t.implemented).map((t) => t.type)).toEqual(['button', 'mobile-navbar', 'desktop-navbar']);
     for (const t of DEFINITION_TYPES) {
       expect(t.states[0], t.type).toBe('default');
       expect(t.triggers.length, t.type).toBeGreaterThan(0);

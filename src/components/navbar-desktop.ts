@@ -1,8 +1,8 @@
-/** Desktop contract and validation only. M5.2 will supply its own renderer. */
+/** Desktop contract, validation and pure renderer presentation. */
 import type { ComponentDefinition, StructureNode } from './definition';
 import { choices, checkField, getPath, setPath, type FieldDescriptor } from './fields';
-import { BN_FIELDS, checkNavbarSections, fromCanonicalPath, toCanonicalPath, type ItemRef, type NavbarCheck } from './navbar';
-import type { NavbarRegion } from './navbar-contract';
+import { BN_FIELDS, NAVBAR_UNSUPPORTED, checkNavbarSections, fromCanonicalPath, navbarPresentation, navbarView, toCanonicalPath, type ItemRef, type NavbarCheck, type Presentation } from './navbar';
+import { navbarItems, type NavbarItem, type NavbarRegion } from './navbar-contract';
 
 const MOBILE_ONLY = new Set(['layout.anchor', 'layout.placement', 'layout.offset']);
 const DEFAULTS: Record<string, unknown> = { 'layout.height': 72, 'layout.padding': 24, 'layout.gap': 16, 'layout.width': 1280, 'layout.maxWidth': 1600, 'layout.itemLayout': 'inline', 'layout.distribution': 'start' };
@@ -67,3 +67,24 @@ export function resolveDesktopNavbar(def: ComponentDefinition, width: number): {
 export function getDesktopNavbarField(def: ComponentDefinition, path: string): unknown {
   return getPath(def, toCanonicalPath(fromCanonicalPath(path)));
 }
+
+/** Regions are derived, never stored a second time. Members inherit the root group's assignment. */
+export function desktopNavbarRegions(def: ComponentDefinition): Record<NavbarRegion, NavbarItem[]> {
+  const regions: Record<NavbarRegion, NavbarItem[]> = { start: [], main: [], end: [] };
+  const assignments = def.layout.regions as Record<string, NavbarRegion>;
+  for (const item of navbarItems(def)) {
+    if (item.visible) regions[assignments[item.groupId ?? item.id] ?? 'main'].push(item);
+  }
+  return regions;
+}
+
+/** Same state/style vocabulary as Mobile, with Desktop geometry and DOM. */
+export function desktopNavbarPresentation(def: ComponentDefinition, family: string, breakpoint: string | null): Presentation {
+  const p = navbarPresentation(navbarView(def), family, { breakpoint });
+  for (const key of ['data-anchor', 'data-placement', 'data-semantics']) delete p.attrs[key];
+  delete p.vars['--jbn-offset'];
+  p.attrs['data-orientation'] = 'horizontal';
+  return p;
+}
+
+export const DESKTOP_NAVBAR_UNSUPPORTED = NAVBAR_UNSUPPORTED;

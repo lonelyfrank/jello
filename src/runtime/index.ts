@@ -21,6 +21,8 @@ export { MaterialBinding } from './surface-binding';
 export type { BoundSurface, MaterialBindingOptions, Radius } from './surface-binding';
 export { BottomNavigation, createBottomNavigation } from './bottom-navigation';
 export type { BottomNavigationEvent, BottomNavigationOptions, BottomNavigationStatus, NavbarActionEvent } from './bottom-navigation';
+export { DesktopNavigation } from './desktop-navigation';
+export type { DesktopNavigationOptions, DesktopNavigationEvent, DesktopNavigationActionEvent, DesktopNavigationStatus } from './desktop-navigation';
 export { JelloButton, createButton } from './button';
 export type { ButtonEvent, ButtonStatus, JelloButtonOptions } from './button';
 export type { ComponentInstance, ComponentStatus, PreviewState } from './component-types';

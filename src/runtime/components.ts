@@ -15,18 +15,20 @@
 import type { DefinitionType } from '../components/definition';
 import { BottomNavigation, type BottomNavigationOptions } from './bottom-navigation';
 import { JelloButton, type JelloButtonOptions } from './button';
+import { DesktopNavigation, type DesktopNavigationOptions } from './desktop-navigation';
 import type { ComponentInstance } from './component-types';
 
 export interface ComponentRuntime {
   type: DefinitionType;
   /** Id of the registry entry's `renderer`. */
   renderer: string;
-  create(options: BottomNavigationOptions | JelloButtonOptions): ComponentInstance;
+  create(options: BottomNavigationOptions | JelloButtonOptions | DesktopNavigationOptions): ComponentInstance;
 }
 
 const RUNTIMES = new Map<string, ComponentRuntime>([
   ['mobile-navbar', { type: 'mobile-navbar', renderer: 'mobile-navbar', create: (o) => new BottomNavigation(o as BottomNavigationOptions) }],
   ['button', { type: 'button', renderer: 'button', create: (o) => new JelloButton(o as JelloButtonOptions) }],
+  ['desktop-navbar', { type: 'desktop-navbar', renderer: 'desktop-navbar', create: (o) => new DesktopNavigation(o as DesktopNavigationOptions) }],
 ]);
 
 export function componentRuntime(type: string): ComponentRuntime | undefined {
@@ -39,19 +41,22 @@ export function componentRuntimes(): ComponentRuntime[] {
 }
 
 /** Creates (without mounting) the renderer of `options.config.type`. Call `mount()` to show it. */
+export function createComponent(options: DesktopNavigationOptions): DesktopNavigation;
 export function createComponent(options: BottomNavigationOptions): BottomNavigation;
 export function createComponent(options: JelloButtonOptions): JelloButton;
-export function createComponent(options: BottomNavigationOptions | JelloButtonOptions): ComponentInstance;
-export function createComponent(options: BottomNavigationOptions | JelloButtonOptions): ComponentInstance {
+export function createComponent(options: BottomNavigationOptions | JelloButtonOptions | DesktopNavigationOptions): ComponentInstance;
+export function createComponent(options: BottomNavigationOptions | JelloButtonOptions | DesktopNavigationOptions): ComponentInstance {
   const rt = RUNTIMES.get(options.config.type);
   if (!rt) throw new Error(`Nessun renderer per il tipo «${options.config.type}»`);
   return rt.create(options);
 }
 
 /** Creates and mounts. */
+export function mountComponent(options: DesktopNavigationOptions): DesktopNavigation;
 export function mountComponent(options: BottomNavigationOptions): BottomNavigation;
 export function mountComponent(options: JelloButtonOptions): JelloButton;
-export function mountComponent(options: BottomNavigationOptions | JelloButtonOptions): ComponentInstance {
+export function mountComponent(options: BottomNavigationOptions | JelloButtonOptions | DesktopNavigationOptions): ComponentInstance;
+export function mountComponent(options: BottomNavigationOptions | JelloButtonOptions | DesktopNavigationOptions): ComponentInstance {
   const c = createComponent(options);
   c.mount();
   return c;

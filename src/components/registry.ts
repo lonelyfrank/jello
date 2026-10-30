@@ -11,12 +11,12 @@
  * (`runtime/components.ts`) the way a material's renderer is, and a test checks
  * that every entry has a runtime and every runtime an entry.
  *
- * Adding a type (Desktop Navbar, Input) means: its slots in `DEFINITION_TYPES`
+ * Adding a type (for example Input) means: its slots in `DEFINITION_TYPES`
  * (they already exist), a property table and checks, a renderer, and one
  * entry here that passes `validateComponentSpec`. Until then the type is
  * *planned*: listed with the reason it is not available, not registered, not
- * editable, not exportable and not renderable. Desktop's full data contract
- * is validated in M5.1; Input still warns that undescribed properties are ignored.
+ * editable, not exportable and not renderable. Desktop has a renderer and
+ * technical preview (M5.2); full editing/framework adapters follow in M5.3.
  */
 
 import { MATERIALS } from '../model/registry';
@@ -24,6 +24,7 @@ import { BUTTON_FIELDS, BUTTON_UNSUPPORTED, setButtonField } from './button';
 import { DEFINITION_TYPES, definitionType, parseDefinition, serializeDefinition, starterDefinition, type ComponentDefinition, type ComponentStateId, type DefinitionType, type DefinitionTypeInfo, type Trigger } from './definition';
 import { defaultsOf, getPath, type FieldDescriptor } from './fields';
 import { NAVBAR_FIELDS, NAVBAR_UNSUPPORTED, setNavbarField } from './navbar';
+import { DESKTOP_NAVBAR_FIELDS, DESKTOP_NAVBAR_UNSUPPORTED, setDesktopNavbarField } from './navbar-desktop';
 
 export interface UnsupportedProperty {
   /** Canonical path of the property. */
@@ -130,6 +131,22 @@ const NAVBAR: ComponentSpec = {
   },
 };
 
+const DESKTOP_INFO = definitionType('desktop-navbar')!;
+const DESKTOP: ComponentSpec = {
+  ...NAVBAR,
+  id: 'desktop-navbar', name: 'Desktop Navbar', description: DESKTOP_INFO.description,
+  version: DESKTOP_INFO.typeVersion, info: DESKTOP_INFO,
+  fields: DESKTOP_NAVBAR_FIELDS, defaults: () => defaultsOf(DESKTOP_NAVBAR_FIELDS),
+  create: (o) => starterDefinition('desktop-navbar', o), setField: setDesktopNavbarField,
+  states: DESKTOP_INFO.states,
+  interactions: [...NAVBAR.interactions, { trigger: 'hover', event: 'jello-hover' }, { trigger: 'focus', event: 'jello-focus' }],
+  unsupported: (family) => DESKTOP_NAVBAR_UNSUPPORTED[family] ?? [],
+  renderer: { id: 'desktop-navbar' },
+  export: { formats: ['component-json'], families: ['glass', 'solid'],
+    events: ['jello-change', 'jello-press', 'jello-reselect', 'jello-action', 'jello-hover', 'jello-focus'],
+    notes: ['Runtime Desktop e anteprima tecnica disponibili. Semantica navigation; tabs senza pannelli non disponibili. Editor Desktop completo e adapter React/Vanilla previsti per M5.3.'] },
+};
+
 /** Everything wrong with a spec, as readable sentences (empty when it is complete and consistent). */
 export function validateComponentSpec(spec: ComponentSpec): string[] {
   const problems: string[] = [];
@@ -218,7 +235,7 @@ export class ComponentRegistry {
       id: t.type,
       name: t.label,
       description: t.description,
-      reason: t.profile === 'desktop-navbar' ? 'Contratto strutturale, layout, stati e responsive validati; non ci sono ancora renderer, editor ed export (M5.2).' : 'Lo schema esiste (struttura, contenuti, stati) ma non ci sono ancora renderer, editor ed export: layout, stile e comportamento vengono ignorati con un avviso.',
+      reason: 'Lo schema esiste (struttura, contenuti, stati) ma non ci sono ancora renderer, editor ed export: layout, stile e comportamento vengono ignorati con un avviso.',
     }));
   }
 
@@ -231,6 +248,7 @@ export class ComponentRegistry {
 export const COMPONENTS = new ComponentRegistry();
 COMPONENTS.register(BUTTON);
 COMPONENTS.register(NAVBAR);
+COMPONENTS.register(DESKTOP);
 
 export function componentSpec(id: string): ComponentSpec | undefined {
   return COMPONENTS.get(id);

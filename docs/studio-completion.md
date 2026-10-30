@@ -1,5 +1,15 @@
 # M3.1 / M4.1 — Studio & Export
 
+## Aggiornamento M5.2
+
+Desktop Navbar dispone ora di renderer pubblico e anteprima tecnica nello stesso
+Stage: regioni Start/Main/End, Glass/Solid, interazioni, viewport e stati.
+Il pannello dichiara esplicitamente ciò che si aggiorna via JSON e ciò che resta
+per M5.3 (editor Desktop completo e adapter React/Vanilla).
+[Consegna e verifiche](navbar-m52-delivery.md) · [Guida runtime](desktop-navbar-renderer.md).
+Le sezioni seguenti conservano il report storico M3.1/M4.1.
+
+
 ## Audit prima delle modifiche (30 ottobre 2026)
 
 - `src/model`: `jello-material` v2 è un'unione Glass/Solid, con registro, descrittori, validazione atomica, stati e renderer distinti. Solid non richiede un nuovo schema.

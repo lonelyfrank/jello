@@ -8,6 +8,46 @@ il laboratorio solo se è stato prodotto per la stessa versione del runtime (`fi
 `runtimeVersion`): i risultati precedenti non certificano il codice modificato. L’emulazione
 mobile non certifica un telefono.
 
+## M5.2 · Desktop Navbar Renderer (runtime 0.3.0) — 30 ottobre 2026
+
+[Consegna, audit, file e limiti](navbar-m52-delivery.md) · [API e lifecycle](desktop-navbar-renderer.md).
+Ambiente Linux x64; Chromium e Firefox headless, Pixel 7 emulato su Chromium.
+
+| Controllo | Esito |
+| --- | --- |
+| `npm run typecheck` | **superato** |
+| `npm test` | **399/399 superati**, 23 file |
+| `npm run build` | **superato** — runtime, tipi e Studio; avviso Vite per chunk Studio oltre 500 kB |
+| Regressione E2E, 10 file × 3 progetti | **350 superati, 1 saltato**, nessun fallimento |
+| Suite Desktop finale, 9 casi × 3 progetti | **27/27 superati**, nessun fallimento |
+| WebKit Desktop Glass | **non eseguibile** — il browser non si avvia: libicu74 e libjpeg-turbo8 mancanti |
+
+La regressione comprende Desktop, Mobile Navbar, Navbar Structure Engine, Button,
+Builder, Solid, progetti, fedeltà export e consumer React/Vanilla indipendenti.
+Il test saltato è il selettore di progetto dal breadcrumb sul viewport mobile,
+dove il controllo è nascosto. Non è l'intera suite E2E del repository.
+La suite Desktop finale è stata rieseguita dopo le ultime modifiche della preview
+Desktop e le nuove verifiche di geometria/ownership. I consumer vengono ricostruiti
+anche in questo setup; il consumer React supera il proprio typecheck e build.
+
+Verificati: regioni/brand/gruppi, selezione controllata/non controllata, reselect,
+link reali e sicuri, consumer action, eventi DOM configurabili, disabled/hidden,
+focus e tastiera, tap su Pixel emulato, breakpoint, overflow senza sovrapposizioni,
+stili calcolati/indicatore, cambio Glass/Solid, ID stabili, aggiornamenti e anteprima
+Studio. Cicli mount/destroy e gruppi Glass condivisi lasciano zero observer/filtri/
+strati residui, non alterano l'host esterno e preservano le risorse del proprietario.
+
+Le prime prove hanno corretto aspettative M5.1 e nomi errati degli helper dei test.
+La prova aggiuntiva dell'indicatore leggeva un colore intermedio della transizione:
+ora attende il valore calcolato con `expect.poll`; finale **27/27**. Nessun timeout
+aumentato. Il relay unitario richiede porte locali (`EPERM` nella sandbox); la
+suite autorizzata completa passa. Dettagli e comandi nella consegna.
+
+Desktop è ora registrata con runtime e anteprima tecnica. Supporta navigation;
+tabs senza associazione ai pannelli sono rifiutate. Export Desktop solo JSON:
+editor completo e adapter React/Vanilla rinviati a M5.3. Nessun cambiamento alle API
+Mobile/Button o allo schema. Safari e dispositivi fisici non verificati.
+
 ## M5.1 · Navbar Structure Engine (runtime 0.3.0) — 30 ottobre 2026
 
 Ambiente Linux x64, browser headless: Chromium, Firefox e Pixel 7 emulato.

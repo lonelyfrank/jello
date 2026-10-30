@@ -259,7 +259,7 @@ describe('desktop preparation and inspector descriptors', () => {
     const d = starterDefinition('desktop-navbar');
     expect(d.layout).toMatchObject({ orientation: 'horizontal', height: 72, padding: 24, distribution: 'start' });
     expect(d.layout).not.toHaveProperty('placement');
-    expect(COMPONENTS.has('desktop-navbar')).toBe(false);
+    expect(COMPONENTS.has('desktop-navbar')).toBe(true);
     const responsive = { ...d, layout: { ...d.layout, regions: { brand: 'start', signin: 'end' } }, responsive: { ...d.responsive, breakpoints: [{ id: 'medium', maxWidth: 768, overrides: { 'layout.gap': 8 } }, { id: 'small', maxWidth: 400, overrides: { 'layout.labels': 'hide', 'layout.compact': true } }] } };
     roundtrip(responsive);
     const resolved = resolveDesktopNavbar(responsive, 360);

@@ -13,7 +13,7 @@ tipi), [`navbar.ts`](../src/components/navbar.ts) (proprietà della Mobile Navba
 
 ## Perché uno solo
 
-Il Component Engine ([M2](component-engine.md)) renderizza Button e Mobile Navbar (e domani Desktop Navbar e Input) dalla stessa descrizione. Due formati
+Il Component Engine ([M2](component-engine.md)) renderizza Button, Mobile Navbar e Desktop Navbar (Input resta pianificato) dalla stessa descrizione. Due formati
 avrebbero voluto dire due modelli da mantenere, due validatori e conversioni a ogni passaggio. Il
 formato di M1 (`jello-component-definition`, ancora non rilasciato) è stato consolidato aggiungendo
 ciò che `jello-component` portava e che il Builder usa davvero: layout, stile, stati di
@@ -76,9 +76,9 @@ L'ordine delle chiavi, in `serializeDefinition`, è fisso: gli export sono leggi
 
 ### Tipi
 
-Dichiarati in `DEFINITION_TYPES`. `button` e `mobile-navbar` hanno renderer ed editor (`implemented: true`,
-registrati in `COMPONENTS`, [Component Engine](component-engine.md)); `desktop-navbar` e `input` hanno già lo schema
-(slot, contenuti, stati, trigger) ma nessuna implementazione: sono *pianificati*.
+Dichiarati in `DEFINITION_TYPES`. `button`, `mobile-navbar` e `desktop-navbar` hanno renderer
+(`implemented: true`, registrati in `COMPONENTS`). Desktop offre anteprima tecnica;
+editor completo e adapter React/Vanilla sono previsti per M5.3. `input` resta pianificato.
 
 | Tipo | Radice | Slot | Stati | Trigger |
 | --- | --- | --- | --- | --- |
@@ -135,7 +135,8 @@ serializzati. Assenza di azione = selezione storica, anche nei documenti con `hr
 Visibilità/disabled e default sono persistenti; hover, focus e pressed appartengono
 solo al runtime. `layout.icons`, `layout.distribution`, `layout.compact` sono
 estensioni opzionali nei vecchi file. Il profilo Desktop ora valida layout,
-regioni iniziali/finali, stile e responsive, pur restando privo di renderer.
+regioni iniziali/finali, stile e responsive; da M5.2 il renderer dedicato li usa
+nel runtime e nell'anteprima tecnica dello Stage.
 
 `definitionFields(type, role)` prepara i controlli dei nodi nello stesso Inspector,
 con `section`, `level` (Base/Avanzato) e `scope` (comune/Mobile/Desktop).
@@ -295,7 +296,9 @@ stage, anteprima e libreria costruita non lo raggiungono né contengono quelle s
 
 ## Problemi aperti
 
-- **Desktop Navbar** ha contratto strutturale e profilo di proprietà validati, ma non renderer/editor/export (M5.2).
+- **Desktop Navbar** ha runtime, regioni, Glass/Solid e anteprima tecnica M5.2.
+  Supporta navigation; tabs senza associazione pannelli sono rifiutate dal renderer.
+  Editor completo e adapter React/Vanilla: M5.3. [Dettagli](desktop-navbar-renderer.md).
 - **Input** ha lo schema ma non una tabella di proprietà né un renderer: `layout`, `style`,
   `responsive`, `states.<s>.style` e `interactions.behavior` vengono ignorati **con un avviso** (non più in
   silenzio). Per aggiungerli: una tabella di descrittori e un `profile` in `DEFINITION_TYPES`, il renderer in

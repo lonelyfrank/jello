@@ -15,9 +15,10 @@ import type { GlassSurface } from '../core/surface';
 import type { GlassDocument } from '../model/document';
 import { createGlassGroup, engineParams, type GlassGroup } from '../runtime/glass-group';
 import { BottomNavigation, type BottomNavigationOptions } from '../runtime/bottom-navigation';
-import { JelloButton } from '../runtime/button';
+import { DesktopNavigation } from '../runtime/desktop-navigation';
+import { createComponent } from '../runtime/components';
 import type { ComponentInstance } from '../runtime/component-types';
-import type { ComponentDefinition } from '../components';
+import type { ComponentDefinition, DesktopNavbarDefinition } from '../components';
 import { ButtonDemo, CardDemo, DialogDemo, type StageObject } from './components';
 import { Navbar } from './navbar';
 import type { NavId, ObjectKind } from './view';
@@ -166,10 +167,16 @@ export class Stage {
       slot.className = 'component-slot';
       this.overlay.append(slot);
       this.componentSlot = slot;
-      instance = new JelloButton({ container: slot, config: options.config, group: this.group, inertLinks: true });
+      instance = createComponent({ container: slot, config: options.config, group: this.group, inertLinks: true });
+    } else if (options.config.type === 'desktop-navbar') {
+      const slot = this.overlay.ownerDocument.createElement('div');
+      slot.className = 'component-desktop-slot';
+      Object.assign(slot.style, { position: 'absolute', top: '12px', left: '12px', right: '12px', pointerEvents: 'auto' });
+      this.overlay.append(slot); this.componentSlot = slot;
+      instance = createComponent({ ...options, container: slot, config: options.config as DesktopNavbarDefinition, group: this.group, scroller: this.scroller });
     } else {
       const { config, activeTab, onChange, onTabPress, onReselect } = options;
-      instance = new BottomNavigation({
+      instance = createComponent({
         config,
         container: this.overlay,
         group: this.group,
@@ -242,7 +249,7 @@ export class Stage {
     this.params = engineParams(doc);
     this.capsuleSurface?.setParams(this.params);
     if (this.kind && this.kind !== 'capsule') this.demo(this.kind)?.setParams(this.params);
-    if (this.componentNav instanceof BottomNavigation) this.componentNav.setMaterial();
+    if (this.componentNav instanceof BottomNavigation || this.componentNav instanceof DesktopNavigation) this.componentNav.setMaterial();
     this.keepInside();
     return report;
   }

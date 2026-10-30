@@ -184,6 +184,7 @@ export const componentVanillaAdapter: ExportAdapter = {
   id: 'component-vanilla', label: 'Componente Vanilla · HTML / CSS / JavaScript', target: 'component', needsRuntime: true, output: 'zip', requires: 'component',
   describe: (req) => {
     const component = need(req.component, 'la componente');
+    if (!COMPONENTS.get(component.type)?.export.formats.includes('component-vanilla')) throw new Error(`Export Vanilla non disponibile per ${component.type}.`);
     return {
       name: reactNames(component).root.replace(/-react$/, '-vanilla.zip'),
       files: [

@@ -159,7 +159,7 @@ Desktop dichiara `orientation: horizontal`, allineamento, distribuzione,
 altezza, padding, gap, larghezza, raggio, etichette, icone, compattezza e regioni
 iniziali/finali. Non eredita `anchor`, `placement` e `offset` Mobile. Dispone
 degli stessi stili di contenuto/stato e azioni. Il binding Glass/Solid si può
-cambiare anche su una definizione Desktop, ma ciò non la rende renderizzabile.
+cambiare su una definizione Desktop; da M5.2 il renderer dedicato usa lo stesso MaterialBinding.
 
 Le proprietà additive Mobile `layout.icons`, `.distribution`, `.compact` sono
 opzionali in import per preservare i vecchi file; i componenti nuovi ne
@@ -195,7 +195,7 @@ let desktop = starterDefinition('desktop-navbar');
 desktop = setDesktopNavbarField(desktop, 'layout.height', 80)!;
 desktop = { ...desktop, layout: { ...desktop.layout,
   regions: { brand: 'start', signin: 'end' } } };
-parseDefinition(desktop); // valido, nessun renderer Desktop in M5.1
+parseDefinition(desktop); // valido; renderizzabile con createComponent da M5.2
 ```
 
 La parte strutturale del JSON prodotto è, per esempio:
@@ -233,12 +233,13 @@ visibilità, azioni esplicite e testi accessibili. Non aggiunge drag-and-drop,
 dropdown, nesting arbitrario o un editor Desktop. L'ordine dei gruppi si
 modifica tramite API; il pannello attuale permette creazione e scioglimento.
 
-Per M5.2: implementare un renderer Desktop che legga questi nodi/regioni,
-aggiungere la sua voce a `runtime/components.ts` e `COMPONENTS` con le
-capability reali, un template e i controlli di anteprima Desktop. Verificare
-stili e accessibilità nel browser prima di abilitarne gli export. I due export
-attuali condividono il runtime; React espone anche `onAction`, Vanilla usa
-direttamente `BottomNavigationOptions`. Non serve un altro modello strutturale.
+M5.2 aggiunge `DesktopNavigation`, registrato nello stesso `runtime/components.ts`
+e `COMPONENTS`, con DOM a tre regioni e MaterialBinding condiviso. Il template
+Desktop e i controlli tecnici di anteprima usano lo Stage esistente. Supporta
+selezione, azioni native, focus, breakpoint e overflow accessibile. L'editor
+Desktop completo e gli adapter React/Vanilla sono rinviati a M5.3; solo JSON è
+annunciato come export Desktop. Tabs senza contratto pannelli sono rifiutate.
+[API, DOM, lifecycle e limiti del renderer](desktop-navbar-renderer.md).
 
 ## Compatibilità e limiti
 
@@ -250,8 +251,8 @@ direttamente `BottomNavigationOptions`. Non serve un altro modello strutturale.
   cambiano. Le nuove includono le API estese nello stesso runtime.
 - La validazione URL è più rigorosa per indirizzi malformati o ambigui;
   `javascript:`, `data:`, `file:`, backslash e credenziali vengono rifiutati.
-- Desktop è un contratto validato e modificabile via API, **non** una componente
-  disponibile nell'editor o negli export React/Vanilla. Nessun Jelly.
-- WebKit/Safari e dispositivi fisici non sono verificati in questa milestone.
+- Desktop ha runtime e anteprima tecnica disponibili; editor completo ed export
+  React/Vanilla restano per M5.3. Nessun Jelly.
+- Esiti per motore e limiti ambientali: vedere la matrice aggiornata. Nessuna certificazione di Safari o dispositivi fisici.
 
 Test ed esiti effettivi: [Compatibilità](compatibility.md).

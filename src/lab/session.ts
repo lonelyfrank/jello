@@ -86,6 +86,8 @@ import {
 } from '../components';
 import { iconFromSvg, SVG_MAX_BYTES, type IconRef } from '../components/icons';
 import type { BottomNavigation } from '../runtime/bottom-navigation';
+import type { DesktopNavigation } from '../runtime/desktop-navigation';
+import { navbarItems } from '../components/navbar-contract';
 import type { PreviewState } from '../runtime/component-types';
 import { ComponentOverlay } from '../stage/component-overlay';
 import { PreviewController, type PreviewRequest } from '../stage/controller';
@@ -148,10 +150,10 @@ function withoutMaterialOverrides(states: ComponentDefinition['states']): Compon
 
 const isNavbar = (doc: ComponentDefinition) => doc.type === 'mobile-navbar';
 /** Tabs of a navbar; any other component has none. */
-const tabsOf = (doc: ComponentDefinition) => (isNavbar(doc) ? navbarView(doc).children : []);
+const tabsOf = (doc: ComponentDefinition) => doc.type === 'desktop-navbar' ? navbarItems(doc) : (isNavbar(doc) ? navbarView(doc).children : []);
 
 function builderState(doc: ComponentDefinition, componentId: string, origin: BuilderState['origin'], modified: boolean): BuilderState {
-  return { doc, componentId, origin, modified, selection: 'root', previewTab: isNavbar(doc) ? navbarView(doc).defaultTab : '', previewState: null, pick: false, messages: null };
+  return { doc, componentId, origin, modified, selection: 'root', previewTab: doc.type === 'desktop-navbar' ? navbarActiveItem(doc) : isNavbar(doc) ? navbarView(doc).defaultTab : '', previewState: null, pick: false, messages: null };
 }
 
 const PATH_OF_BACKEND: Record<BackendRequest, ViewOptions['path'] | null> = { auto: 'auto', svg: 'refraction', css: 'satin', webgl2: null };
@@ -920,7 +922,7 @@ export class LabSession {
     const b = this.state.builder;
     const modified = opts.dirty === false ? false : b.origin === 'template' ? true : b.modified;
     if (this.state.workspace === 'builder') this.syncPreview(doc);
-    const previewTab = isNavbar(doc) ? navbarActiveItem(doc, b.previewTab) : '';
+    const previewTab = isNavbar(doc) || doc.type === 'desktop-navbar' ? navbarActiveItem(doc, b.previewTab) : '';
     const selection = b.selection === 'root' || b.selection === 'material' || tabsOf(doc).some((t) => t.id === b.selection) ? b.selection : 'root';
     const components = b.origin === 'user' ? this.state.components.map((i) => (i.id === b.componentId ? { ...i, name: doc.name, doc } : i)) : this.state.components;
     this.store.set({ builder: { ...b, doc, modified, previewTab, selection }, components });
@@ -961,9 +963,9 @@ export class LabSession {
   }
 
   /** The mounted navbar, when the open component is one. */
-  private navbarInstance(): BottomNavigation | null {
+  private navbarInstance(): BottomNavigation | DesktopNavigation | null {
     const c = this.controller?.component;
-    return c?.type === 'mobile-navbar' ? (c as BottomNavigation) : null;
+    return c?.type === 'mobile-navbar' ? (c as BottomNavigation) : c?.type === 'desktop-navbar' ? (c as DesktopNavigation) : null;
   }
 
   private syncSelection() {
@@ -1202,7 +1204,7 @@ export class LabSession {
   setComponentControl(target: ControlTarget, value: unknown): boolean {
     const doc = this.state.builder.doc;
     if (target.state && (!COMPONENTS.get(doc.type)?.states.includes(target.state) ||
-      (doc.type === 'mobile-navbar' && ['pressed', 'active', 'disabled'].includes(target.state)))) {
+      ((doc.type === 'mobile-navbar' || doc.type === 'desktop-navbar') && ['pressed', 'active', 'disabled'].includes(target.state)))) {
       this.notify(`Lo stato materiale «${target.state}» non è applicabile alla superficie di ${doc.type}. Usa gli stati della componente o modifica il preset nel Material Lab.`);
       return false;
     }

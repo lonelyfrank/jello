@@ -559,7 +559,7 @@ test.describe('definitions in the editor: serialization and import', () => {
   test('definitions of a type that has no implementation are refused to render, never shown as working', async ({ page }) => {
     await openLab(page, BUTTON);
     await controls(page);
-    await expect(page.locator('[data-planned]')).toHaveText([/Desktop Navbar/, /Input/]);
-    for (const id of ['desktop-navbar', 'input']) await expect(page.locator(`[data-template="${id}"]`)).toHaveCount(0);
+    await expect(page.locator('[data-planned]')).toHaveText([/Input/]);
+    for (const id of ['input']) await expect(page.locator(`[data-template="${id}"]`)).toHaveCount(0);
   });
 });

@@ -38,9 +38,9 @@ const navbar = (): ComponentDefinition => componentTemplate('mobile-navbar')!.cr
 const spec = (id: string): ComponentSpec => COMPONENTS.get(id)!;
 
 describe('registration', () => {
-  it('registers the button and the mobile navbar; desktop navbar and input are planned, not available', () => {
-    expect(COMPONENTS.list().map((c) => c.id)).toEqual(['button', 'mobile-navbar']);
-    expect(COMPONENTS.planned().map((p) => p.id)).toEqual(['desktop-navbar', 'input']);
+  it('registers Button, Mobile and Desktop; Input remains planned', () => {
+    expect(COMPONENTS.list().map((c) => c.id)).toEqual(['button', 'mobile-navbar', 'desktop-navbar']);
+    expect(COMPONENTS.planned().map((p) => p.id)).toEqual(['input']);
     for (const p of COMPONENTS.planned()) {
       expect(COMPONENTS.has(p.id)).toBe(false);
       expect(componentSpec(p.id)).toBeUndefined();
@@ -70,7 +70,7 @@ describe('registration', () => {
       expect(c.states[0]).toBe('default');
       expect(c.interactions.length).toBeGreaterThan(0);
       expect(Object.keys(c.materials).sort()).toEqual(MATERIALS.list().map((m) => m.id).sort());
-      expect(c.export.formats).toEqual(['component-json', 'component-react', 'component-vanilla']);
+      expect(c.export.formats).toEqual(c.id === 'desktop-navbar' ? ['component-json'] : ['component-json', 'component-react', 'component-vanilla']);
       expect(c.renderer.id).toBe(c.id);
       // The defaults are the descriptors' defaults and a new component carries them.
       const fresh = c.create();
@@ -100,7 +100,7 @@ describe('runtime binding', () => {
       expect(componentRuntime(c.id)?.type).toBe(c.id);
     }
     // Planned types have neither.
-    expect(componentRuntime('desktop-navbar')).toBeUndefined();
+    expect(componentRuntime('desktop-navbar')?.renderer).toBe('desktop-navbar');
     expect(componentRuntime('input')).toBeUndefined();
   });
 });

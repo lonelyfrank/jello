@@ -74,10 +74,11 @@ describe('mobile-navbar definition', () => {
     }
   });
 
-  it('the official templates are generic: the Mobile Navbar (Home, Explore, Profile) and the Button', () => {
+  it('the official Mobile, Button and Desktop templates are generic', () => {
     expect(COMPONENT_TEMPLATES.map((t) => [t.id, t.label])).toEqual([
       ['mobile-navbar', 'Mobile Navbar'],
       ['button', 'Button'],
+      ['desktop-navbar', 'Desktop Navbar'],
     ]);
     expect(componentTemplate('bt-darts')).toBeUndefined();
     expect(componentTemplate('bottom-navigation')).toBeUndefined();

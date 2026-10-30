@@ -124,7 +124,7 @@ export const DEFINITION_TYPES: readonly DefinitionTypeInfo[] = [
     label: 'Desktop Navbar',
     description: 'Barra orizzontale per schermi larghi: marchio, voci con etichetta e azioni.',
     typeVersion: 1,
-    implemented: false,
+    implemented: true,
     root: {
       role: 'navbar',
       slots: [
@@ -793,7 +793,7 @@ export function starterDefinition(type: DefinitionType, o: { id?: string; name?:
       ]);
       content = {
         root: text('Navigazione principale'),
-        brand: { href: '/' }, 'brand-label': text('Jello'),
+        brand: { href: '/' }, 'brand-label': text('Your brand'),
         docs: { value: 'docs', href: '/docs' }, 'docs-label': text('Documentazione'),
         pricing: { value: 'pricing', href: '/pricing' }, 'pricing-label': text('Prezzi'),
         signin: { value: 'signin' }, 'signin-label': text('Accedi'),

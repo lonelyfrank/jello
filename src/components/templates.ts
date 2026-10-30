@@ -215,7 +215,33 @@ const cta = (): ComponentDefinition => {
 export const COMPONENT_TEMPLATES: readonly ComponentTemplate[] = [
   { id: 'mobile-navbar', label: 'Mobile Navbar', description: 'Demo generica: Home, Explore, Profile. Aggiungi, riordina e personalizza le voci.', create: mobileNavbar },
   { id: 'button', label: 'Button', description: 'Pulsante con etichetta e icona: Primary, Secondary o Ghost, azione o collegamento.', create: cta },
+  { id: 'desktop-navbar', label: 'Desktop Navbar', description: 'Anteprima tecnica: Start / Main / End, Glass e Solid. Editor completo in M5.3.', create: desktopNavbar },
 ];
+
+/** Generic serializable Desktop starter; the consumer owns the brand. */
+function desktopNavbar(): ComponentDefinition {
+  const base = starterDefinition('desktop-navbar', { id: 'desktop-navbar', name: 'Desktop Navbar' });
+  const entries = [
+    ['brand', 'brand', 'Your brand', 'star'], ['home', 'item', 'Home', 'home'],
+    ['explore', 'item', 'Explore', 'compass'], ['projects', 'item', 'Projects', 'matrix'],
+    ['settings', 'item', 'Settings', 'settings'], ['action', 'action', 'Action', 'plus'],
+  ] as const;
+  const content: ComponentDefinition['content'] = { root: { text: 'Main navigation' } };
+  const children = entries.map(([id, role, label, icon]) => {
+    content[id] = { value: id, action: id === 'brand' ? { kind: 'navigate', href: '#home' }
+      : id === 'action' ? { kind: 'consumer', name: 'primary-action' } : { kind: 'select' } };
+    content[`${id}-label`] = { text: label };
+    content[`${id}-icon`] = { icon: { kind: 'builtin', name: icon } };
+    return { id, role, children: [{ id: `${id}-icon`, role: 'icon' as const }, { id: `${id}-label`, role: 'label' as const }] };
+  });
+  return { ...base, structure: { id: 'root', role: 'navbar', children }, content,
+    material: bindMaterial(builtinMaterial('navbar')!.doc, 'navbar'),
+    layout: { ...base.layout, regions: { brand: 'start', settings: 'end', action: 'end' } },
+    style: { ...base.style, typography: { ...(base.style.typography as object), fontSize: 14 } },
+    interactions: { ...base.interactions, behavior: { ...base.interactions.behavior, defaultItem: 'home' } },
+    responsive: { ...base.responsive, breakpoints: [{ id: 'compact', maxWidth: 640, overrides: { 'layout.compact': true, 'layout.labels': 'hide', 'layout.gap': 4, 'layout.padding': 8 } }] },
+  };
+}
 
 export function componentTemplate(id: string): ComponentTemplate | undefined {
   return COMPONENT_TEMPLATES.find((t) => t.id === id);

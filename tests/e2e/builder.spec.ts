@@ -207,13 +207,13 @@ test.describe('official templates and personal components', () => {
   test('only Jello’s own templates are official; types without an implementation are marked as such', async ({ page }) => {
     await openLab(page, BUILDER);
     await controls(page);
-    await expect(page.locator('[data-template]')).toHaveCount(2);
-    await expect(page.locator('[data-template]')).toHaveText([/Mobile Navbar/, /Button/]);
-    expect((await lab<{ id: string; origin: string }[]>(page, 'return h.builder.components()')).filter((c) => c.origin === 'template').map((c) => c.id)).toEqual(['mobile-navbar', 'button']);
+    await expect(page.locator('[data-template]')).toHaveCount(3);
+    await expect(page.locator('[data-template]')).toHaveText([/Mobile Navbar/, /Button/, /Desktop Navbar/]);
+    expect((await lab<{ id: string; origin: string }[]>(page, 'return h.builder.components()')).filter((c) => c.origin === 'template').map((c) => c.id)).toEqual(['mobile-navbar', 'button', 'desktop-navbar']);
     await expect(page.locator('#sidebar')).not.toContainText(/darts|\bBT\b|cable/i);
     // Planned, not offered: no editor, no template, nothing that looks like it works.
-    await expect(page.locator('.soon-card')).toHaveText([/Desktop Navbar/, /Input/]);
-    await expect(page.locator('.soon-card')).toHaveCount(2);
+    await expect(page.locator('.soon-card')).toHaveText([/Input/]);
+    await expect(page.locator('.soon-card')).toHaveCount(1);
   });
 
   test('an old template link opens the generic demo, with a notice', async ({ page }) => {
@@ -244,7 +244,7 @@ test.describe('official templates and personal components', () => {
     await page.waitForSelector('html[data-ready=true]');
     const list = await lab<{ id: string; origin: string }[]>(page, 'return h.builder.components()');
     expect(list).toContainEqual(expect.objectContaining({ id: 'bt-darts', origin: 'user' }));
-    expect(list.filter((c) => c.origin === 'template').map((c) => c.id)).toEqual(['mobile-navbar', 'button']);
+    expect(list.filter((c) => c.origin === 'template').map((c) => c.id)).toEqual(['mobile-navbar', 'button', 'desktop-navbar']);
     await lab(page, `h.builder.open('bt-darts')`);
     await expect(previewTabs(page)).toHaveText(['Matrice', 'Live', 'Risultati']);
     // Its icons, kept for compatibility, still render.

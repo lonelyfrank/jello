@@ -19,6 +19,7 @@ import {
   NAVBAR_FIELDS,
   definitionFields,
   navbarGroups,
+  navbarItems,
   OVERRIDE_PATHS,
   TAB_STYLE_FIELDS,
   MAX_TABS,
@@ -157,7 +158,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
             <button type="button" className="tree-node" data-node="root" aria-pressed={b.selection === 'root'} onClick={() => session.selectElement('root')}>
               <Icon name="left" />
               <span>{b.doc.name}</span>
-              <span className="tree-kind">{navbar ? 'navigazione' : 'pulsante'}</span>
+              <span className="tree-kind">{navbar || b.doc.type === 'desktop-navbar' ? 'navigazione' : 'pulsante'}</span>
             </button>
             {root ? (
               <ul>
@@ -183,7 +184,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
                   <li key={n.id}>
                     <span className="tree-node" data-node={n.id} aria-disabled="true">
                       {n.role === 'icon' ? <TabIcon icon={b.doc.content[n.id]?.icon ?? { kind: 'none' }} /> : <Icon name="left" />}
-                      <span>{n.role === 'label' ? (b.doc.content[n.id]?.text ?? '') : 'Icona'}</span>
+                      <span>{b.doc.type === 'desktop-navbar' ? `${n.id} · ${(b.doc.layout.regions as Record<string, string>)[n.id] ?? 'main'}` : n.role === 'label' ? (b.doc.content[n.id]?.text ?? '') : 'Icona'}</span>
                       <span className="tree-kind">{n.role === 'label' ? 'etichetta' : 'icona'} · {n.id}</span>
                     </span>
                   </li>
@@ -214,7 +215,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
             <p className="hint">{root.children.length} / {MAX_TABS} tab · quando non stanno nella barra decide «Responsive → Troppe tab».</p>
           </>
         ) : (
-          <p className="hint">Un pulsante ha un’etichetta e, se vuoi, un’icona: si modificano dal pannello a destra.</p>
+          <p className="hint">{b.doc.type === 'desktop-navbar' ? 'Anteprima tecnica Desktop: regioni Start / Main / End. Editor strutturale completo previsto per M5.3.' : 'Un pulsante ha un’etichetta e, se vuoi, un’icona: si modificano dal pannello a destra.'}</p>
         )}
       </section>      <section className="side-section" aria-labelledby="bl-library">
         <h2 className="side-title" id="bl-library">
@@ -327,6 +328,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
 
 /** One line about what a component contains, for the library list. */
 function summary(doc: ComponentDefinition): string {
+  if (doc.type === 'desktop-navbar') return `${navbarItems(doc).length} elementi · Start / Main / End`;
   if (doc.type === 'mobile-navbar') return `${navbarView(doc).children.length} tab`;
   const p = resolveButton(doc, Number.POSITIVE_INFINITY);
   return `«${p.text}» · ${p.style.variant}`;
@@ -456,7 +458,19 @@ export function Inspector({ session }: { session: LabSession }) {
         </p>
       </div>
       <div className="panel-body"><InspectorLevel>
-        {b.selection === 'material' ? <MaterialPanel session={session} /> : tab && root ? <TabInspector key={tab.id} session={session} tab={tab} root={root} /> : root ? <RootInspector session={session} root={root} /> : <ButtonInspector session={session} />}
+        {b.selection === 'material' ? <MaterialPanel session={session} /> : b.doc.type === 'desktop-navbar' ? <Section id="desktop-preview" title="Anteprima tecnica Desktop">
+          <p className="hint">Renderer M5.2 · Glass / Solid · Start / Main / End. Struttura, layout e breakpoint si aggiornano importando la definizione JSON. Editor completo e pacchetti React/Vanilla previsti per M5.3.</p>
+          <label htmlFor="desktop-preview-item">Elemento da verificare</label>
+          <select id="desktop-preview-item" value={b.selection} onChange={(e) => session.selectElement(e.target.value)}>
+            <option value="root">Navbar</option>
+            {navbarItems(b.doc).map((item) => <option key={item.id} value={item.id}>{item.label || item.id}</option>)}
+          </select>
+          <label htmlFor="desktop-preview-state">Stato visivo</label>
+          <select id="desktop-preview-state" disabled={b.selection === 'root'} value={b.previewState ?? ''} onChange={(e) => session.setPreviewState((e.target.value || null) as typeof b.previewState)}>
+            <option value="">Default</option>
+            {(['hover', 'pressed', 'focus', 'active', 'disabled'] as const).map((state) => <option key={state} value={state}>{state}</option>)}
+          </select>
+        </Section> : tab && root ? <TabInspector key={tab.id} session={session} tab={tab} root={root} /> : root ? <RootInspector session={session} root={root} /> : <ButtonInspector session={session} />}
       </InspectorLevel></div>
     </div>
   );
@@ -1066,8 +1080,8 @@ function MaterialPanel({ session }: { session: LabSession }) {
         );
       })}
       {advanced && definition.type === 'button' && !glass && <p className="hint">Button non dispone di Active: questo stato del materiale resta nel preset e si prova nel Material Lab.</p>}
-      {advanced && definition.type === 'mobile-navbar' && !glass && <p className="hint">Pressed, Active e Disabled appartengono alle singole tab: si personalizzano in «Stati e interazioni». Gli override pressed/active/disabled del materiale sono conservati nel preset e si provano nel Material Lab, ma non modificano la superficie dell’intera navbar.</p>}
-      {advanced && model.states.filter((st) => spec.states.includes(st.state) && (definition.type !== 'mobile-navbar' || !['pressed', 'active', 'disabled'].includes(st.state))).map((st) => (
+      {advanced && (definition.type === 'mobile-navbar' || definition.type === 'desktop-navbar') && !glass && <p className="hint">Pressed, Active e Disabled appartengono alle singole tab: si personalizzano in «Stati e interazioni». Gli override pressed/active/disabled del materiale sono conservati nel preset e si provano nel Material Lab, ma non modificano la superficie dell’intera navbar.</p>}
+      {advanced && model.states.filter((st) => spec.states.includes(st.state) && ((definition.type !== 'mobile-navbar' && definition.type !== 'desktop-navbar') || !['pressed', 'active', 'disabled'].includes(st.state))).map((st) => (
         <div key={st.state} data-state={st.state}>
           <h3 className="panel-sub">Stato · {st.state}</h3>
           {st.controls.map((c) => control(c, st.state as 'hover' | 'pressed' | 'active' | 'disabled'))}
