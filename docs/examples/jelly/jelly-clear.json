@@ -1,0 +1,68 @@
+{
+  "format": "jello-material",
+  "schemaVersion": 2,
+  "id": "jelly-clear",
+  "name": "Jelly Clear",
+  "family": "jelly",
+  "familyVersion": 1,
+  "runtime": {
+    "min": "0.3.0"
+  },
+  "material": {
+    "tint": "#d2e9ee",
+    "foreground": "#172b35",
+    "bodyOpacity": 0.65,
+    "highlightStrength": 0.25,
+    "roughness": 0.3,
+    "thickness": 0.35,
+    "transmission": 0.85,
+    "absorption": 0.35,
+    "scattering": 0.08,
+    "edgeFalloff": 1.5,
+    "elevation": 1,
+    "shadowColor": "#241838",
+    "shadowOpacity": 0.18
+  },
+  "geometry": {
+    "shape": "rounded",
+    "radius": 16
+  },
+  "bubbles": {
+    "enabled": "enabled",
+    "seed": 20631,
+    "density": 1,
+    "radiusMin": 1,
+    "radiusMax": 3,
+    "depthMin": 0.15,
+    "depthMax": 0.85,
+    "opacity": 0.35
+  },
+  "behavior": {
+    "responseMs": 360,
+    "dampingRatio": 0.65,
+    "maxDeformation": 0.06,
+    "press": "enabled",
+    "hover": "enabled",
+    "pressStrength": 0.65,
+    "releaseImpulse": 0.15
+  },
+  "quality": {
+    "profile": "auto"
+  },
+  "target": {
+    "backend": "auto",
+    "fallback": "css"
+  },
+  "states": {
+    "hover": {},
+    "pressed": {},
+    "active": {},
+    "disabled": {}
+  },
+  "meta": {
+    "createdAt": null,
+    "updatedAt": null,
+    "basedOn": null,
+    "notes": "Candidato M6.1, non verificato visivamente. Tinta tenue, maggiore trasmissione e riflessi controllati."
+  }
+}

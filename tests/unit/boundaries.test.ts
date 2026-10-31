@@ -64,6 +64,15 @@ describe('runtime boundary', () => {
 });
 
 describe('other boundaries', () => {
+  it('experimental Jelly reaches only pure model/descriptors and stays outside every production entry', () => {
+    const g = graph('src/model/experimental/jelly-presets.ts');
+    for (const f of g.files) expect(f, f).toMatch(/^src\/(core\/(descriptors|params)\.ts|model\/)/);
+    expect(g.packages).toEqual(['zod']);
+    for (const entry of ['src/model/index.ts', 'src/runtime/index.ts', 'src/lab/main.tsx', 'src/export/adapters.ts']) {
+      expect(graph(entry).files.filter((f) => f.includes('/experimental/')), entry).toEqual([]);
+    }
+  });
+
   it('the phone preview does not load the editor or React', () => {
     const g = graph('src/preview/main.ts');
     expect(g.files.filter((f) => f.startsWith('src/lab/'))).toEqual([]);

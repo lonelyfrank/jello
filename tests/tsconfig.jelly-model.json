@@ -1,0 +1,8 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["../src/model/experimental/jelly.ts", "../src/model/experimental/jelly-presets.ts"]
+}

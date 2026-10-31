@@ -1,0 +1,68 @@
+{
+  "format": "jello-material",
+  "schemaVersion": 2,
+  "id": "jelly-candy",
+  "name": "Jelly Candy",
+  "family": "jelly",
+  "familyVersion": 1,
+  "runtime": {
+    "min": "0.3.0"
+  },
+  "material": {
+    "tint": "#d64b93",
+    "foreground": "#301329",
+    "bodyOpacity": 0.82,
+    "highlightStrength": 0.35,
+    "roughness": 0.55,
+    "thickness": 0.55,
+    "transmission": 0.4,
+    "absorption": 2.2,
+    "scattering": 0.25,
+    "edgeFalloff": 2,
+    "elevation": 1,
+    "shadowColor": "#241838",
+    "shadowOpacity": 0.18
+  },
+  "geometry": {
+    "shape": "rounded",
+    "radius": 16
+  },
+  "bubbles": {
+    "enabled": "enabled",
+    "seed": 30631,
+    "density": 2,
+    "radiusMin": 1,
+    "radiusMax": 3,
+    "depthMin": 0.15,
+    "depthMax": 0.85,
+    "opacity": 0.35
+  },
+  "behavior": {
+    "responseMs": 360,
+    "dampingRatio": 0.4,
+    "maxDeformation": 0.09,
+    "press": "enabled",
+    "hover": "enabled",
+    "pressStrength": 0.65,
+    "releaseImpulse": 0.15
+  },
+  "quality": {
+    "profile": "auto"
+  },
+  "target": {
+    "backend": "auto",
+    "fallback": "css"
+  },
+  "states": {
+    "hover": {},
+    "pressed": {},
+    "active": {},
+    "disabled": {}
+  },
+  "meta": {
+    "createdAt": null,
+    "updatedAt": null,
+    "basedOn": null,
+    "notes": "Candidato M6.1, non verificato visivamente. Colore saturo, bordi più densi e risposta più elastica."
+  }
+}
