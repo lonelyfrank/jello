@@ -30,26 +30,45 @@ export function bubbleCount(b: JellyBubbles, width: number, height: number, qual
 }
 
 export interface JellyVisualGeometry {
-  width: number; height: number; radius: number; pose: number; path: string;
+  width: number; height: number; radius: number; pose: number; path: string; contact: JellyContact;
 }
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
-/** Same local mapping for the silhouette and inclusions; diagnostic only, no solver. */
-export function surfacePoint(g: Pick<JellyVisualGeometry, 'width' | 'height' | 'pose'>, x: number, y: number): { x: number; y: number } {
-  const middle = g.width / 2;
+export interface JellyContact { x: number; y: number }
+export interface JellyDeformation { displacement: number; contact?: JellyContact }
+export function jellyContact(point: JellyContact = { x: 0.5, y: 0.5 }): JellyContact {
+  return { x: clamp(Number.isFinite(point.x) ? point.x : 0.5, 0, 1), y: clamp(Number.isFinite(point.y) ? point.y : 0.5, 0, 1) };
+}
+/** One global spatially weighted mode, not a propagating wave or volume solver.
+ * Signed pose is short-side displacement. Positive compresses toward contact;
+ * negative extends. Same map for outline, inclusions and optical landmarks. */
+export function surfacePoint(g: Pick<JellyVisualGeometry, 'width' | 'height' | 'pose'> & { contact?: JellyContact }, x: number, y: number): { x: number; y: number } {
+  const { width: w, height: h } = g;
+  if (!w || !h || !g.pose) return { x, y };
+  const c = g.contact ?? { x: 0.5, y: 0.5 }, short = Math.min(w, h);
+  const weight = 0.65 + 0.35*Math.exp(-4*(x/w-c.x)**2);
+  const compression = 2*g.pose*short/h*weight;
   return {
-    x: middle + (x - middle) * (1 + g.pose * 0.45 * Math.sin(Math.PI * y / (g.height || 1))),
-    y: g.height / 2 + (y - g.height / 2) * (1 - g.pose),
+    x: w/2 + (x-w/2)*(1 + 0.7*g.pose*short/w*Math.sin(Math.PI*y/h)),
+    y: c.y*h + (y-c.y*h)*(1-compression),
   };
 }
-export function jellyGeometry(width: number, height: number, geometry: JellyGeometry, hostRadius?: number, diagnosticPose = 0): JellyVisualGeometry {
+export function jellyGeometry(width: number, height: number, geometry: JellyGeometry, hostRadius?: number, deformation: number | JellyDeformation = 0): JellyVisualGeometry {
   const w = Number.isFinite(width) ? Math.max(0, width) : 0;
   const h = Number.isFinite(height) ? Math.max(0, height) : 0;
   const r = clamp(hostRadius ?? (geometry.shape === 'capsule' ? Math.min(w, h) / 2 : geometry.radius), 0, Math.min(w, h) / 2);
-  const g = { width: w, height: h, radius: r, pose: clamp(Number.isFinite(diagnosticPose) ? diagnosticPose : 0, 0, 0.05) };
+  // Numeric diagnostic compatibility remains capped at 5%; dynamics are explicit and signed.
+  const raw = typeof deformation === 'number' ? deformation : deformation.displacement;
+  const pose = clamp(Number.isFinite(raw) ? raw : 0, typeof deformation === 'number' ? 0 : -0.15, typeof deformation === 'number' ? 0.05 : 0.15);
+  const contact = jellyContact(typeof deformation === 'number' ? undefined : deformation.contact);
+  const g = { width: w, height: h, radius: r, pose, contact };
   const p = (x: number, y: number) => { const v = surfacePoint(g, x, y); return `${v.x},${v.y}`; };
+  const line = (x0: number, y0: number, x1: number, y1: number) => {
+    if (!g.pose) return `L${p(x1,y1)}`;
+    return Array.from({ length: 12 }, (_, i) => { const t=(i+1)/12; return `L${p(x0+(x1-x0)*t,y0+(y1-y0)*t)}`; }).join(' ');
+  };
   // Cubic rounded rectangle. Mapping every control point also supports a future surface-only deformation.
   const k = r * 0.5522847498;
-  const path = `M${p(r, 0)} L${p(w-r, 0)} C${p(w-r+k, 0)} ${p(w, r-k)} ${p(w, r)} L${p(w, h-r)} C${p(w, h-r+k)} ${p(w-r+k, h)} ${p(w-r, h)} L${p(r, h)} C${p(r-k, h)} ${p(0, h-r+k)} ${p(0, h-r)} L${p(0, r)} C${p(0, r-k)} ${p(r-k, 0)} ${p(r, 0)} Z`;
+  const path = `M${p(r, 0)} ${line(r,0,w-r,0)} C${p(w-r+k, 0)} ${p(w, r-k)} ${p(w, r)} ${line(w,r,w,h-r)} C${p(w, h-r+k)} ${p(w-r+k, h)} ${p(w-r, h)} ${line(w-r,h,r,h)} C${p(r-k, h)} ${p(0, h-r+k)} ${p(0, h-r)} ${line(0,h-r,0,r)} C${p(0, r-k)} ${p(r-k, 0)} ${p(r, 0)} Z`;
   return { ...g, path };
 }
 
@@ -92,6 +111,6 @@ export function jellyOptics(m: JellyMaterial, shortSide: number, opaque = false)
     shadowY, shadowBlur, shadowColor: m.shadowColor,
     shadowOpacity: m.elevation ? m.shadowOpacity * (opaque ? 1 : m.bodyOpacity) : 0,
     shadowCSS: elevationShadow(m.elevation, m.shadowColor, m.shadowOpacity*(opaque ? 1 : m.bodyOpacity), false),
-    padding: Math.ceil(3*shadowBlur + shadowY + shortSide*0.05 + 2),
+    padding: Math.ceil(3*shadowBlur + shadowY + shortSide*0.35 + 2),
   };
 }

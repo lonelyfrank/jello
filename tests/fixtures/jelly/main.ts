@@ -2,13 +2,17 @@
 import { JELLY_CANDIDATE_PRESETS } from '../../../src/model/experimental/jelly-presets';
 import { JELLY_PARAMS, jellyParams, jellySectionOf, parseExperimentalJelly, type JellyExperimentalDocument, type JellyOverrideState } from '../../../src/model/experimental/jelly';
 import { attachExperimentalJelly, type ExperimentalJellySurface, type JellyRenderOptions } from '../../../src/runtime/experimental/jelly';
+import { bindJellyInput } from '../../../src/runtime/experimental/jelly-input';
+import { createJellyCoordinator, JellyCoordinator } from '../../../src/runtime/experimental/jelly-scheduler';
 import './style.css';
+const coordinator = createJellyCoordinator();
+const inputCleanups: (() => void)[] = [];
 
 const root = document.querySelector<HTMLElement>('#fixture')!;
 const events = new AbortController();
-root.innerHTML = `<header><span class="eyebrow">JELLO / MATERIAL EXPERIMENT</span><h1>Jelly, da ferma.</h1><p>M6.2 · Button nativo · SVG decorativo / fallback CSS · nessun solver</p></header>
-<section class="workbench"><div><div id="main-preview" class="sample light"></div><pre id="status" aria-live="polite"></pre><p id="error" role="alert"></p></div><form id="controls"><label>Preset<select id="preset"></select></label><label>Sfondo<select id="background"><option>light</option><option>dark</option><option>gradient</option><option>checker</option></select></label><label>Geometria<select id="geometry"><option value="main">240×64 rounded</option><option value="small">96×48 rounded</option><option value="capsule">180×56 capsule</option></select></label><label>Stato<select id="state"><option>default</option><option>hover</option><option>pressed</option><option>active</option><option>disabled</option></select></label><label><input id="opaque" type="checkbox"> Modalità opaca</label><label><input id="transparency" type="checkbox"> Override trasparenza ridotta</label><label><input id="pose" type="checkbox"> Posa diagnostica statica (5%)</label><div id="descriptor-controls"></div><p>Movimento non disponibile in M6.2. DPR SVG non controllato; cap reali 24/12/4 bolle. Nessun budget di gruppo adattivo.</p></form></section>
-<section><h2>Quattro materiali, quattro sfondi</h2><div id="preset-matrix" class="matrix"></div></section>
+root.innerHTML = `<header><span class="eyebrow">JELLO / MATERIAL EXPERIMENT</span><h1>Jelly, sotto pressione.</h1><p>M6.3 · Button nativo · risposta elastica SVG / fallback statico</p></header>
+<section class="workbench"><div><div id="main-preview" class="sample light"></div><pre id="status" aria-live="polite"></pre><p id="error" role="alert"></p></div><form id="controls"><label>Preset<select id="preset"></select></label><label>Sfondo<select id="background"><option>light</option><option>dark</option><option>gradient</option><option>checker</option></select></label><label>Geometria<select id="geometry"><option value="main">240×64 rounded</option><option value="small">96×48 rounded</option><option value="capsule">180×56 capsule</option></select></label><label>Stato<select id="state"><option>default</option><option>hover</option><option>pressed</option><option>active</option><option>disabled</option></select></label><label><input id="opaque" type="checkbox"> Modalità opaca</label><label><input id="transparency" type="checkbox"> Override trasparenza ridotta</label><label><input id="pose" type="checkbox"> Posa diagnostica statica (5%)</label><button type="button" id="sequence">Press → hold → release</button><button type="button" id="repeat">Pressioni ripetute</button><button type="button" id="cancel">Cancel</button><button type="button" id="suspend">Sospendi / riprendi</button><output id="motion-diagnostics"></output><div id="descriptor-controls"></div><p>Moto decorativo normalizzato sul lato corto. Contatto indicato nella diagnostica. DPR SVG non controllato; cap reali 24/12/4 bolle. Nessun budget di gruppo adattivo.</p></form></section>
+<section><h2>Soft / Clear / Candy / Dense — interattivi</h2><div id="motion-matrix" class="matrix"></div><h3>Confronto fermo — qualità static, stessi parametri</h3><div id="motion-static-matrix" class="matrix"></div></section><section><h2>Quattro materiali, quattro sfondi</h2><div id="preset-matrix" class="matrix"></div></section>
 <section><h2>Forma, inclusioni e backend</h2><div id="variant-matrix" class="matrix"></div></section>
 <section><h2>Stati statici e focus</h2><div id="state-matrix" class="matrix"></div></section>
 <details id="optical-comparison"><summary>Confronto ottico: estremi dei parametri</summary><div id="optical-matrix" class="matrix"></div></details>`;
@@ -24,20 +28,22 @@ function button(parent: HTMLElement, doc: JellyExperimentalDocument, options: Je
   host.innerHTML = '<span class="button-content"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg><span>Jelly</span></span>';
   host.addEventListener('click', () => { host.dataset.clicks = String(++clicks); });
   parent.append(host);
-  const surface = attachExperimentalJelly(host, doc, options);
+  const surface = attachExperimentalJelly(host, doc, options, coordinator);
+  inputCleanups.push(bindJellyInput(host, surface));
   return { host, surface };
 }
 const soft = JELLY_CANDIDATE_PRESETS[0]!.doc;
 let current = structuredClone(soft);
 const primary = button(mainPreview, current);
 primary.host.id = 'primary-button';
+const contactMarker = document.createElement('span');contactMarker.className = 'contact-marker';contactMarker.setAttribute('aria-hidden','true');mainPreview.append(contactMarker);
 const syncStatus = () => { document.getElementById('status')!.textContent = JSON.stringify(primary.surface.status, null, 2); };
 primary.surface.onStatus(syncStatus);
 syncStatus();
 for (const { doc } of JELLY_CANDIDATE_PRESETS) select('preset').add(new Option(doc.name, doc.id));
 
 const controls = new Map<string, HTMLInputElement | HTMLSelectElement>();
-for (const d of JELLY_PARAMS.filter((d) => d.affects !== 'motion' && d.key !== 'hover')) {
+for (const d of JELLY_PARAMS) {
   const label = document.createElement('label');
   label.title = d.description;
   label.textContent = `${d.label}${d.type === 'number' && d.unit ? ` (${d.unit})` : ''}`;
@@ -80,14 +86,6 @@ select('preset').addEventListener('change', () => {
   for (const [key, control] of controls) control.value = String(jellyParams(current)[key as keyof ReturnType<typeof jellyParams>]);
   refresh();
 });
-primary.host.addEventListener('pointerenter', () => { if (select('state').value === 'default') primary.surface.setHovered(true); });
-primary.host.addEventListener('pointerleave', () => { if (select('state').value === 'default') primary.surface.setState({ hover: false, pressed: false }); });
-primary.host.addEventListener('pointerdown', () => { if (select('state').value === 'default') primary.surface.setPressed(true); });
-window.addEventListener('pointerup', () => { if (select('state').value === 'default') primary.surface.setPressed(false); }, { signal: events.signal });
-primary.host.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') primary.surface.setPressed(true); });
-primary.host.addEventListener('keyup', () => primary.surface.setPressed(false));
-primary.host.addEventListener('blur', () => primary.surface.setState({ hover: false, pressed: false }));
-
 const surfaces: ExperimentalJellySurface[] = [primary.surface];
 function sample(matrix: string, title: string, background: string, doc = soft, options: JellyRenderOptions = {}, geometry = 'main', state?: JellyOverrideState) {
   const card = document.createElement('article');
@@ -95,11 +93,13 @@ function sample(matrix: string, title: string, background: string, doc = soft, o
   card.innerHTML = `<span class="caption"></span>`;
   card.querySelector('.caption')!.textContent = title;
   document.getElementById(matrix)!.append(card);
-  const item = button(card, doc, options, geometry);
+  const item = button(card, state === 'pressed' ? { ...doc, quality: { profile: 'static' } } : doc, options, geometry);
   if (state) { item.surface.setState({ [state]: true }); item.host.disabled = state === 'disabled'; item.host.setAttribute('aria-pressed', String(state === 'active')); }
   surfaces.push(item.surface);
   return item;
 }
+for (const { doc } of JELLY_CANDIDATE_PRESETS) sample('motion-matrix', doc.name, 'light', doc);
+for (const { doc } of JELLY_CANDIDATE_PRESETS) sample('motion-static-matrix', `${doc.name} / static`, 'light', { ...doc, quality: { profile: 'static' } });
 for (const { doc } of JELLY_CANDIDATE_PRESETS) for (const background of ['light', 'dark', 'gradient', 'checker']) sample('preset-matrix', `${doc.name} / ${background}`, background, doc);
 for (const geometry of ['main', 'small', 'capsule']) sample('variant-matrix', `Soft / ${geometry}`, 'light', { ...soft, geometry: { ...soft.geometry, shape: geometry === 'capsule' ? 'capsule' : 'rounded' } }, {}, geometry);
 sample('variant-matrix', 'Soft / bolle off', 'light', { ...soft, bubbles: { ...soft.bubbles, enabled: 'disabled' } });
@@ -133,11 +133,48 @@ document.getElementById('optical-comparison')!.addEventListener('toggle', (event
 });
 
 /** Explicit fixture diagnostics for browser lifecycle tests. Never part of the renderer API. */
-const api = { primary, surfaces, soft, attach: attachExperimentalJelly, get current() { return current; }, refresh };
+let sequenceTimers: ReturnType<typeof setTimeout>[] = [];
+const stopSequence = () => { sequenceTimers.forEach(clearTimeout); sequenceTimers = []; };
+function sequence(repeated = false) {
+  stopSequence(); primary.surface.cancelPress();
+  const pulses = repeated ? [0, 110, 220, 330] : [0];
+  for (const start of pulses) {
+    sequenceTimers.push(setTimeout(() => primary.surface.setPressed(true), start));
+    sequenceTimers.push(setTimeout(() => primary.surface.setPressed(false), start+(repeated ? 65 : 450)));
+  }
+}
+document.getElementById('sequence')!.addEventListener('click', () => sequence());
+document.getElementById('repeat')!.addEventListener('click', () => sequence(true));
+document.getElementById('cancel')!.addEventListener('click', () => { stopSequence(); primary.surface.cancelPress(); });
+let suspended = false;
+document.getElementById('suspend')!.addEventListener('click', () => { suspended = !suspended; primary.surface.setSuspended(suspended); });
+// Pull a single compact output at 10Hz, without rerendering the form or status.
+const diagnostics = setInterval(() => {
+  const m = primary.surface.motion;
+  contactMarker.style.left = `${primary.host.offsetLeft+m.contact.x*primary.host.offsetWidth}px`;
+  contactMarker.style.top = `${primary.host.offsetTop+m.contact.y*primary.host.offsetHeight}px`;
+  contactMarker.style.opacity = m.pressed ? '1' : '0';
+  document.getElementById('motion-diagnostics')!.textContent = `x ${m.x.toFixed(5)} · v ${m.v.toFixed(4)} · target ${m.target.toFixed(4)} · contact ${m.contact.x.toFixed(2)},${m.contact.y.toFixed(2)} · active ${m.scheduler.active} · RAF ${Number(m.scheduler.pending)}/${m.scheduler.frames}`;
+}, 100);
+/** Manual injected time uses exactly the real renderer, with no native RAF. */
+function capture(doc = current, geometry = 'main') {
+  let time = 0;
+  const callbacks = new Map<number, (time: number) => void>(); let id = 0;
+  const clock = new JellyCoordinator({ now: () => time, request: (cb) => { callbacks.set(++id, cb); return id; }, cancel: (key) => { callbacks.delete(key); } });
+  const parent = document.createElement('div'); parent.id = 'capture-scene'; parent.className = 'sample light';
+  root.prepend(parent);
+  const host = document.createElement('button'); host.className = `test-button ${geometry}`; host.type = 'button'; host.innerHTML = primary.host.querySelector('.button-content')!.outerHTML; parent.append(host);
+  const surface = attachExperimentalJelly(host, doc, {}, clock);
+  const advance = (next: number) => { time = next; const batch = [...callbacks.values()]; callbacks.clear(); batch.forEach((cb) => cb(time)); };
+  return { host, surface, advance, coordinator: clock, destroy: () => { surface.destroy(); clock.destroy(); parent.remove(); } };
+}
+const api = { primary, surfaces, soft, presets: JELLY_CANDIDATE_PRESETS, attach: attachExperimentalJelly, bind: bindJellyInput, coordinator, capture, sequence, stopDiagnostics: () => clearInterval(diagnostics), get current() { return current; }, refresh };
 declare global { interface Window { jellyFixture: typeof api } }
 window.jellyFixture = api;
 if (import.meta.hot) import.meta.hot.dispose(() => {
-  events.abort();
+  events.abort(); clearInterval(diagnostics); stopSequence();
+  for (const cleanup of inputCleanups) cleanup();
   for (const surface of surfaces) surface.destroy();
+  coordinator.destroy();
   Reflect.deleteProperty(window, 'jellyFixture');
 });

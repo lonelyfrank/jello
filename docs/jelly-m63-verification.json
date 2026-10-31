@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-31",
+  "timezone": "Europe/Rome",
+  "baseline": "a112627c909e4710285b44d47349dd4058d03855",
+  "unit": {
+    "passed": 541,
+    "files": 29,
+    "skipped": 0
+  },
+  "browser": {
+    "passed": 38,
+    "casesPerBrowser": 19,
+    "engines": [
+      "Chromium 156.0.8078.4",
+      "Firefox 157.0"
+    ],
+    "skipped": 0
+  },
+  "typecheck": "passed",
+  "domFreeModel": "passed",
+  "build": "passed; pre-existing Studio chunk size warning",
+  "generatedExamples": "4 unchanged",
+  "staticRegression": "24/24 same-host comparisons; zero differing pixel channels",
+  "dynamicEvidence": "screenshots/jelly-m63/evidence.json",
+  "performance": "screenshots/jelly-m63/performance.json",
+  "limitations": [
+    "headless Linux, Vite development measurements",
+    "Firefox 12 surfaces RAF interval p95 about 50ms",
+    "Firefox longtask API unavailable",
+    "document hidden simulated for deterministic lifecycle test",
+    "Chromium touch CDP emulation; Firefox touch PointerEvent + wheel",
+    "no physical Android/Pixel/WebView, Safari, GPU/paint/heap profiling",
+    "full production E2E suite not run"
+  ],
+  "productionArtifactHashes": {
+    "dist-lib/jello.js": "9411d44c113d9b9bd2d4e18cf10f750c4bfed5946ab54aca40790e944a01bfd3",
+    "dist-lib/jello.css": "5fb34366844700a325d8d6d0bd1a4432d10265cdb10519db10a50cabb758fa1a",
+    "dist/assets/lab-Bv_Q91HJ.js": "edc5bf59419f1016f4592aedf4bf7f3d88c422ad768186fca442071d7d1acfa2"
+  },
+  "publicStatus": "planned; M6.4 not started",
+  "published": false
+}

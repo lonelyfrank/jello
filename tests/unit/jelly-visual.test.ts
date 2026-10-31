@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultJellyParams, splitJellyParams } from '../../src/model/experimental/jelly';
 import { JELLY_CANDIDATE_PRESETS } from '../../src/model/experimental/jelly-presets';
-import { bubbleCandidates, bubbleCount, jellyGeometry, jellyOptics, mulberry32, opticalQuality, projectBubble } from '../../src/model/experimental/jelly-visual';
+import { bubbleCandidates, bubbleCount, jellyGeometry, jellyOptics, mulberry32, opticalQuality, projectBubble, surfacePoint } from '../../src/model/experimental/jelly-visual';
 
 const sections = () => splitJellyParams(defaultJellyParams());
 
@@ -102,5 +102,40 @@ describe('Jelly geometry and optical profile', () => {
     expect(doc.states.pressed.tint).not.toBe(doc.material.tint);
     expect(doc.states.active.tint).not.toBe(doc.material.tint);
     expect(doc.states.disabled.foreground).not.toBe(doc.material.foreground);
+  });
+});
+
+
+describe('M6.3 signed short-side geometry', () => {
+  it.each([[240,64],[96,48],[180,56],[24,24],[480,24]])('keeps an orientation-preserving finite map at %s×%s, both signs and all contacts', (w,h) => {
+    const { geometry, bubbles, material } = sections();
+    const candidates=bubbleCandidates(0,24), saved=structuredClone(candidates);
+    for(const contact of [{x:.5,y:.5},{x:0,y:.5},{x:1,y:.5},{x:.5,y:0},{x:.5,y:1},{x:0,y:0},{x:1,y:1}]) for(const displacement of [-.15,-.05,0,.05,.15]) {
+      const g=jellyGeometry(w,h,{...geometry,shape:w===180?'capsule':geometry.shape},undefined,{displacement,contact});
+      expect(g.pose).toBe(displacement); expect(g.path).not.toMatch(/NaN|Infinity/);
+      for(let i=0;i<=20;i++) for(let j=0;j<=20;j++) {
+        const x=w*i/20,y=h*j/20, e=1e-4;
+        const a=surfacePoint(g,x,y), b=surfacePoint(g,x+e,y), c=surfacePoint(g,x,y+e);
+        const det=((b.x-a.x)*(c.y-a.y)-(c.x-a.x)*(b.y-a.y))/(e*e);
+        expect(det).toBeGreaterThan(.5);
+        expect(Math.abs(a.x-x)).toBeLessThanOrEqual(Math.min(w,h)*.15+.001);
+        expect(Math.abs(a.y-y)).toBeLessThanOrEqual(Math.min(w,h)*.3+.001);
+      }
+      for(const candidate of candidates) {
+        const projected=projectBubble(candidate,bubbles,g,material), point=surfacePoint(g,candidate.x*w,candidate.y*h);
+        expect(projected.x).toBe(point.x);expect(projected.y).toBe(point.y);expect(projected.index).toBe(candidate.index);
+      }
+    }
+    expect(candidates).toEqual(saved);
+  });
+  it('converts displacement using the short side, clamps bad contact and keeps zero-size finite',()=>{
+    const {geometry}=sections();
+    for(const size of [[240,64],[64,240]]) {
+      const [w,h]=size as [number,number];
+      const g=jellyGeometry(w,h,geometry,undefined,{displacement:.15,contact:{x:NaN,y:Infinity}});
+      expect(g.contact).toEqual({x:.5,y:.5});
+      expect(surfacePoint(g,w/2,0).y).toBeCloseTo(.15*Math.min(w,h),10);
+    }
+    expect(jellyGeometry(0,0,geometry,undefined,{displacement:-.15,contact:{x:-2,y:5}})).toMatchObject({contact:{x:0,y:1}});
   });
 });

@@ -1,12 +1,13 @@
-# Jelly Material — RFC sperimentale M6.1 / M6.2
+# Jelly Material — RFC sperimentale M6.1 / M6.2 / M6.3
 
 Data: 31 ottobre 2026. Checkout di partenza: `main`,
 `6ce08f74670ba0e1353d217b2768a43fe96c08a4`, pulito.
-Stato: **modello candidato e renderer ottico privato SVG/CSS implementati;
-nessun solver, editor o runtime pubblico Jelly**.
-Consegne e verifiche: [M6.1](jelly-m61-delivery.md), [M6.2](jelly-m62-delivery.md).
-Le sezioni di audit M6.1 e i piani M6.3/M6.4 restano storici/proposti;
-la sezione «M6.2 implementata» distingue il codice eseguito dalla roadmap.
+Stato: **modello candidato, renderer ottico privato SVG/CSS e dinamica M6.3
+implementati; nessun editor o runtime pubblico Jelly**.
+Consegne e verifiche: [M6.1](jelly-m61-delivery.md), [M6.2](jelly-m62-delivery.md), [M6.3](jelly-m63-delivery.md).
+Le sezioni di audit M6.1 e il piano M6.4 restano storici/proposti;
+le sezioni «M6.2 implementata» e «M6.3 implementata» distinguono le consegne dalla roadmap.
+Le affermazioni statiche della sezione M6.2 descrivono quella fase storica.
 
 ## Decisione e confine pubblico
 
@@ -370,56 +371,90 @@ obiettivi di roadmap: nessun controllo fittizio del DPR di SVG inline.
 Parametri del solver/impulso sono dati non supportati e sono elencati nello status,
 senza slider di movimento. Nessun WebGL2 sperimentale aggiunto in questa fase.
 
-## M6.3 — Piano solver, input e lifecycle
+## M6.3 implementata — solver, input e lifecycle privati
 
-Solver puro separato dal renderer, soluzione analitica a tratti dell'oscillatore:
-`x'' + 2ζω0 x' + ω0²(x-target)=0`, `ω0=2π/(responseMs/1000)` in s⁻¹.
-`x` è compressione normalizzata sul lato corto, riposo/target iniziale zero;
-target press = `pressStrength × maxDeformation`.
-Al press cambiare il target conservando velocità; nessun impulso addizionale
-persistito. Al release target zero e
-`v += -releaseImpulse × ω0 × maxDeformation` (frazione lato corto/s).
-Gestire rami sotto/critico/sovrasmorzato e limite per ζ≈1 senza instabilità.
-Clamp di |x| a maxDeformation e azzeramento della velocità verso l'esterno
-al limite; input estremi sempre finiti. Settle proposto:
-`|x-target| < 1e-4` e `|v| < 1e-3 s⁻¹`, poi snap al target e stop scheduling.
-Niente massa/stiffness duplicati o tempo di assestamento indipendente.
+[Consegna e prove dinamiche](jelly-m63-delivery.md): equazioni complete, policy,
+comandi, risultati, filmstrip/video ispezionati e misure locali. Nessuna integrazione
+produttiva o nuovo parametro persistito; candidati e JSON M6.2 invariati.
 
-Propagazione: un modo di compressione globale con deformazione spaziale pesata
-verso il contatto e rigonfiamento laterale stilizzato. Nessuna onda locale con
-ritardo di propagazione dichiarata; niente controllo waveSpeed. Il renderer
-deformerà una silhouette campionata, non scala dell'intero componente. La
-fixture M6.2 dovrà provare questa deformabilità prima di finalizzare il solver.
-Punto press locale [0,1]² effimero, tastiera al centro. Aggiornamenti ripetuti
-conservano inerzia, con reset controllato solo dopo sospensione/cancel/disable.
+Il [solver puro](../src/model/experimental/jelly-motion.ts), compilato senza DOM,
+usa `x''+2ζωx'+ω²(x-target)=0`, `ω=2π/(responseMs/1000)` in s⁻¹.
+x e target sono frazioni del lato corto; v è frazione lato corto/s. Il tempo è
+sempre passato esplicitamente in ms. Press cambia target a
+`pressStrength×maxDeformation`, conservando v; release torna a zero e aggiunge
+`-releaseImpulse×ω×maxDeformation` una volta sola. Cancel/disable/blur resettano,
+senza impulso. Zero strength non produce impulso, zero limite annulla il moto.
 
-Policy input: un puntatore attivo per superficie; ignorare i successivi fino
-al release/cancel. Riusare le azioni di Button/navbar, nessun click aggiunto.
-Pointerleave senza pressione rimuove hover; se interrompe una pressione senza
-capture annulla e torna a riposo; cancel/lostcapture/blur/disable annullano
-senza impulso di release. Non catturare puntatori se interferisce con scroll
-o link. Drag solo se già previsto dal contratto host; qui non aggiunto.
-Mai animazione di posizione sul focus. Disabled e active distinti anche da fermi.
+Transizioni libere analitiche sotto/critiche/sovrasmorzate, con limite numerico
+`|ζ²-1|<1e-10`. **Griglia interna fissa di 1ms** per i vincoli: dopo la transizione
+esatta si proietta `|x|≤maxDeformation`, azzerando v uscente. Un tetto
+`|v|≤2ω maxDeformation` limita anche burst deliberati. Gli urti sono quantizzati
+entro 1ms; non si dichiara integrazione continua esatta degli eventi di limite.
+L'osservazione fra tick non modifica la base canonica; gli input commettono lo
+stato al timestamp esatto e aprono una nuova griglia. Nessun Euler variabile o
+clamp dipendente dalla cadenza RAF. Le prove a 30/60/120Hz e cadenza irregolare,
+con urti e timestamp di eventi uguali, hanno errore x <1e-10 ai tempi comuni.
 
-Un scheduler per gruppo con budget Stage; RAF solo mentre un solver cambia.
-Offscreen/documento nascosto: fermare aggiornamenti, cancellare timestamp;
-resume senza recuperare il grande delta. Resize riproietta lo stato normalizzato
-e aggiorna il punto locale senza rigenerare il seed. Parametri in place quando
-possibile, dopo validazione atomica. Destroy idempotente cancella RAF, observer,
-listener, risorse SVG/GPU e callback; gruppo condiviso distrutto solo dal owner.
+Nessun accumulator di frame: resto temporale separato. Riposo esatto salta i tick;
+recupero puro limitato a 60.000 tick (dopo 60s il peggior inviluppo ammesso è
+attenuato di circa e^-47). Il runtime resetta tempo e posa alla sospensione e
+alla ripresa, quindi non recupera il tempo nascosto. Soglie di settle confermate:
+`|x-target|<1e-4` **e** `|v|<1e-3 s^-1`. Soltanto la posa visiva viene snappata
+al target; la decisione di fermare RAF è separata dallo stato matematico.
+Anche il Button tenuto premuto si stabilizza senza lavoro continuativo.
 
-Reduced motion runtime: annulla rimbalzo/deformazione, mantiene stato statico;
-variazioni della media query applicate subito. Reduced transparency: rilevamento
-dove esiste e preferenza manuale alternativa. Forced-colors: colori di sistema,
-bordo e focus visibile, selezione/disabled distinguibili senza movimento.
-Preferenze accessibili appartengono a host/runtime, non ai parametri per frame.
-Posizione/velocità/pointerId/timestamp/visibilità non toccano undo, JSON o IndexedDB.
+Mapping firmato esplicito `{displacement,contact}`. Con S lato corto, W/H misure,
+d ampiezza e `(cx,cy)` contatto, peso `.65+.35 exp(-4(u/W-cx)²)`:
+`X=W/2+(u-W/2)(1+.7dS/W sin(πv/H))`,
+`Y=cyH+(v-cyH)(1-2dS/H weight)`.
+Il fattore S/H converte le unità; al centro il bordo può spostarsi dS, con contatto
+estremo il bordo opposto fino a 2dS. Il limite del solver è un'ampiezza del modo,
+non il limite di ogni vertice. Un solo modo globale pesato, nessuna propagazione
+ondosa o conservazione del volume. Silhouette campionata, centri delle bolle e
+landmark dei riflessi condividono la mappa; il grande highlight usa una scala
+locale approssimata. Clip/ombra supportano entrambi i segni con padding `.35S+2`
+oltre a blur/offset. Posa diagnostica numerica 0… .05 distinta dalla dinamica.
 
-Gate solver: stessa sequenza di input con 30/60/120 Hz e frame irregolari,
-stesso tempo di osservazione, errore normalizzato proposto ≤1e-4; burst, pause
-lunghe, estremi dei descrittori, resize, cambi parametri e destroy in animazione.
-Assert su finitezza, clamp, dissipazione a target zero e nessuna callback dopo
-destroy. Tolleranze da misurare, non risultati di questa fase.
+Contatto locale [0,1]², clamp e centro per dimensioni nulle/non finiti; tastiera
+al centro. Conversione da client/rect in CSS viewport; supportate traslazioni e
+scale positive allineate agli assi, non rotazione/skew/prospettiva. Il contatto è
+fissato al press. Nuovo contatto durante moto: smoothstep 80ms, x/v continui.
+Resize aggiorna misure locali senza riseminare né cambiare coordinate normalizzate.
+
+[Adattatore input](../src/runtime/experimental/jelly-input.ts) riutilizzabile,
+separato da solver e Button: nessun click sintetico, navigazione, preventDefault,
+pointer capture o touch-action:none. Un puntatore attivo; up/cancel su window;
+leave/lostcapture/blur/disabled annullano senza impulso. Space/Enter nativi,
+repeat ignorato per il materiale. Active indipendente da pressed.
+
+[Coordinatore](../src/runtime/experimental/jelly-scheduler.ts) esplicitamente
+condiviso dalla fixture, clock/RAF iniettabili. Insieme delle superfici in moto,
+un RAF pendente, zero RAF idle/hold settled/static/reduced-motion/destroy.
+La superficie distrugge solo un coordinatore creato da sé. Offscreen via
+IntersectionObserver, hidden via visibilitychange e dimensioni zero cancellano
+input e sospendono; resume da riposo. Distruzione idempotente, anche da callback,
+rimuove observer/media/listener/adattatori posseduti preservando l'host.
+
+Documento validato atomicamente; aggiornamenti conservano x/v validi e proiettano
+subito i limiti ridotti. Ottica e misure in cache. Il frame scrive solo attributi
+dipendenti dalla posa: niente layout, schema/JSON/PRNG, nodi, gradienti/filtri,
+React/storage o notifiche globali di status. La diagnostica compatta della fixture
+è una lettura separata a 10Hz e viene disabilitata nelle misure.
+
+Static usa ottica medium e mantiene i parametri motion; CSS/opaco/forced-colors
+non simulano moto invisibile. Reduced motion live resetta subito la posa e lascia
+feedback statico. In opaco, press/active/disabled hanno indizi distinti anche con
+la coppia cromatica fissa. Contenuto, focus e hitbox restano immobili.
+
+Verifiche: 541 unitari, 38 browser su Chromium/Firefox, typecheck/build e modello
+senza DOM. Regressione a riposo contro l'oggetto Git M6.2, nello stesso host:
+24/24 combinazioni identiche pixel per pixel. Le prove dinamiche coprono centro
+e lato, Soft/Candy, 240×64/96×48; test geometrici aggiungono capsule 180×56,
+24×24/480×24 e quattro bordi. [Misure](screenshots/jelly-m63/performance.json):
+una/dodici superfici, ritorno a zero RAF, zero letture layout nel loop; Firefox
+con dodici SVG mostra intervalli RAF p95 ~50ms nell'ambiente headless misurato.
+Nessuna promessa su ThinkPad/Android; long task osservabili solo su Chromium.
+Restano l'approssimazione ottica e il costo multi-superficie, non un nuovo motore.
 
 ## M6.4 — Piano componenti, Inspector, persistenza ed export
 
@@ -470,7 +505,7 @@ in Vanilla. I nomi dei file dentro ZIP non dimostrano funzionamento.
 
 ## Budget iniziali e protocollo QA futuro
 
-**Obiettivi da calibrare**, nessuna misura Jelly disponibile:
+**Obiettivi da calibrare**; le misure private M6.3 sono nella [consegna](jelly-m63-delivery.md#misure-e-limiti-prestazionali) e non attestano questi budget:
 
 | Profilo ottico | DPR cap | Raster equivalente per gruppo | Bolle/superficie | Bolle/gruppo | Superfici in moto/gruppo |
 | --- | --- | --- | --- | --- | --- |

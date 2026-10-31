@@ -1,6 +1,10 @@
-/** Private M6.2 DOM renderer. Explicit imports only; not a registered material runtime. */
+/** Private M6.3 DOM renderer. Explicit imports only; not a registered material runtime. */
 import { parseExperimentalJelly, resolveExperimentalJelly, type JellyExperimentalDocument, type JellyOverrideState } from '../../model/experimental/jelly';
 import { bubbleCandidates, bubbleCount, jellyGeometry, jellyOptics, opticalQuality, projectBubble, type BubbleCandidate, type OpticalQuality } from '../../model/experimental/jelly-visual';
+import { initJellyMotion, evolveJellyMotion, pressJellyMotion, resetJellyMotion, configureJellyMotion, jellyMotionSettled, type JellyMotion } from '../../model/experimental/jelly-motion';
+import { createJellyCoordinator, type JellyCoordinator } from './jelly-scheduler';
+import { jellyContact, surfacePoint, type JellyContact, type JellyOptics } from '../../model/experimental/jelly-visual';
+import type { JellyMaterial } from '../../model/experimental/jelly';
 import type { MaterialSurface } from '../material-types';
 import './jelly.css';
 
@@ -16,7 +20,7 @@ export interface JellyRenderOptions {
 export interface JellyRenderStatus {
   requestedBackend: 'auto' | 'svg' | 'css'; backend: 'svg' | 'css';
   requestedProfile: JellyExperimentalDocument['quality']['profile']; opticalProfile: OpticalQuality;
-  motion: 'static'; motionReduced: boolean; transparencyReduced: boolean; forcedColors: boolean; opaque: boolean;
+  motion: 'static' | 'dynamic'; motionReduced: boolean; transparencyReduced: boolean; forcedColors: boolean; opaque: boolean;
   suspended: boolean; bubbles: number; effectiveAlpha: number; effectiveTransmission: number;
   reasons: string[]; unsupported: string[]; updates: number; distributions: number; decorativePadding: number;
 }
@@ -46,6 +50,27 @@ export class ExperimentalJellySurface implements MaterialSurface {
   private options: JellyRenderOptions;
   private flags: Partial<Record<JellyOverrideState, boolean>> = {};
   private destroyed = false;
+  private motionState: JellyMotion;
+  private readonly coordinator: JellyCoordinator;
+  private readonly ownsCoordinator: boolean;
+  private intersection: IntersectionObserver;
+  private offscreen = false;
+  private manuallySuspended = false;
+  private canMove = false;
+  private material!: JellyMaterial;
+  private optics!: JellyOptics;
+  private motionUpdates = 0;
+  private contact: JellyContact = { x: 0.5, y: 0.5 };
+  private contactFrom = this.contact;
+  private contactTo = this.contact;
+  private contactTime = -Infinity;
+  private destroyListeners = new Set<() => void>();
+  private inputResets = new Set<() => void>();
+  private visibilityChanged = () => {
+    if (this.destroyed) return;
+    if (document.hidden) this.resetInput();
+    this.render();
+  };
   private root = document.createElement('span');
   private image: SVGSVGElement | null = null;
   private parts: Record<string, SVGElement> = {};
@@ -71,10 +96,13 @@ export class ExperimentalJellySurface implements MaterialSurface {
   private listeners = new Set<(status: JellyRenderStatus) => void>();
   private mediaChanged = () => this.render();
 
-  constructor(host: HTMLElement, doc: JellyExperimentalDocument, options: JellyRenderOptions = {}) {
+  constructor(host: HTMLElement, doc: JellyExperimentalDocument, options: JellyRenderOptions = {}, coordinator?: JellyCoordinator) {
     this.doc = validated(doc);
     validateOptions(options);
     this.options = { ...options };
+    this.coordinator = coordinator ?? createJellyCoordinator();
+    this.ownsCoordinator = !coordinator;
+    this.motionState = initJellyMotion(this.doc.behavior, this.coordinator.clock.now());
     this.host = host;
     this.hadClass = host.classList.contains('jelly-surface');
     this.savedForeground = host.style.getPropertyValue('--jelly-foreground');
@@ -86,8 +114,25 @@ export class ExperimentalJellySurface implements MaterialSurface {
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(host);
     for (const query of Object.values(this.media)) query.addEventListener('change', this.mediaChanged);
+    this.intersection = new IntersectionObserver((entries) => {
+      if (this.destroyed) return;
+      const offscreen = !entries[entries.length-1]?.isIntersecting;
+      if (offscreen === this.offscreen) return;
+      this.offscreen = offscreen;
+      if (offscreen) this.resetInput();
+      this.render();
+    });
+    this.intersection.observe(host);
+    document.addEventListener('visibilitychange', this.visibilityChanged);
     this.resize();
   }
+  /** Pull-only compact diagnostics: never broadcasts the full status per frame. */
+  get motion() { const s = this.motionState; return { x: s.x, v: s.v, target: s.target, time: s.time, pressed: !!this.flags.pressed, contact: { ...this.contact }, updates: this.motionUpdates, scheduler: this.coordinator.status }; }
+  onDestroy(listener: () => void): () => void {
+    if (this.destroyed) { listener(); return () => {}; }
+    this.destroyListeners.add(listener); return () => this.destroyListeners.delete(listener);
+  }
+  onInputReset(listener: () => void): () => void { this.inputResets.add(listener); return () => this.inputResets.delete(listener); }
   get status(): JellyRenderStatus { return { ...this.currentStatus, reasons: [...this.currentStatus.reasons], unsupported: [...this.currentStatus.unsupported] }; }
   onStatus(listener: (status: JellyRenderStatus) => void): () => void {
     if (this.destroyed) return () => {};
@@ -99,22 +144,70 @@ export class ExperimentalJellySurface implements MaterialSurface {
     if (this.destroyed) return;
     const next = validated(doc);
     validateOptions(options);
+    this.motionState = configureJellyMotion(this.motionState, next.behavior, this.coordinator.clock.now());
     this.doc = next;
     this.options = { ...options };
     this.render();
   }
   setState(flags: Partial<Record<JellyOverrideState, boolean>>): void {
     if (this.destroyed) return;
-    this.flags = { ...this.flags, ...flags };
+    const { pressed, ...rest } = flags;
+    this.flags = { ...this.flags, ...rest };
+    if (flags.disabled) this.resetInput();
+    if (pressed !== undefined) this.transitionPress(pressed);
     this.render();
   }
-  setPressed(pressed: boolean): void { this.setState({ pressed }); }
+  setPressed(pressed: boolean, point?: JellyContact): void {
+    if (this.destroyed) return;
+    this.transitionPress(pressed, point);
+    this.render();
+  }
+  private transitionPress(pressed: boolean, point?: JellyContact): void {
+    const allowed = !this.flags.disabled && !this.host.matches(':disabled') && !this.suspended;
+    pressed = pressed && allowed;
+    if (!!this.flags.pressed === pressed) return;
+    const now = this.coordinator.clock.now();
+    this.motionState = evolveJellyMotion(this.motionState, now);
+    if (pressed) {
+      this.contact = this.contactAt(now);
+      this.contactFrom = Math.abs(this.motionState.x) < 1e-4 ? jellyContact(point) : this.contact;
+      this.contactTo = jellyContact(point);
+      this.contactTime = now;
+      this.contact = this.contactFrom;
+    }
+    this.flags.pressed = pressed;
+    if (this.canMove) this.motionState = pressJellyMotion(this.motionState, pressed, now);
+  }
+  cancelPress(): void {
+    if (this.destroyed) return;
+    this.resetInput();
+    this.render();
+  }
+  /** Explicit fixture/application suspension; resume always starts at rest. */
+  setSuspended(suspended: boolean): void {
+    if (this.destroyed || suspended === this.manuallySuspended) return;
+    this.manuallySuspended = suspended;
+    this.resetInput();
+    this.render();
+  }
+  private get suspended(): boolean { return document.hidden || this.offscreen || this.manuallySuspended || !this.width || !this.height; }
+  private resetInput(): void {
+    this.flags.pressed = false;
+    this.motionState = resetJellyMotion(this.motionState, this.coordinator.clock.now());
+    this.coordinator.remove(this);
+    for (const reset of this.inputResets) { if (this.destroyed) break; reset(); }
+  }
+  private contactAt(time: number): JellyContact {
+    const t = Math.min(1, Math.max(0, (time-this.contactTime)/80));
+    const u = t*t*(3-2*t);
+    return { x: this.contactFrom.x+(this.contactTo.x-this.contactFrom.x)*u, y: this.contactFrom.y+(this.contactTo.y-this.contactFrom.y)*u };
+  }
   setHovered(hover: boolean): void { this.setState({ hover }); }
   setActive(active: boolean): void { this.setState({ active }); }
   setDisabled(disabled: boolean): void { this.setState({ disabled }); }
   resize(): void {
     if (this.destroyed) return;
-    const { width, height } = this.host.getBoundingClientRect();
+    const width = this.host.offsetWidth, height = this.host.offsetHeight;
     if (this.currentStatus && width === this.width && height === this.height) return;
     this.width = width;
     this.height = height;
@@ -123,6 +216,14 @@ export class ExperimentalJellySurface implements MaterialSurface {
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
+    for (const cleanup of this.destroyListeners) cleanup();
+    this.destroyListeners.clear();
+    this.coordinator.remove(this);
+    if (this.ownsCoordinator) this.coordinator.destroy();
+    this.intersection.disconnect();
+    document.removeEventListener('visibilitychange', this.visibilityChanged);
+    for (const reset of this.inputResets) reset();
+    this.inputResets.clear();
     this.observer.disconnect();
     for (const query of Object.values(this.media)) query.removeEventListener('change', this.mediaChanged);
     this.listeners.clear();
@@ -201,7 +302,7 @@ export class ExperimentalJellySurface implements MaterialSurface {
     const quality = opticalQuality(this.doc.quality.profile);
     const g = jellyGeometry(this.width, this.height, this.doc.geometry, this.options.radius, backend === 'svg' ? this.options.diagnosticPose : 0);
     const o = jellyOptics(m, Math.min(this.width, this.height), opaque);
-    const reasons = ['M6.2: resa statica; solver, rifrazione e lettura dello sfondo assenti.'];
+    const reasons = ['M6.3: modo elastico decorativo; nessuna rifrazione o lettura dello sfondo.'];
     if (this.doc.quality.profile === 'auto') reasons.push('Auto usa medium; nessun adattamento hardware o budget di gruppo misurato.');
     if (this.doc.quality.profile === 'static') reasons.push('Static usa ottica medium.');
     if (!available) reasons.push('SVG escluso dalla policy/capacità: fallback CSS.');
@@ -209,7 +310,15 @@ export class ExperimentalJellySurface implements MaterialSurface {
     if (opaque) reasons.push('Opaco: alpha 1, trasmissione 0; coppia lilla/inchiostro fissa per leggibilità.');
     if (transparencyReduced) reasons.push('Trasparenza ridotta: preferenza rilevata o override manuale.');
     if (forced) reasons.push('Forced colors: colori di sistema; decorazioni eliminate.');
-    if (this.media.motion.matches) reasons.push('Reduced motion rilevato; nessuna animazione in questa fase.');
+    if (this.media.motion.matches) reasons.push('Reduced motion: dinamica fermata e superficie stabile.');
+    this.canMove = backend === 'svg' && !this.media.motion.matches && this.doc.quality.profile !== 'static' && this.doc.behavior.press === 'enabled' && !this.flags.disabled && !this.suspended;
+    if (this.suspended || this.currentStatus?.suspended) this.resetInput();
+    else if (!this.canMove) {
+      this.motionState = resetJellyMotion(this.motionState, this.coordinator.clock.now());
+      this.coordinator.remove(this);
+    }
+    this.material = m;
+    this.optics = o;
     const count = backend === 'svg' ? bubbleCount(this.doc.bubbles, this.width, this.height, quality) : 0;
     if (backend === 'css' || this.doc.bubbles.enabled === 'disabled' || this.doc.bubbles.density === 0) { this.candidates = []; this.seed = null; }
     else if (count && this.seed !== this.doc.bubbles.seed) {
@@ -221,6 +330,9 @@ export class ExperimentalJellySurface implements MaterialSurface {
     this.root.dataset.backend = backend;
     this.root.dataset.opaque = String(opaque);
     this.root.dataset.forced = String(forced);
+    this.root.dataset.pressed = String(!!this.flags.pressed && this.doc.behavior.press === 'enabled');
+    this.root.dataset.active = String(!!this.flags.active);
+    this.root.dataset.disabled = String(!!this.flags.disabled);
     this.root.style.borderRadius = `${g.radius}px`;
     this.root.style.setProperty('--jelly-shadow', o.shadowCSS);
     this.root.style.setProperty('--jelly-css-alpha', String(o.compositingAlpha));
@@ -234,7 +346,6 @@ export class ExperimentalJellySurface implements MaterialSurface {
       this.setupSVG();
       this.image!.style.display = '';
       attributes(this.image!, { viewBox: `0 0 ${this.width || 1} ${this.height || 1}` });
-      for (const key of ['clip', 'base', 'corePath', 'veil', 'poolPath', 'rimPath', 'shadow']) attributes(this.parts[key]!, { d: g.path });
       attributes(this.parts.surface!, { opacity: o.compositingAlpha });
       attributes(this.parts.corePath!, { opacity: 0.3 + m.thickness*0.45 });
       attributes(this.parts.shadow!, { fill: o.shadowColor, opacity: o.shadowOpacity, transform: `translate(0 ${o.shadowY})` });
@@ -248,12 +359,10 @@ export class ExperimentalJellySurface implements MaterialSurface {
       attributes(this.parts.pool!.children[2]!, { 'stop-color': o.deepTint, 'stop-opacity': 0.18 + m.thickness*0.3 });
       attributes(this.parts.rimPath!, { 'stroke-width': o.rimWidth*2, opacity: 0.35 + m.thickness*0.5 });
       attributes(this.parts.veil!, { fill: o.lightTint, opacity: o.veil });
-      attributes(this.parts.highlight!, { cx: this.width*0.36, cy: this.height*0.11, rx: this.width*0.55, ry: this.height*o.highlightSpread, opacity: o.highlight*1.5 });
-      const inset = Math.min(g.radius*0.6+3, this.width*0.2);
-      const glossY = this.height * (0.15+0.16*m.roughness);
-      attributes(this.parts.glossPath!, { d: `M${inset},${this.height*0.21} Q${inset},5 ${g.radius+5},5 C${this.width*0.35},3 ${this.width*0.7},4 ${this.width-inset-5},${this.height*0.15} Q${this.width*0.6},${glossY} ${this.width*0.35},${glossY} Q${inset},${glossY+3} ${inset},${this.height*0.21} Z`, opacity: o.highlight*(1-m.roughness*0.3) });
-      attributes(this.parts.gleam!, { d: `M${Math.max(5, g.radius*0.5)},${this.height*0.25} Q${Math.max(7, g.radius*0.5)},${5+g.pose*this.height/2} ${g.radius+8},5 Q${this.width*0.3},3 ${this.width*0.6},6`, 'stroke-width': 1+o.highlight, opacity: o.highlight*0.8, filter: `url(#${this.id}-soften)` });
-      attributes(this.parts.caustic!, { d: `M${g.radius+5},${this.height-6} Q${this.width*0.58},${this.height-2-g.pose*this.height/2} ${this.width-g.radius-5},${this.height-8}`, 'stroke-width': 1+m.thickness*2, opacity: 0.1+m.transmission*m.thickness*0.45 });
+      attributes(this.parts.highlight!, { opacity: o.highlight*1.5 });
+      attributes(this.parts.glossPath!, { opacity: o.highlight*(1-m.roughness*0.3) });
+      attributes(this.parts.gleam!, { 'stroke-width': 1+o.highlight, opacity: o.highlight*0.8, filter: `url(#${this.id}-soften)` });
+      attributes(this.parts.caustic!, { 'stroke-width': 1+m.thickness*2, opacity: 0.1+m.transmission*m.thickness*0.45 });
     } else if (this.image) this.image.style.display = 'none';
     while (this.bubbleNodes.length > count) this.bubbleNodes.pop()!.remove();
     while (this.bubbleNodes.length < count) {
@@ -270,16 +379,52 @@ export class ExperimentalJellySurface implements MaterialSurface {
     });
     this.currentStatus = {
       requestedBackend: this.doc.target.backend, backend, requestedProfile: this.doc.quality.profile, opticalProfile: quality,
-      motion: 'static', motionReduced: this.media.motion.matches, transparencyReduced, forcedColors: forced, opaque,
-      suspended: !this.width || !this.height, bubbles: count,
+      motion: this.canMove ? 'dynamic' : 'static', motionReduced: this.media.motion.matches, transparencyReduced, forcedColors: forced, opaque,
+      suspended: this.suspended, bubbles: count,
       effectiveAlpha: o.compositingAlpha, effectiveTransmission: o.transmission, reasons,
-      unsupported: ['responseMs', 'dampingRatio', 'maxDeformation', 'pressStrength', 'releaseImpulse', 'drift', 'refraction', ...(backend === 'css' ? ['bubbles.*', 'diagnosticPose'] : [])],
+      unsupported: ['drift', 'refraction', ...(backend === 'css' ? ['bubbles.*', 'diagnosticPose'] : [])],
       updates: ++this.updates, distributions: this.distributions, decorativePadding: o.padding,
     };
+    this.renderMotion(jellyMotionSettled(this.motionState));
+    if (this.canMove && !jellyMotionSettled(this.motionState)) this.coordinator.add(this);
     for (const listener of this.listeners) { if (this.destroyed) break; listener(this.status); }
   }
+  /** Only pose-dependent SVG attributes. No layout, validation, optics, PRNG or status listeners. */
+  private renderMotion(settled = false): void {
+    if (this.destroyed || this.currentStatus?.backend !== 'svg' || !this.image) return;
+    const pose = this.canMove ? (settled ? this.motionState.target : this.motionState.x) : 0;
+    const diagnostic = this.options.diagnosticPose ?? 0;
+    const g = jellyGeometry(this.width, this.height, this.doc.geometry, this.options.radius,
+      diagnostic && !this.media.motion.matches ? diagnostic : { displacement: pose, contact: this.contact });
+    for (const key of ['clip', 'base', 'corePath', 'veil', 'poolPath', 'rimPath', 'shadow']) attributes(this.parts[key]!, { d: g.path });
+    const p = (x: number, y: number) => { const v = surfacePoint(g, x, y); return `${v.x},${v.y}`; };
+    const w = this.width, h = this.height;
+    const center = surfacePoint(g, w*0.36, h*0.11);
+    const dy = surfacePoint(g, w*0.36, h*0.11+1).y-center.y;
+    attributes(this.parts.highlight!, { cx: center.x, cy: center.y, rx: w*0.55*(1+g.pose*0.1), ry: h*this.optics.highlightSpread*dy });
+    const inset = Math.min(g.radius*0.6+3, w*0.2), gy = h*(0.15+0.16*this.material.roughness);
+    attributes(this.parts.glossPath!, { d: `M${p(inset,h*0.21)} Q${p(inset,5)} ${p(g.radius+5,5)} C${p(w*0.35,3)} ${p(w*0.7,4)} ${p(w-inset-5,h*0.15)} Q${p(w*0.6,gy)} ${p(w*0.35,gy)} Q${p(inset,gy+3)} ${p(inset,h*0.21)} Z` });
+    attributes(this.parts.gleam!, { d: `M${p(Math.max(5,g.radius*0.5),h*0.25)} Q${p(Math.max(7,g.radius*0.5),5)} ${p(g.radius+8,5)} Q${p(w*0.3,3)} ${p(w*0.6,6)}` });
+    attributes(this.parts.caustic!, { d: `M${p(g.radius+5,h-6)} Q${p(w*0.58,h-2)} ${p(w-g.radius-5,h-8)}` });
+    this.bubbleNodes.forEach((node, i) => {
+      const b = projectBubble(this.candidates[i]!, this.doc.bubbles, g, this.material);
+      attributes(node, { transform: `translate(${b.x} ${b.y})` });
+    });
+    this.motionUpdates++;
+  }
+  /** Coordinator participant; false removes this surface without touching group ownership. */
+  frame(time: number): boolean {
+    if (this.destroyed || !this.canMove) return false;
+    if (this.host.matches(':disabled') || this.suspended) { this.cancelPress(); return false; }
+    this.motionState = evolveJellyMotion(this.motionState, time);
+    this.contact = this.contactAt(time);
+    const settled = jellyMotionSettled(this.motionState);
+    this.renderMotion(settled);
+    return !this.destroyed && !settled;
+  }
+
 }
 
-export function attachExperimentalJelly(host: HTMLElement, doc: JellyExperimentalDocument, options?: JellyRenderOptions): ExperimentalJellySurface {
-  return new ExperimentalJellySurface(host, doc, options);
+export function attachExperimentalJelly(host: HTMLElement, doc: JellyExperimentalDocument, options?: JellyRenderOptions, coordinator?: JellyCoordinator): ExperimentalJellySurface {
+  return new ExperimentalJellySurface(host, doc, options, coordinator);
 }

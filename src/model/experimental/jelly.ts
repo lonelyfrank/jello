@@ -109,7 +109,7 @@ export const JELLY_PARAMS: readonly JellyDescriptor[] = [
   num('opacity', 'bubbles', 'surface', 'Opacità inclusioni', '', 0, 1, 0.01, 0.35, 'Contrasto massimo delle inclusioni prima dell’attenuazione in profondità.'),
   num('responseMs', 'motion', 'motion', 'Risposta', 'ms', 80, 1200, 10, 360, 'Periodo naturale non smorzato: omega0 = 2π / (responseMs / 1000).'),
   num('dampingRatio', 'motion', 'motion', 'Smorzamento', '', 0.15, 2, 0.01, 0.65, 'Rapporto zeta; 1 critico, sotto 1 oscillatorio. Non è un settle time.'),
-  num('maxDeformation', 'motion', 'motion', 'Deformazione massima', 'lato corto', 0, 0.15, 0.005, 0.06, 'Limite normalizzato dello spostamento decorativo; contenuto e hitbox stabili.'),
+  num('maxDeformation', 'motion', 'motion', 'Deformazione massima', 'lato corto', 0, 0.15, 0.005, 0.06, 'Ampiezza massima del modo sul lato corto; al contatto estremo il bordo opposto può muoversi fino al doppio. Contenuto e hitbox stabili.'),
   choice('press', 'interaction', 'motion', 'Pressione', ['enabled', 'disabled'], 'enabled', 'Abilita il feedback, non un nuovo evento semantico.'),
   choice('hover', 'interaction', 'surface', 'Hover', ['enabled', 'disabled'], 'enabled', 'Solo feedback di aspetto, senza spostamento del focus.'),
   num('pressStrength', 'interaction', 'motion', 'Intensità pressione', '', 0, 1, 0.01, 0.65, 'Frazione di maxDeformation usata dal target di compressione.'),

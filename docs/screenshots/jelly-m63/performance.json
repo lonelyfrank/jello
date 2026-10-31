@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-31",
+  "build": "Vite development (not production bundled)",
+  "platform": "linux",
+  "kernel": "7.2.13-200.fc44.x86_64",
+  "cpu": "Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz",
+  "results": [
+    {
+      "browser": "chromium",
+      "version": "156.0.8078.4",
+      "viewport": "1400×1100",
+      "dpr": 1,
+      "cases": [
+        {
+          "count": 1,
+          "elapsedMs": 1381.1999999955297,
+          "idleDurationMs": 300.6000000014901,
+          "idleFrames": 0,
+          "idleAfter": 0,
+          "maximumActive": 1,
+          "frames": 84,
+          "updates": 84,
+          "totalUpdateMs": 22.100000075995922,
+          "updateP95Ms": 0.3999999985098839,
+          "updateMaxMs": 0.5,
+          "frameIntervalP95Ms": 16.700000000000045,
+          "layoutReads": 0,
+          "longTaskSupported": true,
+          "longTasks": [],
+          "final": {
+            "active": 0,
+            "pending": false,
+            "frames": 84,
+            "updates": 84
+          }
+        },
+        {
+          "count": 12,
+          "elapsedMs": 1399.2999999970198,
+          "idleDurationMs": 300.29999999701977,
+          "idleFrames": 0,
+          "idleAfter": 0,
+          "maximumActive": 12,
+          "frames": 85,
+          "updates": 1020,
+          "totalUpdateMs": 141.2999999895692,
+          "updateP95Ms": 0.29999999701976776,
+          "updateMaxMs": 0.8999999985098839,
+          "frameIntervalP95Ms": 16.700000000000273,
+          "layoutReads": 0,
+          "longTaskSupported": true,
+          "longTasks": [],
+          "final": {
+            "active": 0,
+            "pending": false,
+            "frames": 169,
+            "updates": 1104
+          }
+        }
+      ]
+    },
+    {
+      "browser": "firefox",
+      "version": "157.0",
+      "viewport": "1400×1100",
+      "dpr": 1,
+      "cases": [
+        {
+          "count": 1,
+          "elapsedMs": 1409,
+          "idleDurationMs": 300,
+          "idleFrames": 0,
+          "idleAfter": 0,
+          "maximumActive": 1,
+          "frames": 85,
+          "updates": 85,
+          "totalUpdateMs": 43,
+          "updateP95Ms": 1,
+          "updateMaxMs": 2,
+          "frameIntervalP95Ms": 17.299999999999955,
+          "layoutReads": 0,
+          "longTaskSupported": false,
+          "longTasks": [],
+          "final": {
+            "active": 0,
+            "pending": false,
+            "frames": 85,
+            "updates": 85
+          }
+        },
+        {
+          "count": 12,
+          "elapsedMs": 1444,
+          "idleDurationMs": 300,
+          "idleFrames": 0,
+          "idleAfter": 0,
+          "maximumActive": 12,
+          "frames": 37,
+          "updates": 439,
+          "totalUpdateMs": 109,
+          "updateP95Ms": 1,
+          "updateMaxMs": 1,
+          "frameIntervalP95Ms": 50.32000000000062,
+          "layoutReads": 0,
+          "longTaskSupported": false,
+          "longTasks": [],
+          "final": {
+            "active": 0,
+            "pending": false,
+            "frames": 122,
+            "updates": 524
+          }
+        }
+      ]
+    }
+  ]
+}

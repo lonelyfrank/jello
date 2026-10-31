@@ -1,0 +1,1343 @@
+{
+  "platform": "linux",
+  "kernel": "7.2.13-200.fc44.x86_64",
+  "cpu": "Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz",
+  "results": [
+    {
+      "browser": "chromium",
+      "version": "156.0.8078.4",
+      "viewport": "1400×1100",
+      "dpr": 1,
+      "build": "Vite development, local installed dependencies",
+      "sequences": [
+        {
+          "preset": 0,
+          "geometry": "main",
+          "contact": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.019572447322055597,
+              "v": 0.3154757558256765,
+              "target": 0.039
+            },
+            {
+              "t": 240,
+              "x": 0.04165110253709833,
+              "v": -0.002447952431281113,
+              "target": 0.039
+            },
+            {
+              "t": 450,
+              "x": 0.03883767697905827,
+              "v": -0.15876124870438718,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015130784427545231,
+              "v": -0.29759248634872304,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.0003652897791983139,
+              "v": -0.09133445663756609,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.0026073547221628613,
+              "v": 0.012487627561014219,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": 1.2429219153403452e-9,
+              "v": 1.1590811289402269e-7,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 0,
+          "geometry": "main",
+          "contact": {
+            "x": 0.95,
+            "y": 0.25
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.019572447322055597,
+              "v": 0.3154757558256765,
+              "target": 0.039
+            },
+            {
+              "t": 240,
+              "x": 0.04165110253709833,
+              "v": -0.002447952431281113,
+              "target": 0.039
+            },
+            {
+              "t": 450,
+              "x": 0.03883767697905827,
+              "v": -0.15876124870438718,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015130784427545231,
+              "v": -0.29759248634872304,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.0003652897791983139,
+              "v": -0.09133445663756609,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.0026073547221628613,
+              "v": 0.012487627561014219,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": 1.2429219153403452e-9,
+              "v": 1.1590811289402269e-7,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 0,
+          "geometry": "small",
+          "contact": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.019572447322055597,
+              "v": 0.3154757558256765,
+              "target": 0.039
+            },
+            {
+              "t": 240,
+              "x": 0.04165110253709833,
+              "v": -0.002447952431281113,
+              "target": 0.039
+            },
+            {
+              "t": 450,
+              "x": 0.03883767697905827,
+              "v": -0.15876124870438718,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015130784427545231,
+              "v": -0.29759248634872304,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.0003652897791983139,
+              "v": -0.09133445663756609,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.0026073547221628613,
+              "v": 0.012487627561014219,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": 1.2429219153403452e-9,
+              "v": 1.1590811289402269e-7,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 0,
+          "geometry": "small",
+          "contact": {
+            "x": 0.95,
+            "y": 0.25
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.019572447322055597,
+              "v": 0.3154757558256765,
+              "target": 0.039
+            },
+            {
+              "t": 240,
+              "x": 0.04165110253709833,
+              "v": -0.002447952431281113,
+              "target": 0.039
+            },
+            {
+              "t": 450,
+              "x": 0.03883767697905827,
+              "v": -0.15876124870438718,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015130784427545231,
+              "v": -0.29759248634872304,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.0003652897791983139,
+              "v": -0.09133445663756609,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.0026073547221628613,
+              "v": 0.012487627561014219,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": 1.2429219153403452e-9,
+              "v": 1.1590811289402269e-7,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 2,
+          "geometry": "main",
+          "contact": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.03490398507923244,
+              "v": 0.6104794228102904,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 240,
+              "x": 0.06996415471528816,
+              "v": -0.13395686487311434,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 450,
+              "x": 0.05608413730936319,
+              "v": -0.19746134320154968,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015856968914048624,
+              "v": -0.5704630250321091,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.013146932144320677,
+              "v": -0.1227030926258674,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.009506371341486738,
+              "v": 0.1463956272914962,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": -0.000003797315201671867,
+              "v": -0.000015882419372183747,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 2,
+          "geometry": "main",
+          "contact": {
+            "x": 0.95,
+            "y": 0.25
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.03490398507923244,
+              "v": 0.6104794228102904,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 240,
+              "x": 0.06996415471528816,
+              "v": -0.13395686487311434,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 450,
+              "x": 0.05608413730936319,
+              "v": -0.19746134320154968,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015856968914048624,
+              "v": -0.5704630250321091,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.013146932144320677,
+              "v": -0.1227030926258674,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.009506371341486738,
+              "v": 0.1463956272914962,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": -0.000003797315201671867,
+              "v": -0.000015882419372183747,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 2,
+          "geometry": "small",
+          "contact": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.03490398507923244,
+              "v": 0.6104794228102904,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 240,
+              "x": 0.06996415471528816,
+              "v": -0.13395686487311434,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 450,
+              "x": 0.05608413730936319,
+              "v": -0.19746134320154968,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015856968914048624,
+              "v": -0.5704630250321091,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.013146932144320677,
+              "v": -0.1227030926258674,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.009506371341486738,
+              "v": 0.1463956272914962,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": -0.000003797315201671867,
+              "v": -0.000015882419372183747,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 2,
+          "geometry": "small",
+          "contact": {
+            "x": 0.95,
+            "y": 0.25
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.03490398507923244,
+              "v": 0.6104794228102904,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 240,
+              "x": 0.06996415471528816,
+              "v": -0.13395686487311434,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 450,
+              "x": 0.05608413730936319,
+              "v": -0.19746134320154968,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015856968914048624,
+              "v": -0.5704630250321091,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.013146932144320677,
+              "v": -0.1227030926258674,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.009506371341486738,
+              "v": 0.1463956272914962,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": -0.000003797315201671867,
+              "v": -0.000015882419372183747,
+              "target": 0
+            }
+          ]
+        }
+      ],
+      "fallbacks": [
+        {
+          "mode": "reduced",
+          "motion": {
+            "x": 0,
+            "v": 0,
+            "target": 0,
+            "pressed": true,
+            "contact": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "updates": 2,
+            "scheduler": {
+              "active": 0,
+              "pending": false,
+              "frames": 0,
+              "updates": 0
+            }
+          },
+          "status": {
+            "requestedBackend": "auto",
+            "backend": "svg",
+            "requestedProfile": "auto",
+            "opticalProfile": "medium",
+            "motion": "static",
+            "motionReduced": true,
+            "transparencyReduced": false,
+            "forcedColors": false,
+            "opaque": false,
+            "suspended": false,
+            "bubbles": 12,
+            "effectiveAlpha": 0.98,
+            "effectiveTransmission": 0.55,
+            "reasons": [
+              "M6.3: modo elastico decorativo; nessuna rifrazione o lettura dello sfondo.",
+              "Auto usa medium; nessun adattamento hardware o budget di gruppo misurato.",
+              "Reduced motion: dinamica fermata e superficie stabile."
+            ],
+            "unsupported": [
+              "drift",
+              "refraction"
+            ],
+            "updates": 2,
+            "distributions": 1,
+            "decorativePadding": 40
+          }
+        },
+        {
+          "mode": "static",
+          "motion": {
+            "x": 0,
+            "v": 0,
+            "target": 0,
+            "pressed": true,
+            "contact": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "updates": 2,
+            "scheduler": {
+              "active": 0,
+              "pending": false,
+              "frames": 0,
+              "updates": 0
+            }
+          },
+          "status": {
+            "requestedBackend": "auto",
+            "backend": "svg",
+            "requestedProfile": "static",
+            "opticalProfile": "medium",
+            "motion": "static",
+            "motionReduced": false,
+            "transparencyReduced": false,
+            "forcedColors": false,
+            "opaque": false,
+            "suspended": false,
+            "bubbles": 12,
+            "effectiveAlpha": 0.98,
+            "effectiveTransmission": 0.55,
+            "reasons": [
+              "M6.3: modo elastico decorativo; nessuna rifrazione o lettura dello sfondo.",
+              "Static usa ottica medium."
+            ],
+            "unsupported": [
+              "drift",
+              "refraction"
+            ],
+            "updates": 2,
+            "distributions": 1,
+            "decorativePadding": 40
+          }
+        },
+        {
+          "mode": "css",
+          "motion": {
+            "x": 0,
+            "v": 0,
+            "target": 0,
+            "pressed": true,
+            "contact": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "updates": 0,
+            "scheduler": {
+              "active": 0,
+              "pending": false,
+              "frames": 0,
+              "updates": 0
+            }
+          },
+          "status": {
+            "requestedBackend": "css",
+            "backend": "css",
+            "requestedProfile": "auto",
+            "opticalProfile": "medium",
+            "motion": "static",
+            "motionReduced": false,
+            "transparencyReduced": false,
+            "forcedColors": false,
+            "opaque": false,
+            "suspended": false,
+            "bubbles": 0,
+            "effectiveAlpha": 0.98,
+            "effectiveTransmission": 0.55,
+            "reasons": [
+              "M6.3: modo elastico decorativo; nessuna rifrazione o lettura dello sfondo.",
+              "Auto usa medium; nessun adattamento hardware o budget di gruppo misurato.",
+              "CSS: corpo, bordo, highlight e ombra approssimati; nessuna inclusione o deformazione."
+            ],
+            "unsupported": [
+              "drift",
+              "refraction",
+              "bubbles.*",
+              "diagnosticPose"
+            ],
+            "updates": 2,
+            "distributions": 0,
+            "decorativePadding": 40
+          }
+        },
+        {
+          "mode": "opaque",
+          "motion": {
+            "x": 0,
+            "v": 0,
+            "target": 0,
+            "pressed": true,
+            "contact": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "updates": 0,
+            "scheduler": {
+              "active": 0,
+              "pending": false,
+              "frames": 0,
+              "updates": 0
+            }
+          },
+          "status": {
+            "requestedBackend": "auto",
+            "backend": "css",
+            "requestedProfile": "auto",
+            "opticalProfile": "medium",
+            "motion": "static",
+            "motionReduced": false,
+            "transparencyReduced": false,
+            "forcedColors": false,
+            "opaque": true,
+            "suspended": false,
+            "bubbles": 0,
+            "effectiveAlpha": 1,
+            "effectiveTransmission": 0,
+            "reasons": [
+              "M6.3: modo elastico decorativo; nessuna rifrazione o lettura dello sfondo.",
+              "Auto usa medium; nessun adattamento hardware o budget di gruppo misurato.",
+              "CSS: corpo, bordo, highlight e ombra approssimati; nessuna inclusione o deformazione.",
+              "Opaco: alpha 1, trasmissione 0; coppia lilla/inchiostro fissa per leggibilità."
+            ],
+            "unsupported": [
+              "drift",
+              "refraction",
+              "bubbles.*",
+              "diagnosticPose"
+            ],
+            "updates": 2,
+            "distributions": 0,
+            "decorativePadding": 40
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "browser": "firefox",
+      "version": "157.0",
+      "viewport": "1400×1100",
+      "dpr": 1,
+      "build": "Vite development, local installed dependencies",
+      "sequences": [
+        {
+          "preset": 0,
+          "geometry": "main",
+          "contact": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.019572447322055597,
+              "v": 0.3154757558256765,
+              "target": 0.039
+            },
+            {
+              "t": 240,
+              "x": 0.04165110253709833,
+              "v": -0.002447952431281113,
+              "target": 0.039
+            },
+            {
+              "t": 450,
+              "x": 0.03883767697905827,
+              "v": -0.15876124870438718,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015130784427545231,
+              "v": -0.29759248634872304,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.0003652897791983139,
+              "v": -0.09133445663756609,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.0026073547221628613,
+              "v": 0.012487627561014219,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": 1.2429219153403452e-9,
+              "v": 1.1590811289402269e-7,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 0,
+          "geometry": "main",
+          "contact": {
+            "x": 0.95,
+            "y": 0.25
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.019572447322055597,
+              "v": 0.3154757558256765,
+              "target": 0.039
+            },
+            {
+              "t": 240,
+              "x": 0.04165110253709833,
+              "v": -0.002447952431281113,
+              "target": 0.039
+            },
+            {
+              "t": 450,
+              "x": 0.03883767697905827,
+              "v": -0.15876124870438718,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015130784427545231,
+              "v": -0.29759248634872304,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.0003652897791983139,
+              "v": -0.09133445663756609,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.0026073547221628613,
+              "v": 0.012487627561014219,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": 1.2429219153403452e-9,
+              "v": 1.1590811289402269e-7,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 0,
+          "geometry": "small",
+          "contact": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.019572447322055597,
+              "v": 0.3154757558256765,
+              "target": 0.039
+            },
+            {
+              "t": 240,
+              "x": 0.04165110253709833,
+              "v": -0.002447952431281113,
+              "target": 0.039
+            },
+            {
+              "t": 450,
+              "x": 0.03883767697905827,
+              "v": -0.15876124870438718,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015130784427545231,
+              "v": -0.29759248634872304,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.0003652897791983139,
+              "v": -0.09133445663756609,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.0026073547221628613,
+              "v": 0.012487627561014219,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": 1.2429219153403452e-9,
+              "v": 1.1590811289402269e-7,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 0,
+          "geometry": "small",
+          "contact": {
+            "x": 0.95,
+            "y": 0.25
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.019572447322055597,
+              "v": 0.3154757558256765,
+              "target": 0.039
+            },
+            {
+              "t": 240,
+              "x": 0.04165110253709833,
+              "v": -0.002447952431281113,
+              "target": 0.039
+            },
+            {
+              "t": 450,
+              "x": 0.03883767697905827,
+              "v": -0.15876124870438718,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015130784427545231,
+              "v": -0.29759248634872304,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.0003652897791983139,
+              "v": -0.09133445663756609,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.0026073547221628613,
+              "v": 0.012487627561014219,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": 1.2429219153403452e-9,
+              "v": 1.1590811289402269e-7,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 2,
+          "geometry": "main",
+          "contact": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.03490398507923244,
+              "v": 0.6104794228102904,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 240,
+              "x": 0.06996415471528816,
+              "v": -0.13395686487311434,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 450,
+              "x": 0.05608413730936319,
+              "v": -0.19746134320154968,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015856968914048624,
+              "v": -0.5704630250321091,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.013146932144320677,
+              "v": -0.1227030926258674,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.009506371341486738,
+              "v": 0.1463956272914962,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": -0.000003797315201671867,
+              "v": -0.000015882419372183747,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 2,
+          "geometry": "main",
+          "contact": {
+            "x": 0.95,
+            "y": 0.25
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.03490398507923244,
+              "v": 0.6104794228102904,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 240,
+              "x": 0.06996415471528816,
+              "v": -0.13395686487311434,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 450,
+              "x": 0.05608413730936319,
+              "v": -0.19746134320154968,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015856968914048624,
+              "v": -0.5704630250321091,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.013146932144320677,
+              "v": -0.1227030926258674,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.009506371341486738,
+              "v": 0.1463956272914962,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": -0.000003797315201671867,
+              "v": -0.000015882419372183747,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 2,
+          "geometry": "small",
+          "contact": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.03490398507923244,
+              "v": 0.6104794228102904,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 240,
+              "x": 0.06996415471528816,
+              "v": -0.13395686487311434,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 450,
+              "x": 0.05608413730936319,
+              "v": -0.19746134320154968,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015856968914048624,
+              "v": -0.5704630250321091,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.013146932144320677,
+              "v": -0.1227030926258674,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.009506371341486738,
+              "v": 0.1463956272914962,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": -0.000003797315201671867,
+              "v": -0.000015882419372183747,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "preset": 2,
+          "geometry": "small",
+          "contact": {
+            "x": 0.95,
+            "y": 0.25
+          },
+          "samples": [
+            {
+              "t": 0,
+              "x": 0,
+              "v": 0,
+              "target": 0
+            },
+            {
+              "t": 80,
+              "x": 0.03490398507923244,
+              "v": 0.6104794228102904,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 240,
+              "x": 0.06996415471528816,
+              "v": -0.13395686487311434,
+              "target": 0.058499999999999996
+            },
+            {
+              "t": 450,
+              "x": 0.05608413730936319,
+              "v": -0.19746134320154968,
+              "target": 0
+            },
+            {
+              "t": 530,
+              "x": 0.015856968914048624,
+              "v": -0.5704630250321091,
+              "target": 0
+            },
+            {
+              "t": 610,
+              "x": -0.013146932144320677,
+              "v": -0.1227030926258674,
+              "target": 0
+            },
+            {
+              "t": 690,
+              "x": -0.009506371341486738,
+              "v": 0.1463956272914962,
+              "target": 0
+            },
+            {
+              "t": 1800,
+              "x": -0.000003797315201671867,
+              "v": -0.000015882419372183747,
+              "target": 0
+            }
+          ]
+        }
+      ],
+      "fallbacks": [
+        {
+          "mode": "reduced",
+          "motion": {
+            "x": 0,
+            "v": 0,
+            "target": 0,
+            "pressed": true,
+            "contact": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "updates": 2,
+            "scheduler": {
+              "active": 0,
+              "pending": false,
+              "frames": 0,
+              "updates": 0
+            }
+          },
+          "status": {
+            "requestedBackend": "auto",
+            "backend": "svg",
+            "requestedProfile": "auto",
+            "opticalProfile": "medium",
+            "motion": "static",
+            "motionReduced": true,
+            "transparencyReduced": false,
+            "forcedColors": false,
+            "opaque": false,
+            "suspended": false,
+            "bubbles": 12,
+            "effectiveAlpha": 0.98,
+            "effectiveTransmission": 0.55,
+            "reasons": [
+              "M6.3: modo elastico decorativo; nessuna rifrazione o lettura dello sfondo.",
+              "Auto usa medium; nessun adattamento hardware o budget di gruppo misurato.",
+              "Reduced motion: dinamica fermata e superficie stabile."
+            ],
+            "unsupported": [
+              "drift",
+              "refraction"
+            ],
+            "updates": 2,
+            "distributions": 1,
+            "decorativePadding": 40
+          }
+        },
+        {
+          "mode": "static",
+          "motion": {
+            "x": 0,
+            "v": 0,
+            "target": 0,
+            "pressed": true,
+            "contact": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "updates": 2,
+            "scheduler": {
+              "active": 0,
+              "pending": false,
+              "frames": 0,
+              "updates": 0
+            }
+          },
+          "status": {
+            "requestedBackend": "auto",
+            "backend": "svg",
+            "requestedProfile": "static",
+            "opticalProfile": "medium",
+            "motion": "static",
+            "motionReduced": false,
+            "transparencyReduced": false,
+            "forcedColors": false,
+            "opaque": false,
+            "suspended": false,
+            "bubbles": 12,
+            "effectiveAlpha": 0.98,
+            "effectiveTransmission": 0.55,
+            "reasons": [
+              "M6.3: modo elastico decorativo; nessuna rifrazione o lettura dello sfondo.",
+              "Static usa ottica medium."
+            ],
+            "unsupported": [
+              "drift",
+              "refraction"
+            ],
+            "updates": 2,
+            "distributions": 1,
+            "decorativePadding": 40
+          }
+        },
+        {
+          "mode": "css",
+          "motion": {
+            "x": 0,
+            "v": 0,
+            "target": 0,
+            "pressed": true,
+            "contact": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "updates": 0,
+            "scheduler": {
+              "active": 0,
+              "pending": false,
+              "frames": 0,
+              "updates": 0
+            }
+          },
+          "status": {
+            "requestedBackend": "css",
+            "backend": "css",
+            "requestedProfile": "auto",
+            "opticalProfile": "medium",
+            "motion": "static",
+            "motionReduced": false,
+            "transparencyReduced": false,
+            "forcedColors": false,
+            "opaque": false,
+            "suspended": false,
+            "bubbles": 0,
+            "effectiveAlpha": 0.98,
+            "effectiveTransmission": 0.55,
+            "reasons": [
+              "M6.3: modo elastico decorativo; nessuna rifrazione o lettura dello sfondo.",
+              "Auto usa medium; nessun adattamento hardware o budget di gruppo misurato.",
+              "CSS: corpo, bordo, highlight e ombra approssimati; nessuna inclusione o deformazione."
+            ],
+            "unsupported": [
+              "drift",
+              "refraction",
+              "bubbles.*",
+              "diagnosticPose"
+            ],
+            "updates": 2,
+            "distributions": 0,
+            "decorativePadding": 40
+          }
+        },
+        {
+          "mode": "opaque",
+          "motion": {
+            "x": 0,
+            "v": 0,
+            "target": 0,
+            "pressed": true,
+            "contact": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "updates": 0,
+            "scheduler": {
+              "active": 0,
+              "pending": false,
+              "frames": 0,
+              "updates": 0
+            }
+          },
+          "status": {
+            "requestedBackend": "auto",
+            "backend": "css",
+            "requestedProfile": "auto",
+            "opticalProfile": "medium",
+            "motion": "static",
+            "motionReduced": false,
+            "transparencyReduced": false,
+            "forcedColors": false,
+            "opaque": true,
+            "suspended": false,
+            "bubbles": 0,
+            "effectiveAlpha": 1,
+            "effectiveTransmission": 0,
+            "reasons": [
+              "M6.3: modo elastico decorativo; nessuna rifrazione o lettura dello sfondo.",
+              "Auto usa medium; nessun adattamento hardware o budget di gruppo misurato.",
+              "CSS: corpo, bordo, highlight e ombra approssimati; nessuna inclusione o deformazione.",
+              "Opaco: alpha 1, trasmissione 0; coppia lilla/inchiostro fissa per leggibilità."
+            ],
+            "unsupported": [
+              "drift",
+              "refraction",
+              "bubbles.*",
+              "diagnosticPose"
+            ],
+            "updates": 2,
+            "distributions": 0,
+            "decorativePadding": 40
+          }
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

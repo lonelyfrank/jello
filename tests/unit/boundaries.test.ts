@@ -76,7 +76,7 @@ describe('other boundaries', () => {
   it('private Jelly fixture alone reaches its experimental renderer; visual calculations stay pure', () => {
     const fixture = graph('tests/fixtures/jelly/main.ts');
     expect(fixture.files).toContain('src/runtime/experimental/jelly.ts');
-    for (const f of graph('src/model/experimental/jelly-visual.ts').files) expect(f, f).toMatch(/^src\/(model|core)\//);
+    for (const f of [...graph('src/model/experimental/jelly-visual.ts').files, ...graph('src/model/experimental/jelly-motion.ts').files]) expect(f, f).toMatch(/^src\/(model|core)\//);
     for (const f of graph('src/runtime/experimental/jelly.ts').files) expect(f, f).not.toMatch(/^tests\/|src\/(lab|stage|preview)\//);
     for (const entry of ['src/core/index.ts', 'src/model/index.ts', 'src/runtime/index.ts', 'src/lab/main.tsx', 'src/preview/main.ts', 'src/export/adapters.ts']) {
       expect(graph(entry).files.filter((f) => f.includes('/experimental/') || f.startsWith('tests/fixtures/')), entry).toEqual([]);

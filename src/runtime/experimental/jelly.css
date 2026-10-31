@@ -13,3 +13,7 @@
   .jelly-surface:disabled { color: GrayText; }
   .jelly-surface[aria-pressed="true"] .jelly-decoration { border: 3px solid Highlight; }
 }
+/* Static state cues also survive the opaque fixed color pair. */
+.jelly-decoration[data-opaque="true"][data-pressed="true"] { outline: 2px solid currentColor; outline-offset: -3px; }
+.jelly-decoration[data-opaque="true"][data-active="true"] { outline: 3px double currentColor; outline-offset: -4px; }
+.jelly-decoration[data-opaque="true"][data-disabled="true"] { opacity: .65; }

@@ -24,3 +24,7 @@ select, input { max-width: 170px; padding: 5px; } input[type=number] { width: 10
 #error { color: #a91f3f; }
 @media(max-width: 1100px) { .matrix { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media(max-width: 620px) { main { padding: 16px; } .workbench { grid-template-columns: 1fr; } .matrix { grid-template-columns: 1fr; } }
+#motion-diagnostics { display: block; font: 11px/1.6 monospace; padding: 8px; min-height: 50px; }
+#capture-scene { width: 560px; height: 180px; }
+
+.contact-marker { position:absolute;width:9px;height:9px;border:1px solid #a91f64;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0; }

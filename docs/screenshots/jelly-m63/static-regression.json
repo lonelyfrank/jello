@@ -1,0 +1,198 @@
+{
+  "baseline": "a112627c909e4710285b44d47349dd4058d03855",
+  "method": "same DOM host and pixel grid, original renderer loaded from git object; default state",
+  "results": [
+    {
+      "browser": "chromium",
+      "preset": 0,
+      "geometry": "main",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 0,
+      "geometry": "small",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 0,
+      "geometry": "capsule",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 1,
+      "geometry": "main",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 1,
+      "geometry": "small",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 1,
+      "geometry": "capsule",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 2,
+      "geometry": "main",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 2,
+      "geometry": "small",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 2,
+      "geometry": "capsule",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 3,
+      "geometry": "main",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 3,
+      "geometry": "small",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "chromium",
+      "preset": 3,
+      "geometry": "capsule",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 0,
+      "geometry": "main",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 0,
+      "geometry": "small",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 0,
+      "geometry": "capsule",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 1,
+      "geometry": "main",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 1,
+      "geometry": "small",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 1,
+      "geometry": "capsule",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 2,
+      "geometry": "main",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 2,
+      "geometry": "small",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 2,
+      "geometry": "capsule",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 3,
+      "geometry": "main",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 3,
+      "geometry": "small",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    },
+    {
+      "browser": "firefox",
+      "preset": 3,
+      "geometry": "capsule",
+      "sameDimensions": true,
+      "differingChannels": 0,
+      "maxDifference": 0
+    }
+  ]
+}
