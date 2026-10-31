@@ -12,6 +12,7 @@
  *
  * Run `npm run build:lib` first (npm run consumer:prepare does).
  */
+import { desktopConsumerFixture } from './desktop-consumer-fixture.mjs';
 import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -53,6 +54,7 @@ if (file) {
   link = c.setButtonField(link, 'style.variant', 'secondary');
   link = c.setButtonLink(link, 'link', '/docs');
   extras.push({ file: 'exported-button-link.jello-component.json', doc: link });
+  for (const family of ['glass', 'solid']) extras.push({ file: `exported-desktop-${family}.jello-component.json`, doc: desktopConsumerFixture(c, family) });
 }
 
 const manifest = JSON.parse(readFileSync(join(lib, 'manifest.json'), 'utf8'));

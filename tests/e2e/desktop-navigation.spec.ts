@@ -315,12 +315,12 @@ test('state styles, forced colors, reduced motion and per-item overrides remain 
   await expect(item(page, 'projects')).toHaveCSS('transition-duration', '0s');
 });
 
-test('Studio technical preview uses the same runtime, switches material, updates JSON and changes viewport', async ({ page }) => {
+test('Studio visual Builder uses the same runtime, switches material, updates JSON and changes viewport', async ({ page }) => {
   await openLab(page, 'workspace=builder&component=desktop-navbar&scene=app&animate=0');
   const nav = page.locator('#stageMain .jello-dnav');
   await expect(nav).toBeVisible();
   await showPanel(page);
-  await expect(page.locator('#inspector')).toContainText('Anteprima tecnica Desktop');
+  await expect(page.locator('#inspector')).toContainText('Layout');
   await page.locator('#bl-material-solid').click(); await expect(nav).toHaveAttribute('data-material', 'solid');
   await page.locator('#bl-material-glass').click(); await expect(nav).toHaveAttribute('data-material', 'glass');
   await lab(page, "h.setOption('device', 'phone')"); await expect(nav).toHaveAttribute('data-breakpoint', 'compact');

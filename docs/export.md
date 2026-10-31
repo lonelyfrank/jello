@@ -24,7 +24,8 @@ con `NavbarActionEvent`, Vanilla accetta lo stesso callback in `mount(options)`.
 Le azioni `navigate` sono link nativi; `consumer` riporta il nome dell'azione,
 `select` mantiene `onChange/onReselect`. `interactions.events.action` personalizza
 il CustomEvent (default `jello-action`). I pacchetti prodotti prima restano
-autonomi. Desktop non è esportabile finché non esiste il suo renderer.
+autonomi. Da M5.3 Desktop offre entrambi i pacchetti sullo stesso DesktopNavigation
+dello Studio, con activeItem/onChange e onAction tipizzati. [Consegna M5.3](navbar-m53-delivery.md).
 
 ## 1. Preset JSON
 
@@ -162,3 +163,7 @@ Glass rifrange una sorgente DOM opaca separata dal container; senza sorgente usa
 ## 5. Materiale Solid autonomo
 
 `material-runtime` include anche Solid: documento, `createGroup()`, runtime, CSS, tipi, esempio e manifest. `group.attach(host, { interaction: 'interactive' })` conserva hover e pressione; active e disabled si impostano dalla superficie. La semantica HTML e disabled/aria-disabled appartengono all’host. `group.destroy()` rilascia strati, variabili e listener. Non si offre uno stylesheet statico Solid che perda gli override di stato senza avviso.
+
+## Desktop Navbar M5.3
+
+Il wrapper React non ricrea il DOM: monta DesktopNavigation tramite createComponent. Config canonica, materiale risolto, runtime/CSS/tipi, esempio e manifest con hash sono inclusi. Props config, activeItem/defaultActiveItem, onChange, onAction, onTabPress, onReselect, onHover, onFocus; sourceRef/scrollerRef/backend/className/aria-label facoltativi. Vanilla restituisce DesktopNavigation da mount(options), con update/setActiveItem/unmount/mount/destroy. Solid non richiede source; Glass rifrange una source opaca separata dove supportato, altrimenti usa CSS/opaco. Nessuna conversione Desktop/Mobile o menu implicito.

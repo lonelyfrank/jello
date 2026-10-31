@@ -92,11 +92,11 @@ duplica, elimina); al centro la stessa anteprima con i formati desktop, tablet e
 di prova e le modalità *Interagisci* / *Seleziona*; a destra l’inspector contestuale (struttura,
 layout, aspetto, tipografia, materiale, stati, interazioni, responsive).
 
-Desktop Navbar M5.2: template generico e anteprima tecnica nello stesso Stage,
-regioni Start / Main / End, Glass/Solid, azioni, tastiera e breakpoint. Apri
-`?workspace=builder&component=desktop-navbar`. Editor completo e adapter Desktop
-React/Vanilla previsti per M5.3; definizione JSON e runtime pubblico già disponibili.
-[API e limiti](docs/desktop-navbar-renderer.md) · [audit](docs/navbar-m52-audit.md).
+Desktop Navbar M5.3: editor visuale nello stesso Builder/Inspector/Stage,
+regioni Start / Main / End, brand, gruppi, voci, azioni, Glass/Solid e breakpoint.
+Apri `?workspace=builder&component=desktop-navbar` oppure il wizard componenti.
+Salva nella libreria ed esporta pacchetti React o Vanilla con lo stesso runtime.
+[Consegna e verifiche M5.3](docs/navbar-m53-delivery.md) · [API e limiti](docs/desktop-navbar-renderer.md) · [audit](docs/navbar-m53-audit.md).
 
 ## Runtime
 

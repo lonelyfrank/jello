@@ -24,6 +24,8 @@
     "src",
     "vendor/jello-mobile-navbar-react/src",
     "vendor/jello-call-to-action-react/src",
-    "vendor/jello-solid-link-react/src"
+    "vendor/jello-solid-link-react/src",
+    "vendor/jello-desktop-glass-react/src",
+    "vendor/jello-desktop-solid-react/src"
   ]
 }

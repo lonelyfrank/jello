@@ -25,6 +25,7 @@
 import { COMPONENTS, BN_FIELDS, navbarView, resolveDefinitionMaterial, serializeDefinition, toCanonicalPath, unsupportedProperties, type BnTab, type ComponentDefinition } from '../components';
 import { BACKEND_LABEL, BACKEND_REQUIRES, RUNTIME_VERSION, serializeMaterial, type Backend } from './model-deps';
 import { candidates, sha256Hex, type PackageFile, type PackageResult, type RuntimeBundle } from './package';
+import { desktopIndexJs, desktopIndexDts, desktopTsx, desktopExample, desktopReadme } from './react-desktop';
 import { buttonExample, buttonIndexDts, buttonIndexJs, buttonReadme, buttonTsx } from './react-button';
 
 export interface ReactPackageInput {
@@ -51,12 +52,13 @@ export function reactNames(doc: ComponentDefinition): ReactNames {
   let base = words.map((w) => w[0]!.toUpperCase() + w.slice(1).toLowerCase()).join('') || 'Jello';
   if (/^\d/.test(base)) base = `Jello${base}`;
   const isButton = doc.type === 'button';
-  const component = isButton ? (/Button$/.test(base) ? base : `${base}Button`) : /Nav(igation|bar)?$/.test(base) ? base : `${base}Navigation`;
+  let component = isButton ? (/Button$/.test(base) ? base : `${base}Button`) : /Nav(igation|bar)?$/.test(base) ? base : `${base}Navigation`;
+  if (doc.type === 'desktop-navbar' && component === 'JelloDesktopNavigation') component = 'ExportedDesktopNavigation';
   // Named after the component, not its storage id: "Mobile Navbar" → @jello-export/mobile-navbar.
   const slugOf = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   const slug = slugOf(doc.name) || slugOf(doc.id) || 'component';
   // A navbar's second name is the union of its tab ids; a button's is the union of its variants.
-  return { component, tabType: isButton ? `${base}Variant` : `${base}TabId`, packageName: `@jello-export/${slug}`, root: `jello-${slug}-react` };
+  return { component, tabType: isButton ? `${base}Variant` : doc.type === 'desktop-navbar' ? `${base}ItemId` : `${base}TabId`, packageName: `@jello-export/${slug}`, root: `jello-${slug}-react` };
 }
 
 const enc = new TextEncoder();
@@ -90,7 +92,7 @@ export async function buildReactPackage(input: ReactPackageInput): Promise<Packa
   add('material.json', serializeMaterial(material) + '\n');
   for (const f of input.runtime.files) add(`runtime/${f.path}`, f.data);
   add('example/App.tsx', exampleApp(doc, names));
-  add('README.md', doc.type === 'button' ? buttonReadme(doc, names, warnings, material.name, material.family) : readme(doc, names, warnings, svgIcons, material.name, material.family));
+  add('README.md', doc.type === 'desktop-navbar' ? desktopReadme(doc, names, warnings) : doc.type === 'button' ? buttonReadme(doc, names, warnings, material.name, material.family) : readme(doc, names, warnings, svgIcons, material.name, material.family));
 
   const listed = await Promise.all(files.map(async (f) => ({ path: f.path.slice(names.root.length + 1), bytes: f.data.length, sha256: await sha256Hex(f.data) })));
   // Solid is plain CSS: no backend to choose and nothing to fall back from.
@@ -120,7 +122,7 @@ function packageJson(doc: ComponentDefinition, n: ReactNames): string {
       {
         name: n.packageName,
         version: '1.0.0',
-        description: `${doc.name}: ${doc.type === 'button' ? 'Button' : 'Mobile Navbar'} con materiale ${resolveDefinitionMaterial(doc).name}, esportato da Jello.`,
+        description: `${doc.name}: ${doc.type === 'button' ? 'Button' : doc.type === 'desktop-navbar' ? 'Desktop Navbar' : 'Mobile Navbar'} con materiale ${resolveDefinitionMaterial(doc).name}, esportato da Jello.`,
         type: 'module',
         main: './index.js',
         types: './index.d.ts',
@@ -143,6 +145,7 @@ function packageJson(doc: ComponentDefinition, n: ReactNames): string {
 const tabUnion = (tabs: readonly BnTab[]) => tabs.map((t) => JSON.stringify(t.id)).join(' | ');
 
 function indexJs(doc: ComponentDefinition, n: ReactNames, materialName: string): string {
+  if (doc.type === 'desktop-navbar') return desktopIndexJs(doc, n);
   if (doc.type === 'button') return buttonIndexJs(doc, n, materialName, serializeDefinition(doc));
   return `/**
  * ${doc.name} — componente React esportato da Jello (Mobile Navbar, materiale ${materialName}).
@@ -215,6 +218,7 @@ export default ${n.component};
 }
 
 function indexDts(doc: ComponentDefinition, n: ReactNames): string {
+  if (doc.type === 'desktop-navbar') return desktopIndexDts(doc, n);
   if (doc.type === 'button') return buttonIndexDts(doc, n);
   return `import type { ReactElement, RefObject } from 'react';
 import type { BackendRequest, BnLayout, BottomNavigationEvent, NavbarActionEvent, ComponentDefinition } from './runtime/jello.js';
@@ -267,6 +271,7 @@ export default ${n.component};
 }
 
 function tsxSource(doc: ComponentDefinition, n: ReactNames): string {
+  if (doc.type === 'desktop-navbar') return desktopTsx(doc, n);
   if (doc.type === 'button') return buttonTsx(doc, n);
   return `/**
  * ${doc.name} — sorgente TSX equivalente a index.js, per chi preferisce copiare il componente nel progetto.
@@ -354,6 +359,7 @@ export default ${n.component};
 }
 
 function exampleApp(doc: ComponentDefinition, n: ReactNames): string {
+  if (doc.type === 'desktop-navbar') return desktopExample(doc, n);
   if (doc.type === 'button') return buttonExample(doc, n);
   const first = navbarView(doc).defaultTab;
   return `/**

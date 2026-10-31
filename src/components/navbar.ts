@@ -582,6 +582,7 @@ export function checkNavbarSections(
   warnings: string[],
   fields: readonly FieldDescriptor[] = BN_FIELDS,
   overridePaths: readonly string[] = OVERRIDE_PATHS,
+  styleItems: readonly ItemRef[] = items,
 ): NavbarCheck | null {
   const before = errors.length;
   for (const k of ['layout', 'responsive', 'style', 'states', 'interactions'] as const) {
@@ -645,7 +646,7 @@ export function checkNavbarSections(
   else if (isObj(itemsIn)) {
     for (const [id, st] of Object.entries(itemsIn)) {
       const at = `style.items.${id}`;
-      if (!items.some((t) => t.id === id)) {
+      if (!styleItems.some((t) => t.id === id)) {
         warnings.push(`${at}: nessuna voce con questo id, ignorato`);
         continue;
       }

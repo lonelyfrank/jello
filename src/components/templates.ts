@@ -215,7 +215,7 @@ const cta = (): ComponentDefinition => {
 export const COMPONENT_TEMPLATES: readonly ComponentTemplate[] = [
   { id: 'mobile-navbar', label: 'Mobile Navbar', description: 'Demo generica: Home, Explore, Profile. Aggiungi, riordina e personalizza le voci.', create: mobileNavbar },
   { id: 'button', label: 'Button', description: 'Pulsante con etichetta e icona: Primary, Secondary o Ghost, azione o collegamento.', create: cta },
-  { id: 'desktop-navbar', label: 'Desktop Navbar', description: 'Anteprima tecnica: Start / Main / End, Glass e Solid. Editor completo in M5.3.', create: desktopNavbar },
+  { id: 'desktop-navbar', label: 'Desktop Navbar', description: 'Brand, voci e azioni in Start / Main / End. Glass e Solid, export React e Vanilla.', create: desktopNavbar },
 ];
 
 /** Generic serializable Desktop starter; the consumer owns the brand. */

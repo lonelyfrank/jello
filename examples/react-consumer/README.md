@@ -18,3 +18,7 @@ sorgente TSX incluso, build di produzione, una superficie di materiale sulla bar
 della GlassSource, tab e configurazione dell’export, modalità controllata, eventi, tastiera.
 
 `vendor/`, `node_modules/` e `dist/` sono generati (ignorati da git).
+
+## Desktop Navbar M5.3
+
+La preparazione installa anche `@jello-export/desktop-glass` e `@jello-export/desktop-solid`. Apri `/?desktop=glass` oppure `/?desktop=solid`: i due pacchetti hanno la stessa struttura canonica con brand, gruppi, link e consumer action. Il componente è montato in StrictMode; i pulsanti provano config, activeItem, sostituzione callback e smontaggio. Sono controllati anche i sorgenti TSX esportati dal toolchain del consumatore. Nessun import dei sorgenti Studio.

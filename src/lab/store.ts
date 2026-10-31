@@ -54,7 +54,7 @@ export interface BuilderState {
   origin: 'template' | 'user';
   /** Template edited in place: a draft of the project until saved in the library. */
   modified: boolean;
-  /** `root`, a tab id, or `material`. */
+  /** `root`, a navbar control/group ID, or `material`. */
   selection: string;
   /** Tab shown as active in the preview (the document's default is root.defaultTab). */
   previewTab: string;

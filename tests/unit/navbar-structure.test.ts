@@ -313,7 +313,12 @@ describe('export compatibility', () => {
       }
     }
   });
-  it('does not export a planned desktop as an existing mobile renderer', async () => {
-    for (const build of [buildReactPackage, buildVanillaPackage]) await expect(build({ component: starterDefinition('desktop-navbar'), runtime })).rejects.toThrow(/non disponibile/);
+  it('exports Desktop through the common runtime factory, never a Mobile renderer', async () => {
+    for (const build of [buildReactPackage, buildVanillaPackage]) {
+      const pkg = await build({ component: starterDefinition('desktop-navbar'), runtime });
+      const js = new TextDecoder().decode(pkg.files.find((f) => f.path === `${pkg.root}/index.js`)!.data);
+      expect(js).toContain('createComponent');
+      expect(js).not.toContain('createBottomNavigation');
+    }
   });
 });

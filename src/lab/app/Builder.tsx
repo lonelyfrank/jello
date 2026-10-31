@@ -23,6 +23,14 @@ import {
   definitionFields,
   navbarGroups,
   navbarItems,
+  isNavbarDefinition,
+  desktopNavbarRegions,
+  DESKTOP_NAVBAR_FIELDS,
+  DESKTOP_NAVBAR_OVERRIDE_PATHS,
+  fromCanonicalPath,
+  type NavbarItem,
+  type NavbarRegion,
+  type StructureNode,
   OVERRIDE_PATHS,
   TAB_STYLE_FIELDS,
   MAX_TABS,
@@ -38,7 +46,6 @@ import {
   toCanonicalPath,
   unsupportedProperties,
   type BnRoot,
-  type BnTab,
   type BnTabStyle,
   type BindingState,
   type ComponentDefinition,
@@ -70,11 +77,6 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
   const templates = components.filter((c) => c.origin === 'template');
   const saved = components.filter((c) => c.origin === 'user');
   const personal = library.filter((i) => i.origin === 'user' && i.doc.family === b.doc.material.family);
-  const navbar = b.doc.type === 'mobile-navbar';
-  const root = navbar ? navbarView(b.doc) : null;
-  const selectedTab = root?.children.find((t) => t.id === b.selection);
-  const itemContainer = selectedTab?.groupId ? b.doc.structure.children?.find((n) => n.id === selectedTab.groupId) : b.doc.structure;
-  const index = selectedTab ? itemContainer?.children?.findIndex((n) => n.id === selectedTab.id) ?? -1 : -1;
   const material = resolveDefinitionMaterial(b.doc);
 
   return (
@@ -160,70 +162,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
         <h2 className="side-title" id="bl-structure">
           Struttura
         </h2>
-        <ul className="tree" id="structureTree" aria-label="Elementi della componente">
-          <li>
-            <button type="button" className="tree-node" data-node="root" aria-pressed={b.selection === 'root'} onClick={() => session.selectElement('root')}>
-              <Icon name="left" />
-              <span>{b.doc.name}</span>
-              <span className="tree-kind">{navbar || b.doc.type === 'desktop-navbar' ? 'navigazione' : 'pulsante'}</span>
-            </button>
-            {root ? (
-              <ul>
-                {root.children.map((t) => (
-                  <li key={t.id}>
-                    <button type="button" className="tree-node" data-node={t.id} aria-pressed={b.selection === t.id} onClick={() => session.selectElement(t.id)}>
-                      <TabIcon icon={t.icon} />
-                      <span>{t.label}</span>
-                      <span className="tree-kind">
-                        {t.id === root.defaultTab ? 'iniziale · ' : ''}
-                        {t.disabled ? 'disabilitata · ' : ''}
-                        {t.visible === false ? 'nascosta · ' : ''}
-                        {t.groupId ? `${b.doc.content[t.groupId]?.text ?? t.groupId} · ` : ''}
-                        {t.id}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <ul>
-                {b.doc.structure.children?.map((n) => (
-                  <li key={n.id}>
-                    <span className="tree-node" data-node={n.id} aria-disabled="true">
-                      {n.role === 'icon' ? <TabIcon icon={b.doc.content[n.id]?.icon ?? { kind: 'none' }} /> : <Icon name="left" />}
-                      <span>{b.doc.type === 'desktop-navbar' ? `${n.id} · ${(b.doc.layout.regions as Record<string, string>)[n.id] ?? 'main'}` : n.role === 'label' ? (b.doc.content[n.id]?.text ?? '') : 'Icona'}</span>
-                      <span className="tree-kind">{n.role === 'label' ? 'etichetta' : 'icona'} · {n.id}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        </ul>
-        {root ? (
-          <>
-            <div className="library-actions" role="group" aria-label="Azioni sulle tab">
-              <button type="button" className="button small" id="tabAdd" disabled={root.children.length >= MAX_TABS} onClick={() => session.addTab()}>
-                <Icon name="plus" /> Tab
-              </button>
-              <button type="button" className="button small" id="tabUp" aria-label="Sposta la tab prima" disabled={index <= 0} onClick={() => selectedTab && session.moveTab(selectedTab.id, -1)}>
-                ←
-              </button>
-              <button type="button" className="button small" id="tabDown" aria-label="Sposta la tab dopo" disabled={index < 0 || index >= (itemContainer?.children?.length ?? 0) - 1} onClick={() => selectedTab && session.moveTab(selectedTab.id, 1)}>
-                →
-              </button>
-              <button type="button" className="button small" id="tabDuplicate" disabled={!selectedTab || root.children.length >= MAX_TABS} onClick={() => selectedTab && session.duplicateTab(selectedTab.id)}>
-                <Icon name="copy" /> Duplica
-              </button>
-              <button type="button" className="button small" id="tabRemove" disabled={!selectedTab || root.children.length <= 1} onClick={() => selectedTab && session.removeTab(selectedTab.id)}>
-                <Icon name="trash" /> Elimina
-              </button>
-            </div>
-            <p className="hint">{root.children.length} / {MAX_TABS} tab · quando non stanno nella barra decide «Responsive → Troppe tab».</p>
-          </>
-        ) : (
-          <p className="hint">{b.doc.type === 'desktop-navbar' ? 'Anteprima tecnica Desktop: regioni Start / Main / End. Editor strutturale completo previsto per M5.3.' : 'Un pulsante ha un’etichetta e, se vuoi, un’icona: si modificano dal pannello a destra.'}</p>
-        )}
+        <NavbarStructure session={session} />
       </section>      <section className="side-section" hidden={builderPane !== 'all' && builderPane !== 'components'} aria-labelledby="bl-library">
         <h2 className="side-title" id="bl-library">
           La mia libreria
@@ -325,7 +264,7 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
         ) : (
           <p className="hint">Nessun materiale personale: crealo nel Material Lab o salvalo da Materiale nell’inspector.</p>
         )}
-        <Messages />
+        <Messages id="builderMessages" />
       </section>
 
 
@@ -336,16 +275,16 @@ export function BuilderSidebar({ session }: { session: LabSession }) {
 /** One line about what a component contains, for the library list. */
 function summary(doc: ComponentDefinition): string {
   if (doc.type === 'desktop-navbar') return `${navbarItems(doc).length} elementi · Start / Main / End`;
-  if (doc.type === 'mobile-navbar') return `${navbarView(doc).children.length} tab`;
+  if (doc.type === 'mobile-navbar') return `${navbarItems(doc).length} tab`;
   const p = resolveButton(doc, Number.POSITIVE_INFINITY);
   return `«${p.text}» · ${p.style.variant}`;
 }
 
-function Messages() {
+function Messages({ id }: { id?: string } = {}) {
   const m = useLab((s) => s.builder.messages);
   if (!m) return null;
   return (
-    <ul className="messages" id="builderMessages" role="status" data-ok={String(m.ok)}>
+    <ul className="messages" id={id} role="status" data-ok={String(m.ok)}>
       {m.messages.map((x, i) => (
         <li key={i}>{x}</li>
       ))}
@@ -455,34 +394,24 @@ export function Inspector({ session }: { session: LabSession }) {
   const { inspectorTab } = useStudioPreferences();
   const b = useLab((s) => s.builder);
   const spec = COMPONENTS.get(b.doc.type)!;
-  const root = b.doc.type === 'mobile-navbar' ? navbarView(b.doc) : null;
-  const tab = root?.children.find((t) => t.id === b.selection);
+  const root = isNavbarDefinition(b.doc) ? navbarView(b.doc) : null;
+  const tab = isNavbarDefinition(b.doc) ? navbarItems(b.doc).find((t) => t.id === b.selection) : undefined;
+  const group = isNavbarDefinition(b.doc) ? navbarGroups(b.doc).find((g) => g.id === b.selection) : undefined;
   return (
     <div className="panel-inner" id="inspector" data-component-type={b.doc.type}>
       <div className="panel-head">
         <div className="panel-heading">
-          <h2>{b.selection === 'material' ? 'Materiale' : tab ? 'Tab' : root ? 'Navigazione' : spec.name}</h2>
-          <span className="chip chip-accent">{tab ? tab.label : b.selection === 'material' ? resolveDefinitionMaterial(b.doc).name : spec.name}</span>
+          <h2>{b.selection === 'material' ? 'Materiale' : group ? 'Gruppo' : tab ? tab.role === 'brand' ? 'Brand' : tab.role === 'action' ? 'Azione' : 'Voce' : root ? 'Navigazione' : spec.name}</h2>
+          <span className="chip chip-accent">{group ? group.label ?? group.id : tab ? tab.label : b.selection === 'material' ? resolveDefinitionMaterial(b.doc).name : spec.name}</span>
         </div>
         <p className="hint" id="inspectorSubject">
-          {tab ? `Tab «${tab.label}» · id ${tab.id}` : b.selection === 'material' ? 'Materiale applicato alla componente' : root ? `${b.doc.name} · ${root.children.length} tab` : `${b.doc.name} · ${summary(b.doc)}`}
+          {group ? `Gruppo «${group.label ?? group.id}» · ${group.itemIds.length} voci` : tab ? `${tab.role === 'brand' ? 'Brand' : 'Voce'} «${tab.label}» · id ${tab.id}` : b.selection === 'material' ? 'Materiale applicato alla componente' : root ? `${b.doc.name} · ${root.children.length} tab` : `${b.doc.name} · ${summary(b.doc)}`}
         </p>
       </div>
       <div className="studio-inspector-tabs" role="group" aria-label="Sezioni inspector">{([['all', 'Tutto'], ['design', 'Design'], ['interactions', 'Interactions'], ['advanced', 'Advanced']] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={inspectorTab === id} onClick={() => setStudioPreferences({ inspectorTab: id })}>{label}</button>)}</div>
       <div className="panel-body"><InspectorLevel expanded={inspectorTab !== 'all'}>
-        {b.selection === 'material' ? <MaterialPanel session={session} /> : b.doc.type === 'desktop-navbar' ? <Section id="desktop-preview" title="Anteprima tecnica Desktop">
-          <p className="hint">Renderer M5.2 · Glass / Solid · Start / Main / End. Struttura, layout e breakpoint si aggiornano importando la definizione JSON. Editor completo e pacchetti React/Vanilla previsti per M5.3.</p>
-          <label htmlFor="desktop-preview-item">Elemento da verificare</label>
-          <select id="desktop-preview-item" value={b.selection} onChange={(e) => session.selectElement(e.target.value)}>
-            <option value="root">Navbar</option>
-            {navbarItems(b.doc).map((item) => <option key={item.id} value={item.id}>{item.label || item.id}</option>)}
-          </select>
-          <label htmlFor="desktop-preview-state">Stato visivo</label>
-          <select id="desktop-preview-state" disabled={b.selection === 'root'} value={b.previewState ?? ''} onChange={(e) => session.setPreviewState((e.target.value || null) as typeof b.previewState)}>
-            <option value="">Default</option>
-            {(['hover', 'pressed', 'focus', 'active', 'disabled'] as const).map((state) => <option key={state} value={state}>{state}</option>)}
-          </select>
-        </Section> : tab && root ? <TabInspector key={tab.id} session={session} tab={tab} root={root} /> : root ? <RootInspector session={session} root={root} /> : <ButtonInspector session={session} />}
+        {b.selection === 'material' ? <MaterialPanel session={session} /> : group ? <GroupInspector key={group.id} session={session} id={group.id} /> : tab && root ? <TabInspector key={tab.id} session={session} tab={tab} root={root} /> : b.doc.type === 'desktop-navbar' ? <DesktopRootInspector session={session} /> : root ? <RootInspector session={session} root={root} /> : <ButtonInspector session={session} />}
+        <Messages id="inspectorMessages" />
         {(inspectorTab === 'all' || inspectorTab === 'advanced') && <Section id="definition" title="Definizione e compatibilità" open={false}><p className="hint">jello-component-definition v1 · {b.doc.material.family} · runtime {b.doc.runtime.min}</p><p className="hint">{spec.export.notes.join(' ')}</p><label htmlFor="studioDefinition" className="field">Definizione JSON canonica</label><textarea id="studioDefinition" className="code-area" readOnly rows={14} value={session.componentJson()} /><button type="button" className="button small" onClick={() => session.download(`${b.doc.id}.jello-component.json`, session.componentJson(), 'application/json')}>Scarica JSON</button></Section>}
       </InspectorLevel></div>
     </div>
@@ -564,6 +493,8 @@ function RootInspector({ session, root }: { session: LabSession; root: BnRoot })
 
 function Breakpoints({ session, root }: { session: LabSession; root: BnRoot }) {
   const width = useLab((s) => s.report?.options.device);
+  const desktop = useLab((s) => s.builder.doc.type === 'desktop-navbar');
+  const paths = desktop ? DESKTOP_NAVBAR_OVERRIDE_PATHS.map(fromCanonicalPath) as (typeof OVERRIDE_PATHS)[number][] : OVERRIDE_PATHS;
   return (
     <div className="breakpoints" id="breakpoints">
       <h3 className="panel-sub">Breakpoint (larghezza del contenitore)</h3>
@@ -579,17 +510,17 @@ function Breakpoints({ session, root }: { session: LabSession; root: BnRoot }) {
             value={bp.maxWidth}
             onChange={(v) => session.updateBreakpoint(bp.id, { maxWidth: v as number })}
           />
-          {OVERRIDE_PATHS.map((path) => {
-            const f = BN_FIELD_INDEX[path]!;
+          {paths.map((path) => {
+            const f = desktop ? { ...DESKTOP_NAVBAR_FIELDS.find((f) => f.path === toCanonicalPath(path))!, path } : BN_FIELD_INDEX[path]!;
             const on = path in bp.overrides;
             const id = `bp-${bp.id}-${path.replace(/\./g, '-')}`;
             return (
               <div key={path} className="bp-override">
                 <label className="check" htmlFor={`${id}-on`}>
-                  <input id={`${id}-on`} type="checkbox" checked={on} onChange={(e) => session.updateBreakpoint(bp.id, { set: [path, e.target.checked ? (rootField(root, path) ?? f.default) as number | string | boolean : null] })} />
+                  <input id={`${id}-on`} type="checkbox" checked={on} onChange={(e) => session.updateBreakpoint(bp.id, { set: [path as (typeof OVERRIDE_PATHS)[number], e.target.checked ? (rootField(root, path) ?? f.default) as number | string | boolean : null] })} />
                   <span>{f.label}</span>
                 </label>
-                {on && <FieldControl f={f} id={id} value={bp.overrides[path]} onChange={(v) => session.updateBreakpoint(bp.id, { set: [path, v as number | string | boolean] })} />}
+                {on && <FieldControl f={f} id={id} value={bp.overrides[path]} onChange={(v) => session.updateBreakpoint(bp.id, { set: [path as (typeof OVERRIDE_PATHS)[number], v as number | string | boolean] })} />}
               </div>
             );
           })}
@@ -606,43 +537,47 @@ function Breakpoints({ session, root }: { session: LabSession; root: BnRoot }) {
   );
 }
 
-function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab; root: BnRoot }) {
+function TabInspector({ session, tab, root }: { session: LabSession; tab: NavbarItem; root: BnRoot }) {
   const b = useLab((s) => s.builder);
   const advanced = useAdvanced();
-  const fields = definitionFields(b.doc.type, 'item');
+  const fields = definitionFields(b.doc.type, tab.role);
+  const desktop = b.doc.type === 'desktop-navbar';
+  const canSelect = tab.role === 'item' && tab.visible && !tab.disabled && tab.action.kind !== 'consumer';
+  const style = { iconSize: null, fontSize: null, fontWeight: null, letterSpacing: null, ...(b.doc.style.items as Record<string, Partial<BnTabStyle>> | undefined)?.[tab.id] };
   const field = (name: string) => fields.find((f) => f.path === `content.$item.${name}`)!;
-  const index = root.children.indexOf(tab);
+  const index = navbarItems(b.doc).findIndex((n) => n.id === tab.id);
   return (
     <>
       <Section id="structure" title="Contenuto">
-        <TextControl id="tab-label" label={<label htmlFor="tab-label">Etichetta</label>} value={tab.label} maxLength={40} description="Testo visibile e nome accessibile. L’id non cambia." onChange={(v) => session.updateTab(tab.id, { label: v })} />
+        <TextControl id="tab-label" label={<label htmlFor="tab-label">Etichetta</label>} value={tab.label} maxLength={desktop ? 120 : 40} description="Testo visibile e nome accessibile. L’id non cambia." onChange={(v) => session.updateTab(tab.id, { label: v })} />
         <div className="field param">
           <div className="field-head">
             <label htmlFor="tab-id">Id stabile</label>
           </div>
           <input id="tab-id" className="text-input" value={tab.id} readOnly aria-describedby="tab-id-desc" />
           <p className="param-desc" id="tab-id-desc">
-            Lo riceve <code>onChange</code>. Generato alla creazione, indipendente dall’etichetta.
+            Lo ricevono i callback di selezione o azione. Generato alla creazione, indipendente dall’etichetta.
           </p>
         </div>
         <div className="field param">
           <div className="field-head">
-            <label htmlFor="tab-value">Valore (facoltativo)</label>
+            <label htmlFor="tab-value">{tab.role === 'action' ? 'Valore dell’azione' : 'Valore (facoltativo)'}</label>
           </div>
-          <input id="tab-value" className="text-input" value={tab.value ?? ''} maxLength={200} placeholder="es. /risultati" aria-describedby="tab-value-desc" onChange={(e) => session.updateTab(tab.id, { value: e.target.value || null })} />
+          <input id="tab-value" className="text-input" value={tab.value ?? ''} maxLength={200} placeholder="es. /risultati" aria-describedby="tab-value-desc" onChange={(e) => session.updateTab(tab.id, { value: tab.role === 'action' ? e.target.value : e.target.value || null })} />
           <p className="param-desc" id="tab-value-desc">
-            Dato libero inviato con gli eventi (una route, una chiave): la componente non naviga da sola.
+            Dato libero inviato con gli eventi. La destinazione dei link si configura in Azione.
           </p>
         </div>
         <p className="hint">
-          Posizione {index + 1} di {root.children.length}. Sposta, duplica o elimina dalla Struttura a sinistra.
+          Posizione {index + 1} di {navbarItems(b.doc).length}. Sposta, duplica o elimina dalla Struttura a sinistra.
         </p>
         <FieldControl id="tab-visible" f={field('visible')} value={tab.visible ?? true} onChange={(v) => session.updateTab(tab.id, { visible: v as boolean })} />
-        <label htmlFor="tab-group">Gruppo</label>
+        {desktop && <RegionControl session={session} id={tab.groupId ?? tab.id} inherited={!!tab.groupId} />}
+        {tab.role === 'item' && <><label htmlFor="tab-group">Gruppo</label>
         <select id="tab-group" value={tab.groupId ?? ''} onChange={(e) => session.moveTabToGroup(tab.id, e.target.value || null)}>
           <option value="">Nessun gruppo</option>
-          {navbarGroups(b.doc).map((g) => <option key={g.id} value={g.id}>{g.label ?? g.id}</option>)}
-        </select>
+          {navbarGroups(b.doc).filter((g) => !desktop || ((b.doc.layout.regions as Record<string, string>)[g.id] ?? 'main') === ((b.doc.layout.regions as Record<string, string>)[tab.groupId ?? tab.id] ?? 'main')).map((g) => <option key={g.id} value={g.id}>{g.label ?? g.id}</option>)}
+        </select></>}
       </Section>
       <Section id="appearance" title="Icona">
         <IconPicker prefix="tab" icon={tab.icon} onPick={(icon) => session.setTabIcon(tab.id, icon)} onUpload={(f) => session.uploadTabIcon(tab.id, f)} />
@@ -650,9 +585,10 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
         <Messages />
       </Section>
       <Section id="typography" title="Dimensioni e tipografia">
+        {desktop && <p className="hint">Il peso dello stato attivo prevale su quello della voce. Le dimensioni di testo e icona sono visibili quando il layout li mostra.</p>}
         {(Object.keys(TAB_STYLE_FIELDS) as (keyof BnTabStyle)[]).map((k) => {
           const f = TAB_STYLE_FIELDS[k];
-          const own = tab.style[k] !== null;
+          const own = style[k] !== null;
           const inherited = rootField(root, f.path) as number;
           const id = `tab-style-${k}`;
           return (
@@ -663,7 +599,7 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
                   {f.label} {own ? '' : `· eredita ${inherited}${f.unit ? ` ${f.unit}` : ''}`}
                 </span>
               </label>
-              {own && <FieldControl f={f} id={id} value={tab.style[k]} onChange={(v) => session.setTabStyle(tab.id, k, v as number)} />}
+              {own && <FieldControl f={f} id={id} value={style[k]} onChange={(v) => session.setTabStyle(tab.id, k, v as number)} />}
             </div>
           );
         })}
@@ -674,14 +610,14 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
           <span>Disabilitata</span>
         </label>
         <NavbarActionEditor key={`${tab.id}-${JSON.stringify(tab.action)}`} session={session} tab={tab} />
-        <div className="button-row">
-          <button type="button" className="button small" id="tab-default" disabled={root.defaultTab === tab.id} onClick={() => session.setComponentRoot({ defaultTab: tab.id })}>
+        {tab.role === 'item' && <div className="button-row">
+          <button type="button" className="button small" id="tab-default" disabled={!canSelect || root.defaultTab === tab.id} onClick={() => session.setComponentRoot({ defaultTab: tab.id })}>
             {root.defaultTab === tab.id ? 'Tab attiva iniziale' : 'Rendi attiva all’avvio'}
           </button>
-          <button type="button" className="button small" id="tab-preview-active" disabled={b.previewTab === tab.id} onClick={() => session.setPreviewTab(tab.id)}>
+          <button type="button" className="button small" id="tab-preview-active" disabled={!canSelect || b.previewTab === tab.id} onClick={() => session.setPreviewTab(tab.id)}>
             Attiva nell’anteprima
           </button>
-        </div>
+        </div>}
         <div className="field param">
           <div className="field-head">
             <label htmlFor="tab-preview-state">Anteprima stato</label>
@@ -694,7 +630,7 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
             <option value="focus">Focus</option>
             <option value="disabled">Disabled</option>
           </select>
-          <p className="param-desc">Mostra lo stato su questa tab senza interagire. Gli stili degli stati sono della navigazione (seleziona la radice).</p>
+          <p className="param-desc">Mostra lo stato sull’elemento selezionato senza interagire. Gli stili degli stati sono della navigazione (seleziona la radice).</p>
         </div>
       </Section>
       {advanced && <Section id="accessibility" title="Accessibilità" open={false}>
@@ -708,20 +644,21 @@ function TabInspector({ session, tab, root }: { session: LabSession; tab: BnTab;
       </Section>}
       <Section id="interactions" title={SECTION_LABEL.interactions} open={false}>
         <p className="hint">
-          Premere questa tab emette <code>{root.interactions.events.press}</code>; sceglierla emette <code>{root.interactions.events.change}</code> con <code>{`{ tabId: "${tab.id}", value: ${tab.value === null ? 'null' : JSON.stringify(tab.value)} }`}</code>.
+          L’attivazione riporta <code>onAction</code> con id <code>{tab.id}</code> e l’azione configurata. {tab.role === 'item' && tab.action.kind === 'select' ? `La selezione emette anche ${root.interactions.events.change}.` : tab.action.kind === 'navigate' ? 'Il browser segue il link.' : 'Il consumatore gestisce l’azione senza cambiare la selezione.'}
         </p>
       </Section>
     </>
   );
 }
 
-function NavbarActionEditor({ session, tab }: { session: LabSession; tab: BnTab }) {
+function NavbarActionEditor({ session, tab }: { session: LabSession; tab: NavbarItem }) {
   const action = tab.action ?? { kind: 'select' };
   const [kind, setKind] = useState<NavbarAction['kind']>(action.kind);
   const [destination, setDestination] = useState(action.kind === 'navigate' ? action.href : action.kind === 'consumer' ? action.name : '');
   const [target, setTarget] = useState<'_self' | '_blank'>(action.kind === 'navigate' ? action.target ?? '_self' : '_self');
   // The form keeps incomplete destinations local; only an explicit, validated action is persisted.
-  const f = definitionFields('mobile-navbar', 'item').find((f) => f.path === 'content.$item.action.kind')!;
+  const type = useLab((s) => s.builder.doc.type);
+  const f = definitionFields(type, tab.role).find((f) => f.path === 'content.$item.action.kind')!;
   return <form onSubmit={(e) => {
     e.preventDefault();
     session.setTabAction(tab.id, kind === 'select' ? { kind } : kind === 'navigate' ? { kind, href: destination, target } : { kind, name: destination });
@@ -1163,4 +1100,107 @@ function MaterialPanel({ session }: { session: LabSession }) {
       )}
     </div>
   );
+}
+
+/** Structure order is canonical; Desktop partitions root nodes into their actual regions. */
+function NavbarStructure({ session }: { session: LabSession }) {
+  const { doc, selection } = useLab((s) => s.builder);
+  const navbar = isNavbarDefinition(doc);
+  const desktop = doc.type === 'desktop-navbar';
+  const items = navbar ? navbarItems(doc) : [];
+  const groups = navbar ? navbarGroups(doc) : [];
+  const selected = items.find((n) => n.id === selection);
+  const selectedGroup = groups.find((g) => g.id === selection);
+  const parent = selected?.groupId ? doc.structure.children?.find((g) => g.id === selected.groupId) : doc.structure;
+  const displayed = ((selectedGroup ? doc.structure : parent)?.children ?? []).filter((n) => !desktop || selected?.groupId || ((doc.layout.regions as Record<string, string>)[n.id] ?? 'main') === ((doc.layout.regions as Record<string, string>)[selection] ?? 'main'));
+  const index = displayed.findIndex((n) => n.id === selection);
+  const siblings = displayed.length;
+  const rendered = desktop ? desktopNavbarRegions(doc) : null;
+  const entry = (node: StructureNode): React.ReactNode => {
+    const item = items.find((i) => i.id === node.id);
+    const group = groups.find((g) => g.id === node.id);
+    return <li key={node.id}>
+      <button type="button" className="tree-node" data-node={node.id} aria-pressed={selection === node.id} onClick={() => session.selectElement(node.id)}>
+        {item ? <TabIcon icon={item.icon} /> : <Icon name="left" />}
+        <span>{group?.label ?? item?.label ?? node.id}</span>
+        <span className="tree-kind">{group ? 'gruppo' : item?.role === 'brand' ? 'brand' : item?.role === 'action' ? 'azione' : 'voce'}{item && !item.visible ? ' · nascosta' : ''}{item?.disabled ? ' · disabled' : ''}</span>
+      </button>
+      {group && <ul>{node.children?.map(entry)}</ul>}
+    </li>;
+  };
+  const shift = (delta: number) => selectedGroup ? session.moveNavbarGroup(selection, delta) : session.moveTab(selection, delta);
+  return <>
+    <ul className="tree" id="structureTree" aria-label="Elementi della componente"><li>
+      <button type="button" className="tree-node" data-node="root" aria-pressed={selection === 'root'} onClick={() => session.selectElement('root')}><Icon name="left" /><span>{doc.name}</span><span className="tree-kind">{navbar ? 'navigazione' : 'pulsante'}</span></button>
+      {desktop ? <ul>{(['start', 'main', 'end'] as const).map((region) => <li key={region} data-tree-region={region}><span className="tree-node tree-region">{region[0]!.toUpperCase() + region.slice(1)}<span className="tree-kind">{rendered![region].length} visibili</span></span><ul>{doc.structure.children?.filter((n) => ((doc.layout.regions as Record<string, string>)[n.id] ?? 'main') === region).map(entry)}</ul></li>)}</ul> : navbar ? <ul>{doc.structure.children?.map(entry)}</ul> : <ul>{doc.structure.children?.map((n) => <li key={n.id}><span className="tree-node" aria-disabled="true">{doc.content[n.id]?.text ?? n.role}</span></li>)}</ul>}
+    </li></ul>
+    {navbar ? <>
+      <div className="library-actions" role="group" aria-label="Azioni sulla struttura">
+        <button type="button" className="button small" id="tabAdd" disabled={items.filter((i) => i.role === 'item').length >= MAX_TABS} onClick={() => session.addTab()}><Icon name="plus" />{desktop ? 'Voce' : 'Tab'}</button>
+        <button type="button" className="button small" id="tabUp" aria-label="Sposta prima" disabled={index <= 0} onClick={() => shift(-1)}>←</button>
+        <button type="button" className="button small" id="tabDown" aria-label="Sposta dopo" disabled={index < 0 || index >= siblings - 1} onClick={() => shift(1)}>→</button>
+        <button type="button" className="button small" id="tabDuplicate" disabled={!selected || selected.role === 'brand' || (selected.role === 'action' && items.filter((n) => n.role === 'action').length >= 4) || items.length >= MAX_TABS} onClick={() => session.duplicateTab(selection)}><Icon name="copy" />Duplica</button>
+        <button type="button" className="button small" id="tabRemove" disabled={!selected || (selected.role === 'item' && items.filter((n) => n.role === 'item').length <= 1)} onClick={() => session.removeTab(selection)}><Icon name="trash" />Elimina</button>
+      </div>
+      {desktop && <div className="button-row"><button type="button" id="navbarAddBrand" className="button small" disabled={items.some((n) => n.role === 'brand')} onClick={() => session.addDesktopControl('brand')}>+ Brand</button><button type="button" id="navbarAddAction" className="button small" disabled={items.filter((n) => n.role === 'action').length >= 4} onClick={() => session.addDesktopControl('action')}>+ Azione</button></div>}
+      <p className="hint">{items.filter((n) => n.role === 'item').length} / {MAX_TABS} voci{desktop ? ' · gruppi logici, senza dropdown. I membri ereditano la regione del gruppo.' : ' · prova Responsive quando non stanno nella barra.'}</p>
+      <GroupCreator session={session} />
+    </> : <p className="hint">Testo e icona si modificano nell’inspector.</p>}
+  </>;
+}
+
+function GroupCreator({ session }: { session: LabSession }) {
+  const [name, setName] = useState('');
+  return <form onSubmit={(e) => { e.preventDefault(); if (name.trim()) { session.addNavbarGroup(name.trim()); setName(''); } }}>
+    <label htmlFor="structure-group-name">Nuovo gruppo</label><input className="text-input" id="structure-group-name" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} />
+    <button type="submit" className="button small" disabled={!name.trim()}>Crea gruppo</button>
+  </form>;
+}
+
+function RegionControl({ session, id, inherited = false }: { session: LabSession; id: string; inherited?: boolean }) {
+  const doc = useLab((s) => s.builder.doc);
+  const f = definitionFields(doc.type, 'item').find((f) => f.path === 'layout.regions.$item')!;
+  return <><FieldControl id="navbar-region" f={f} disabled={inherited} value={(doc.layout.regions as Record<string, string>)[id] ?? 'main'} onChange={(v) => session.setNavbarRegion(id, v as NavbarRegion)} />{inherited && <p className="hint">Regione ereditata: seleziona il gruppo per spostarlo, oppure estrai la voce dal gruppo.</p>}</>;
+}
+
+function GroupInspector({ session, id }: { session: LabSession; id: string }) {
+  const doc = useLab((s) => s.builder.doc);
+  const group = navbarGroups(doc).find((g) => g.id === id)!;
+  const fields = definitionFields(doc.type, 'group');
+  const siblings = doc.structure.children!.filter((n) => doc.type !== 'desktop-navbar' || ((doc.layout.regions as Record<string, string>)[n.id] ?? 'main') === ((doc.layout.regions as Record<string, string>)[id] ?? 'main'));
+  const index = siblings.findIndex((n) => n.id === id);
+  return <Section id="structure" title="Gruppo logico">
+    <FieldControl id="navbar-group-label" f={fields.find((f) => f.path === 'content.$group.text')!} value={group.label ?? ''} onChange={(v) => session.renameNavbarGroup(id, String(v))} />
+    {doc.type === 'desktop-navbar' && <RegionControl session={session} id={id} />}
+    <p className="hint">Nessun dropdown. Nel Canvas è evidenziata l’area delle voci visibili; i gruppi vuoti non hanno geometria.</p>
+    <ul className="bl-list">{group.itemIds.map((itemId, i) => <li key={itemId} className="button-row"><button className="button small" onClick={() => session.selectElement(itemId)}>{navbarItems(doc).find((n) => n.id === itemId)?.label ?? itemId}</button><button className="button small" aria-label={`Sposta prima ${itemId}`} disabled={!i} onClick={() => session.moveTab(itemId, -1)}>←</button><button className="button small" aria-label={`Sposta dopo ${itemId}`} disabled={i === group.itemIds.length - 1} onClick={() => session.moveTab(itemId, 1)}>→</button></li>)}</ul>
+    <div className="button-row"><button className="button small" disabled={index <= 0} onClick={() => session.moveNavbarGroup(id, -1)}>Sposta gruppo prima</button><button className="button small" disabled={index >= siblings.length - 1} onClick={() => session.moveNavbarGroup(id, 1)}>Sposta gruppo dopo</button><button id="navbarUngroup" className="button small" onClick={() => session.removeNavbarGroup(id)}>Sciogli gruppo</button></div>
+    <Messages />
+  </Section>;
+}
+
+function DesktopRootInspector({ session }: { session: LabSession }) {
+  const doc = useLab((s) => s.builder.doc);
+  const root = navbarView(doc); // presentation only; hierarchy is read with navbarItems / navbarGroups
+  const unsupported = unsupportedMap(doc);
+  const fields = (section: InspectorSection) => DESKTOP_NAVBAR_FIELDS.filter((f) => f.section === section && f.path !== 'layout.orientation'
+    && (f.path !== 'layout.width' || doc.layout.widthMode === 'fixed')
+    && (f.path !== 'layout.maxWidth' || doc.layout.widthMode === 'fill')
+    && (!['style.appearance.indicator.color', 'style.appearance.indicator.inset'].includes(f.path) || root.appearance.indicator.style !== 'none')
+    && (f.path !== 'style.motion.duration' || root.motion.indicator !== 'none')).map((f) => unsupported.has(f.path)
+      ? <p key={f.path} className="param-support" data-unsupported={f.path}>{f.label}: {unsupported.get(f.path)}</p>
+      : <PropertyField key={f.path} f={f} path={f.path} value={getPath(doc, f.path)} unsupported={unsupported} onChange={(v) => session.setComponentField(f.path, v)} />);
+  return <>
+    <Section id="structure" title="Contenuto">
+      <TextControl id="cmp-name" label={<label htmlFor="cmp-name">Nome della componente</label>} value={doc.name} maxLength={80} description="Nome nella libreria e negli export." onChange={(v) => session.setComponentName(v)} />
+      <TextControl id="cmp-label" label={<label htmlFor="cmp-label">Nome accessibile</label>} value={doc.content.root?.text ?? doc.name} maxLength={120} description="Nome della navigazione letto dagli screen reader." onChange={(v) => session.setComponentRoot({ label: v })} />
+      <label htmlFor="cmp-defaultTab">Voce attiva iniziale</label><select id="cmp-defaultTab" value={String(doc.interactions.behavior.defaultItem)} onChange={(e) => session.setComponentRoot({ defaultTab: e.target.value })}>{navbarItems(doc).filter((n) => n.role === 'item' && n.visible && !n.disabled && n.action.kind !== 'consumer').map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}</select>
+      <p className="hint">Semantica navigation. Gruppi logici e regioni Start / Main / End, senza conversione Mobile automatica.</p>
+    </Section>
+    <Section id="layout" title="Layout">{fields('layout')}</Section>
+    <Section id="appearance" title="Aspetto">{fields('appearance')}<Section id="typography" title="Tipografia" open={false}>{fields('typography')}</Section></Section>
+    <Section id="material" title="Materiale" open={false}><MaterialPanel session={session} /></Section>
+    <Section id="states" title="Stati e interazioni" open={false}>{fields('states')}<p className="hint">Gli stati simulati nel Canvas non cambiano il documento. Seleziona una voce per provarli.</p><Section id="interactions" title="Interazioni" open={false}>{fields('interactions')}<p className="hint">onAction riporta select, navigate e consumer. Le azioni consumer non cambiano la selezione.</p></Section></Section>
+    <Section id="responsive" title="Responsive" open={false}>{fields('responsive')}<Breakpoints session={session} root={root} /><p className="hint">Breakpoint sulla larghezza del contenitore. Overflow segnalato nel Canvas; nessun hamburger implicito.</p></Section>
+  </>;
 }

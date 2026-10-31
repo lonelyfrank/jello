@@ -62,7 +62,7 @@ export function buildStage(doc: Document, role: 'main' | 'compare'): HTMLElement
 }
 
 /** What the editor listens to while a component is shown (a navbar's tabs; a button reports nothing to the editor). */
-export type ComponentHandlers = Pick<BottomNavigationOptions, 'onChange' | 'onTabPress' | 'onReselect' | 'activeTab'>;
+export type ComponentHandlers = Pick<BottomNavigationOptions, 'onChange' | 'onTabPress' | 'onReselect' | 'onAction' | 'activeTab'>;
 
 export class Stage {
   readonly root: HTMLElement;

@@ -64,6 +64,10 @@ export interface ExportAdapter {
   build(req: ExportRequest): Promise<PackageResult>;
 }
 
+const materialRequirements = (doc: ComponentDefinition): string[] => resolveDefinitionMaterial(doc).family === 'glass'
+  ? ['Materiale Glass incluso. Per rifrazione SVG passa source: contenuto DOM opaco dietro la barra, separato dal contenitore. Senza source usa CSS satinato; fallback del browser a CSS/opaco. WebGL2 non rifrange i componenti DOM.']
+  : ['Materiale Solid incluso: CSS, senza source, filtri o canvas.'];
+
 const RUNTIME_DEP = (v = '0.3.0'): ExportDependency => ({ name: '@jello/runtime', version: v, kind: 'bundled', note: 'in runtime/: renderer, CSS, backend WebGL2 (caricato solo se serve), tipi' });
 
 function need<T>(v: T | undefined, what: string): T {
@@ -172,6 +176,7 @@ export const componentReactAdapter: ExportAdapter = {
       dependencies: [RUNTIME_DEP(req.runtime?.version), { name: 'react, react-dom', version: '>=18', kind: 'peer', note: 'forniti dal progetto' }],
       notes: [
         c.type === 'mobile-navbar' ? `Installabile con npm install ./${n.root}; nessun router richiesto: onChange riceve l’id della tab.` : `Installabile con npm install ./${n.root}; usa lo stesso renderer dell’anteprima.`,
+        ...materialRequirements(c),
         ...spec.export.notes.filter((x) => c.type !== 'mobile-navbar' || !x.startsWith('Le tab')),
         ...off.map((u) => `Senza effetto con ${material.name}: ${u.path}.`),
       ],
@@ -195,7 +200,7 @@ export const componentVanillaAdapter: ExportAdapter = {
         { path: 'README.md · jello-manifest.json', description: 'integrazione, compatibilità, requisiti e limitazioni' },
       ],
       dependencies: [RUNTIME_DEP(req.runtime?.version)],
-      notes: ['Nessuna installazione React. Servi la cartella via HTTP e apri example/.', 'CSS con namespace jello-*. Il lifecycle libera le risorse con destroy().', ...unsupportedProperties(component).map((u) => `${u.path}: ${u.reason}`)],
+      notes: [...materialRequirements(component), 'Nessuna installazione React. Servi la cartella via HTTP e apri example/.', 'CSS con namespace jello-*. Il lifecycle libera le risorse con destroy().', ...unsupportedProperties(component).map((u) => `${u.path}: ${u.reason}`)],
     };
   },
   build: (req) => buildVanillaPackage({ component: need(req.component, 'la componente'), runtime: need(req.runtime, 'il runtime (npm run build:lib)'), ...(req.now ? { now: req.now } : {}) }),

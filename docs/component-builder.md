@@ -149,15 +149,15 @@ Il tipo di disegno (tratto o riempimento) è rilevato e applicato con `currentCo
 - `src/runtime/materials.ts` — runtime dei materiali per famiglia (`createMaterialGroup`).
 - `src/components/registry.ts` — **componenti** (`COMPONENTS`): proprietà, valori iniziali, stati, interazioni,
   materiali compatibili, proprietà senza effetto per famiglia, renderer ed export ([Component Engine](component-engine.md)).
-  Registrati: Button e Mobile Navbar. `DEFINITION_TYPES` (`definition.ts`) conserva lo schema anche di Desktop
-  Navbar e Input, elencati come «in arrivo», senza implementazioni fittizie.
+  Registrati: Button, Mobile Navbar e Desktop Navbar. Input rimane pianificato,
+  senza implementazioni fittizie.
 - `src/runtime/components.ts` — renderer dei componenti per tipo (`createComponent`).
 
 ## Libreria: ufficiale e personale
 
 | | Dove | Modificabile |
 | --- | --- | --- |
-| **Template ufficiali Jello** | in codice (`COMPONENT_TEMPLATES`): *Mobile Navbar* e *Button* | no: le modifiche sono una bozza finché non si salvano |
+| **Template ufficiali Jello** | in codice (`COMPONENT_TEMPLATES`): *Mobile Navbar*, *Desktop Navbar* e *Button* | no: le modifiche sono una bozza finché non si salvano |
 | **Componenti salvate** | IndexedDB, store `components` | sì, salvataggio automatico |
 | **Preset materiali personali** | IndexedDB, store `materials` | sì (Material Lab) |
 
@@ -195,8 +195,8 @@ dell'icona. Il livello Base/Avanzato continua a essere solo presentazione.
 
 I descrittori vengono dallo stesso `definitionFields(type, role)`, con ambito
 comune/Mobile/Desktop e livello; nessun Inspector parallelo. Il contratto
-Desktop è pronto per un renderer dedicato in M5.2 ma il Builder non lo offre
-come componente già disponibile. Non sono introdotti dropdown o drag-and-drop.
+Desktop usa il renderer M5.2 e, da M5.3, il Builder visuale e gli export React/Vanilla.
+Non sono introdotti dropdown o drag-and-drop. Vedi [consegna M5.3](navbar-m53-delivery.md).
 
 ## Studio M3.1
 
@@ -209,3 +209,7 @@ Desktop, tablet, telefono e dimensioni personalizzate condividono lo stesso stag
 Solid si salva anche dall’Inspector come preset personale. Le revisioni seguono le regole già usate da Glass: un collegamento senza override segue il preset; i valori locali restano protetti e “Aggiorna dal preset” rende esplicita la sostituzione. Il salvataggio allinea l’URL prima di dichiararsi concluso, per recuperare il lavoro anche con una ricarica immediata.
 
 Le destinazioni sono React, Vanilla e JSON; il formato progetto `.jello` mantiene il lavoro dello Studio. Dettagli e limiti in [Export](export.md) e [report M3.1/M4.1](studio-completion.md).
+
+## Desktop Navbar M5.3
+
+Il wizard propone anche Desktop. La struttura è organizzata per Start/Main/End, con brand opzionale, voci, gruppi e azioni. Il medesimo Inspector cambia in base al nodo; Regione si applica alle radici, i membri ereditano dal gruppo. Le frecce riordinano nella regione o nel gruppo. Gli stati simulati e la selezione della preview non vengono salvati nel documento. Il Canvas segnala overflow e breakpoint; Seleziona apre il nodo e le proprietà, Interagisci prova le azioni. [Flusso, API, export e verifiche](navbar-m53-delivery.md).

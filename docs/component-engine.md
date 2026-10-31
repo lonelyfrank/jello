@@ -16,7 +16,7 @@ descrittori, materiali e breakpoint. [Audit del codice](navbar-audit.md).
 Il Builder Mobile usa queste operazioni; `BnRoot` resta la vista del suo renderer.
 Desktop ha un profilo completo e validato, senza ereditare il posizionamento
 inferiore. Da M5.2 è registrata in `COMPONENTS` con renderer dedicato, anteprima
-tecnica nello stesso Stage e capability JSON. [Desktop Renderer](desktop-navbar-renderer.md).
+nello stesso Stage; da M5.3 dispone di Builder visuale e capability JSON/React/Vanilla. [Desktop Renderer](desktop-navbar-renderer.md).
 
 ## Che cosa c'è
 
@@ -53,8 +53,8 @@ che `setField` rifiuta, `defaults()` diverso dai descrittori, nomi di evento non
 
 **Desktop Navbar** usa `DesktopNavigation` e `MaterialBinding`: tre regioni,
 azioni select/navigate/consumer, tastiera, breakpoint, overflow e lifecycle.
-La preview tecnica è disponibile; il Builder completo e gli adapter React/Vanilla
-sono previsti per M5.3. **Input** resta pianificato: il documento si legge, ma le
+Il Builder visuale e gli adapter React/Vanilla M5.3 montano lo stesso renderer.
+[Consegna M5.3](navbar-m53-delivery.md). **Input** resta pianificato: il documento si legge, ma le
 proprietà prive di renderer sono ignorate con un avviso.
 
 Il runtime lega ogni voce al proprio renderer come fa per i materiali:
@@ -265,8 +265,6 @@ famiglia), il runtime, sorgente TSX e tipi, esempio, README e manifest.
 
 ## Attività residue
 
-- **Materiali personali Solid**: il Material Lab edita solo Glass, la libreria personale contiene solo Glass.
-  In una componente Solid si modificano e si esportano i valori, ma non si «salva come preset».
 - **Colori e contrasto**: con Solid, il colore della tab attiva e i colori di stato della navbar restano scelti da chi
   usa il componente; non c'è un controllo di contrasto nell'inspector.
 - **Il Button non ha badge, stato di caricamento, gruppo o variante «destructive»**: non erano richiesti.
@@ -274,4 +272,4 @@ famiglia), il runtime, sorgente TSX e tipi, esempio, README e manifest.
 - **WebKit** non è stato eseguito (vedi [Compatibilità](compatibility.md)).
 - **Jelly** deve fornire `accent` e un renderer nella `RUNTIMES` di `materials.ts` e nel `surface-binding`
   (la checklist di Material Core è aggiornata).
-- Editor Desktop completo e relativi adapter: M5.3. Input resta pianificato.
+- Desktop editor/export completati in M5.3; Input resta pianificato.

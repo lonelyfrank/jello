@@ -1,4 +1,4 @@
-import { COMPONENTS } from '../../components';
+import { COMPONENTS, navbarItems } from '../../components';
 import { setStudioPreferences, useStudioPreferences } from '../studio-preferences';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { SCENES } from '../../stage/scenes';
@@ -20,6 +20,7 @@ export function Preview({ session }: { session: LabSession }) {
   const { zoom, area } = useStudioPreferences();
   const setZoom = (zoom: number) => setStudioPreferences({ zoom });
   const b = useLab((s) => s.builder);
+  const [desktopStatus, setDesktopStatus] = useState('');
   const pick = useLab((s) => s.builder.pick);
 
   // The controller owns everything inside this element; React never renders into it.
@@ -27,10 +28,23 @@ export function Preview({ session }: { session: LabSession }) {
     if (host.current) session.mountPreview(host.current);
   }, [session]);
 
+  useLayoutEffect(() => {
+    if (!builder || b.doc.type !== 'desktop-navbar' || !host.current) { setDesktopStatus(''); return; }
+    const refresh = () => {
+      const nav = host.current?.querySelector('.jello-dnav');
+      setDesktopStatus(nav ? `${nav.hasAttribute('data-overflowing') ? 'Overflow: scorri per raggiungere tutte le voci' : 'Tutte le voci nello spazio disponibile'} · Breakpoint: ${nav.getAttribute('data-breakpoint') || 'base'}` : '');
+    };
+    const observer = new MutationObserver(refresh);
+    observer.observe(host.current, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-overflowing', 'data-breakpoint'] });
+    refresh();
+    return () => observer.disconnect();
+  }, [builder, b.doc.type]);
+
   const scene = options.mode === 'scene';
   const loops = report?.loops ?? [];
   const sceneStatus = report?.scene ?? null;
 
+  const simulateStates = b.doc.type !== 'desktop-navbar' || navbarItems(b.doc).some((item) => item.id === b.selection && item.visible);
   const forcedOpaque = !solid && !scene && report?.main.effective === 'opaque' && report.main.configured !== 'opaque';
   const manualTransparency = options.reduceTransparency;
   return (
@@ -158,8 +172,9 @@ export function Preview({ session }: { session: LabSession }) {
       </div>
       {area === 'preview' && <div className="studio-test-note"><Ic name="shield" /><span>Stesso Stage, stesso runtime. Prova viewport, sfondi e stati; diagnostica e relay sono nei pannelli laterali.</span></div>}
       <div className="canvas-caption"><span>{builder ? b.doc.name : solid ? 'Solid / CSS' : scene ? 'Glass / Scena controllata' : 'Glass / Componenti reali'}</span><span>{options.device === 'custom' ? `${options.width} × ${options.height} px` : options.device === 'phone' ? '390 px · Mobile' : options.device === 'tablet' ? '768 px · Tablet' : 'Desktop · adattivo'}</span></div>
+      {builder && b.doc.type === 'desktop-navbar' && <p className="hint navbar-layout-status" id="navbarLayoutStatus" role="status">{desktopStatus}</p>}
       <div className="preview-host" ref={host} style={{ zoom }} />
-      {builder && <div className="canvas-states" role="group" aria-label="Stati della componente"><span>Stato</span>{(COMPONENTS.get(b.doc.type)?.states ?? []).map((state) => <button key={state} type="button" aria-pressed={(b.previewState ?? 'default') === state} onClick={() => session.setPreviewState(state === 'default' ? null : state as typeof b.previewState)}>{state === 'default' ? 'Default' : state[0]!.toUpperCase() + state.slice(1)}</button>)}</div>}
+      {builder && <div className="canvas-states" role="group" aria-label="Stati della componente"><span>{simulateStates ? 'Stato' : 'Seleziona un brand, una voce o un’azione visibile per simulare gli stati.'}</span>{(simulateStates ? COMPONENTS.get(b.doc.type)?.states ?? [] : []).map((state) => <button key={state} type="button" aria-pressed={(b.previewState ?? 'default') === state} onClick={() => session.setPreviewState(state === 'default' ? null : state as typeof b.previewState)}>{state === 'default' ? 'Default' : state[0]!.toUpperCase() + state.slice(1)}</button>)}</div>}
       <dl className="metrics" id="metrics" aria-label="Misure disponibili">
         <div>
           <dt>Loop JavaScript</dt>

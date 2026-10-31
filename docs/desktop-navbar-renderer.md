@@ -101,3 +101,9 @@ Open `?workspace=builder&component=desktop-navbar`. The existing Stage uses the 
 M5.3 owns the complete Desktop structural/layout Inspector, visual editor and React/Vanilla package adapters. COMPONENTS advertises JSON only; both adapter descriptions and package builders reject Desktop framework exports. The built public runtime already contains Desktop independently of React/editor/storage. Mobile/Button exports remain supported.
 
 Validation: [compatibility matrix](compatibility.md). No schema/IndexedDB version change or Mobile/Button API breaking change.
+
+## Visual Builder and exports · M5.3
+
+The visual editor now exposes this renderer in the existing Builder, contextual Inspector and shared Stage. The canonical structure, brand/actions, regions/groups, styles, material and container breakpoints are editable without JSON. Selection is bidirectional; logical groups highlight their visible members without generating runtime controls. Overflow and the effective breakpoint are visible in the Canvas.
+
+React and Vanilla packages use the same built runtime. React exposes configuration, controlled/uncontrolled activeItem, selection/action/press/reselect/hover/focus callbacks and material source refs; Vanilla mount returns the dedicated typed DesktopNavigation instance. Both include canonical and resolved material documents, CSS/types, working examples, README and hashed manifests. Brand and action typography overrides survive validation as well as runtime updates. [M5.3 delivery and verification](navbar-m53-delivery.md).

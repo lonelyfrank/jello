@@ -68,7 +68,7 @@ function ComponentWizard({ session }: { session: LabSession }) {
   const [family, setFamily] = useState('glass');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const templates = useMemo(() => ['button', 'mobile-navbar'].map((id) => ({ id, config: componentTemplate(id)!.create() })), []);
+  const templates = useMemo(() => ['button', 'mobile-navbar', 'desktop-navbar'].map((id) => ({ id, config: componentTemplate(id)!.create() })), []);
   const preview = useMemo(() => switchMaterialFamily(componentTemplate(type)!.create(), family).definition, [type, family]);
   const open = async () => {
     setBusy(true);
@@ -89,7 +89,7 @@ function ComponentWizard({ session }: { session: LabSession }) {
     {step < 2 ? <button type="button" className="button primary" onClick={() => setStep(step + 1)}>Continua</button> : <button type="button" className="button primary" id="openComponentBuilder" disabled={busy} onClick={() => void open()}>Personalizza nel Builder</button>}
   </>}>
     {step === 0 && <fieldset className="choice-group"><legend>Quale componente vuoi creare?</legend><div className="choice-cards">{templates.map((t) => <label key={t.id} className="choice-card" data-checked={type === t.id}>
-      <input type="radio" name="componentType" value={t.id} checked={type === t.id} onChange={() => setType(t.id)} /><strong>{t.id === 'button' ? 'Button' : 'Mobile Navbar'}</strong><ComponentSample config={t.config} />
+      <input type="radio" name="componentType" value={t.id} checked={type === t.id} onChange={() => setType(t.id)} /><strong>{t.id === 'button' ? 'Button' : t.id === 'desktop-navbar' ? 'Desktop Navbar' : 'Mobile Navbar'}</strong><ComponentSample config={t.config} />
     </label>)}</div></fieldset>}
     {step === 1 && <fieldset className="choice-group"><legend>Materiale della stessa componente</legend><div className="choice-cards">{['glass', 'solid'].map((id) => <label key={id} className="choice-card" data-checked={family === id}>
       <input type="radio" name="componentFamily" value={id} checked={family === id} onChange={() => setFamily(id)} /><strong>{id === 'glass' ? 'Glass' : 'Solid'}</strong>

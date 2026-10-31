@@ -46,12 +46,13 @@ export function mount(options) {
   catch (error) { instance.destroy(); throw error; }
 }
 `);
-  const options = doc.type === 'button' ? 'JelloButtonOptions' : 'BottomNavigationOptions';
-  const instance = doc.type === 'button' ? 'JelloButton' : 'BottomNavigation';
-  add('index.d.ts', `import type { ComponentDefinition, MaterialDocument, ${options}, ${instance} } from './runtime/jello.js';
-export declare const config: ComponentDefinition;
+  const options = doc.type === 'button' ? 'JelloButtonOptions' : doc.type === 'desktop-navbar' ? 'DesktopNavigationOptions' : 'BottomNavigationOptions';
+  const instance = doc.type === 'button' ? 'JelloButton' : doc.type === 'desktop-navbar' ? 'DesktopNavigation' : 'BottomNavigation';
+  const definition = doc.type === 'desktop-navbar' ? 'DesktopNavbarDefinition' : 'ComponentDefinition';
+  add('index.d.ts', `import type { ${definition}, MaterialDocument, ${options}, ${instance} } from './runtime/jello.js';
+export declare const config: ${definition};
 export declare const material: MaterialDocument;
-export declare function mount(options: Omit<${options}, 'config'> & { config?: ComponentDefinition }): ${instance};
+export declare function mount(options: Omit<${options}, 'config'> & { config?: ${definition} }): ${instance};
 `);
   add('package.json', JSON.stringify({ name: `${reactNames(doc).packageName}-vanilla`, version: '1.0.0', type: 'module', main: './index.js', types: './index.d.ts', exports: { '.': { types: './index.d.ts', import: './index.js' }, './style.css': './runtime/jello.css', './component.json': './component.json', './material.json': './material.json' }, sideEffects: ['**/*.css'] }, null, 2) + '\n');
   add('example/index.html', exampleHtml(doc.name));
@@ -62,9 +63,10 @@ const output = document.querySelector('#jello-output');
 let instance;
 function start() {
   if (instance) return;
-  instance = mount({ container, source, scroller: source, anchor: 'container',
+  instance = mount({ container, ${material.family === 'glass' ? 'source, scroller: source,' : ''} ${doc.type === 'mobile-navbar' ? "anchor: 'container'," : ''}
     onPress: (e) => { output.textContent = 'Press: ' + (e.value ?? 'button'); },
-    onChange: (id) => { output.textContent = 'Selected: ' + id; }
+    onChange: (id) => { output.textContent = 'Selected: ' + id; },
+    onAction: (id, event) => { output.textContent = 'Action: ' + id + ' / ' + event.action.kind + (event.action.kind === 'consumer' ? ' / ' + event.action.name : ''); }
   });
 }
 function stop() { instance?.destroy(); instance = null; }
@@ -99,9 +101,9 @@ In un bundler puoi installare la cartella con npm install ./${root}, importare m
 
 Glass: source è il contenuto DOM opaco dietro la componente, in un elemento separato dal container, mai un suo antenato. Senza source usa CSS satinato. SVG richiede il supporto del browser; in assenza passa a CSS e poi opaco. WebGL2 richiede una texture controllata e non è usato dai renderer DOM. Solid non richiede source, filtri o canvas.
 
-${doc.type === 'button' ? 'Callbacks: onPress, onHover, onFocus. Azione: <button>; collegamento: <a href>. I link seguono il browser; un’azione viene gestita dal consumatore.' : 'Callbacks: onChange(id, event), onTabPress(id, event), onReselect(id, event). setActiveTab(id) per cambiare selezione; controlled: true per delegarla all’app. Nessun router incluso.'}
+${doc.type === 'desktop-navbar' ? 'Callbacks: onChange, onTabPress, onReselect, onAction, onHover, onFocus (id, event). setActiveItem(id) per lo stato attivo; controlled: true delega la selezione all’app. onAction include event.action: select, navigate (link nativo) o consumer (name applicativo). Brand/consumer non cambiano selezione. Regioni Start/Main/End e gruppi logici piatti, senza dropdown. Semantica navigation; tabs senza pannelli non supportate. Tab/Shift+Tab, frecce, Home/End, Enter/Space usano il runtime comune.' : doc.type === 'button' ? 'Callbacks: onPress, onHover, onFocus. Azione: <button>; collegamento: <a href>. I link seguono il browser; un’azione viene gestita dal consumatore.' : 'Callbacks: onChange(id, event), onTabPress(id, event), onReselect(id, event). setActiveTab(id) per cambiare selezione; controlled: true per delegarla all’app. Nessun router incluso.'}
 
-Gli eventi DOM dichiarati in component.json fanno bubbling. I breakpoint leggono la larghezza del container: assegnagli una dimensione. I namespace CSS sono jello-*, --jbtn-* e --jbn-*; il posizionamento viewport/container segue la definizione (anchor può essere sovrascritto nelle opzioni navbar). Non usare lo stesso container come sorgente Glass.
+Gli eventi DOM dichiarati in component.json fanno bubbling. I breakpoint leggono la larghezza del container: assegnagli una dimensione. I namespace CSS sono jello-*, --jbtn-* e --jbn-*; ${doc.type === 'desktop-navbar' ? 'la geometria Desktop usa il normale flusso; nessuna conversione Mobile automatica' : 'il posizionamento viewport/container segue la definizione (anchor può essere sovrascritto nelle opzioni Mobile)'}. Non usare lo stesso container come sorgente Glass.
 
 Movimento ridotto, trasparenza ridotta e forced-colors seguono le preferenze del browser. Gli stati Disabled conservano la semantica HTML. Il focus è visibile. Colori personalizzati richiedono una verifica del contrasto sullo sfondo scelto. Browser moderni con ES modules, ResizeObserver e CSS variables; nessun polyfill incluso.
 

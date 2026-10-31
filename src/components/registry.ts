@@ -16,7 +16,7 @@
  * entry here that passes `validateComponentSpec`. Until then the type is
  * *planned*: listed with the reason it is not available, not registered, not
  * editable, not exportable and not renderable. Desktop has a renderer and
- * technical preview (M5.2); full editing/framework adapters follow in M5.3.
+ * visual editing and framework adapters (M5.3) on the same M5.2 runtime.
  */
 
 import { MATERIALS } from '../model/registry';
@@ -142,9 +142,9 @@ const DESKTOP: ComponentSpec = {
   interactions: [...NAVBAR.interactions, { trigger: 'hover', event: 'jello-hover' }, { trigger: 'focus', event: 'jello-focus' }],
   unsupported: (family) => DESKTOP_NAVBAR_UNSUPPORTED[family] ?? [],
   renderer: { id: 'desktop-navbar' },
-  export: { formats: ['component-json'], families: ['glass', 'solid'],
+  export: { formats: ['component-json', 'component-react', 'component-vanilla'], families: ['glass', 'solid'],
     events: ['jello-change', 'jello-press', 'jello-reselect', 'jello-action', 'jello-hover', 'jello-focus'],
-    notes: ['Runtime Desktop e anteprima tecnica disponibili. Semantica navigation; tabs senza pannelli non disponibili. Editor Desktop completo e adapter React/Vanilla previsti per M5.3.'] },
+    notes: ['Desktop Navbar: regioni Start / Main / End e gruppi logici, senza dropdown. Semantica navigation; tabs senza pannelli non disponibili. Stesso runtime nello Studio e negli export React/Vanilla.'] },
 };
 
 /** Everything wrong with a spec, as readable sentences (empty when it is complete and consistent). */

@@ -20,7 +20,7 @@ function freeze<T>(value: T): T {
 describe('Desktop renderer contract', () => {
   it('registers a working renderer, JSON capability and typed common entry points', () => {
     expect(componentRuntime('desktop-navbar')?.renderer).toBe('desktop-navbar');
-    expect(COMPONENTS.get('desktop-navbar')?.export.formats).toEqual(['component-json']);
+    expect(COMPONENTS.get('desktop-navbar')?.export.formats).toEqual(['component-json', 'component-react', 'component-vanilla']);
     // Compile-time regression: Desktop options infer the dedicated instance through the shared factory.
     const factory: (options: DesktopNavigationOptions) => DesktopNavigation = createComponent;
     const mount: (options: DesktopNavigationOptions) => DesktopNavigation = mountComponent;
@@ -113,7 +113,7 @@ describe('Desktop renderer contract', () => {
     expect(navbarItems(added.definition).some((item) => item.id === added.id)).toBe(true);
     expect(setDesktopNavbarRegion(added.definition, added.id, 'start')).not.toBeNull();
   });
-  it('refuses incomplete Desktop framework adapter descriptions', () => {
-    for (const adapter of [componentReactAdapter, componentVanillaAdapter]) expect(() => adapter.describe({ component: demo() })).toThrow(/non ha un export|non disponibile/);
+  it('describes working Desktop framework adapters with the bundled runtime', () => {
+    for (const adapter of [componentReactAdapter, componentVanillaAdapter]) expect(adapter.describe({ component: demo() }).files.some((f) => f.path === 'runtime/')).toBe(true);
   });
 });

@@ -1,8 +1,10 @@
 /** Desktop contract, validation and pure renderer presentation. */
-import type { ComponentDefinition, StructureNode } from './definition';
+import { parseDefinition, type ComponentDefinition, type StructureNode } from './definition';
 import { choices, checkField, getPath, setPath, type FieldDescriptor } from './fields';
 import { BN_FIELDS, NAVBAR_UNSUPPORTED, checkNavbarSections, fromCanonicalPath, navbarPresentation, navbarView, toCanonicalPath, type ItemRef, type NavbarCheck, type Presentation } from './navbar';
-import { navbarItems, type NavbarItem, type NavbarRegion } from './navbar-contract';
+import { NavbarStructureError } from './navbar-structure';
+import { uniqueId } from './navbar';
+import { navbarItemNodes, navbarItems, type NavbarItem, type NavbarRegion } from './navbar-contract';
 
 const MOBILE_ONLY = new Set(['layout.anchor', 'layout.placement', 'layout.offset']);
 const DEFAULTS: Record<string, unknown> = { 'layout.height': 72, 'layout.padding': 24, 'layout.gap': 16, 'layout.width': 1280, 'layout.maxWidth': 1600, 'layout.itemLayout': 'inline', 'layout.distribution': 'start' };
@@ -24,7 +26,7 @@ export function checkDesktopNavbarSections(
 ): NavbarCheck | null {
   const layout = isObj(raw.layout) ? raw.layout : {};
   const { regions: inputRegions, ...rest } = layout;
-  const checked = checkNavbarSections({ ...raw, layout: raw.layout === undefined || isObj(raw.layout) ? rest : raw.layout }, items, errors, warnings, DESKTOP_VIEW_FIELDS, DESKTOP_NAVBAR_OVERRIDE_PATHS);
+  const checked = checkNavbarSections({ ...raw, layout: raw.layout === undefined || isObj(raw.layout) ? rest : raw.layout }, items, errors, warnings, DESKTOP_VIEW_FIELDS, DESKTOP_NAVBAR_OVERRIDE_PATHS, navbarItemNodes({ structure }).map(({ node }) => node));
   const regions: Record<string, NavbarRegion> = {};
   if (inputRegions !== undefined) {
     if (!isObj(inputRegions)) errors.push('layout.regions: atteso un oggetto');
@@ -88,3 +90,27 @@ export function desktopNavbarPresentation(def: ComponentDefinition, family: stri
 }
 
 export const DESKTOP_NAVBAR_UNSUPPORTED = NAVBAR_UNSUPPORTED;
+
+/** Canonical container breakpoints. The existing validator owns paths, ranges and ordering. */
+export function editDesktopNavbarBreakpoint(def: ComponentDefinition, id: string | null, patch: { maxWidth?: number; set?: [string, unknown]; remove?: boolean } = {}): ComponentDefinition {
+  if (def.type !== 'desktop-navbar') throw new NavbarStructureError(['Richiesta una desktop-navbar']);
+  type Point = { id: string; maxWidth: number; overrides: Record<string, unknown> };
+  const points = (def.responsive.breakpoints ?? []) as Point[];
+  const added = id === null;
+  const key = id ?? uniqueId(`bp-${patch.maxWidth ?? 768}`, points.map((p) => p.id));
+  if (!added && !points.some((p) => p.id === key)) throw new NavbarStructureError(['Breakpoint inesistente']);
+  const base = added ? [...points, { id: key, maxWidth: patch.maxWidth ?? 768, overrides: {} }] : points;
+  const next = { ...def, responsive: { ...def.responsive, breakpoints: base.filter((p) => p.id !== key || !patch.remove).map((p) => {
+    if (p.id !== key) return p;
+    const overrides = { ...p.overrides };
+    if (patch.set) {
+      const [path, value] = patch.set;
+      if (value === null) delete overrides[path]; else overrides[path] = value;
+    }
+    return { ...p, maxWidth: patch.maxWidth ?? p.maxWidth, overrides };
+  }) } };
+  const parsed = parseDefinition(next);
+  if (!parsed.ok) throw new NavbarStructureError(parsed.errors);
+  if (parsed.warnings.length) throw new NavbarStructureError(parsed.warnings);
+  return next;
+}

@@ -1,0 +1,252 @@
+{
+  "format": "jello-navbar-m53-verification",
+  "date": "2026-10-31",
+  "branch": "main",
+  "checks": [
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm test",
+      "result": "passed",
+      "tests": 411,
+      "files": 25,
+      "skipped": 0
+    },
+    {
+      "command": "npm run build",
+      "result": "passed",
+      "notes": [
+        "Runtime, declarations, Studio and lightweight preview built. Vite warns about chunks above 500 kB."
+      ]
+    },
+    {
+      "command": "scripts/prepare-consumer.mjs (E2E server startup)",
+      "result": "passed",
+      "notes": [
+        "Local packages installed in the independent React project; its source and exported TSX declarations typecheck; Vite build passed."
+      ]
+    },
+    {
+      "command": "scripts/prepare-vanilla.mjs (E2E server startup)",
+      "result": "passed",
+      "notes": [
+        "Six component packages and one Solid material package; consumer types passed; examples run via HTTP without React."
+      ]
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "e2e": {
+    "runs": [
+      {
+        "id": "full-local",
+        "command": "npx playwright test --project=chromium --project=firefox --project=mobile-emulated",
+        "passed": 666,
+        "skipped": 3,
+        "failed": 0,
+        "flaky": 0,
+        "durationMs": 588238.91
+      },
+      {
+        "id": "desktop-builder-final",
+        "command": "npx playwright test tests/e2e/desktop-builder.spec.ts tests/e2e/desktop-consumer.spec.ts tests/e2e/desktop-navigation.spec.ts tests/e2e/builder.spec.ts tests/e2e/studio-redesign.spec.ts --project=chromium --project=firefox --project=mobile-emulated",
+        "passed": 122,
+        "skipped": 1,
+        "failed": 3,
+        "flaky": 0,
+        "durationMs": 221772.659
+      },
+      {
+        "id": "mobile-regression-final",
+        "command": "npx playwright test tests/e2e/builder.spec.ts tests/e2e/studio-redesign.spec.ts --project=chromium --project=firefox --project=mobile-emulated",
+        "passed": 53,
+        "skipped": 1,
+        "failed": 0,
+        "flaky": 0,
+        "durationMs": 78602.275
+      }
+    ],
+    "aggregation": "Last result per project, file, suite and title; reruns do not count as new tests. The full run predates the last UI refinements; the affected Builder/Studio and Desktop/consumer suites were rerun.",
+    "totalUnique": 672,
+    "passed": 669,
+    "skipped": 3,
+    "failed": 0,
+    "byProject": {
+      "chromium": {
+        "expected": 224
+      },
+      "firefox": {
+        "expected": 223,
+        "skipped": 1
+      },
+      "mobile-emulated": {
+        "expected": 222,
+        "skipped": 2
+      }
+    },
+    "byFile": {
+      "builder.spec.ts": {
+        "expected": 30
+      },
+      "component-export.spec.ts": {
+        "expected": 30
+      },
+      "components.spec.ts": {
+        "expected": 57
+      },
+      "desktop-builder.spec.ts": {
+        "expected": 33
+      },
+      "desktop-consumer.spec.ts": {
+        "expected": 12
+      },
+      "desktop-navigation.spec.ts": {
+        "expected": 27
+      },
+      "example.spec.ts": {
+        "expected": 12
+      },
+      "export.spec.ts": {
+        "expected": 12
+      },
+      "fallback.spec.ts": {
+        "expected": 29,
+        "skipped": 1
+      },
+      "interaction.spec.ts": {
+        "expected": 45
+      },
+      "materials.spec.ts": {
+        "expected": 33
+      },
+      "navbar-structure.spec.ts": {
+        "expected": 9
+      },
+      "navbar.spec.ts": {
+        "expected": 54
+      },
+      "params-io.spec.ts": {
+        "expected": 15
+      },
+      "projects.spec.ts": {
+        "expected": 56,
+        "skipped": 1
+      },
+      "raster.spec.ts": {
+        "expected": 36
+      },
+      "react-consumer.spec.ts": {
+        "expected": 27
+      },
+      "solid.spec.ts": {
+        "expected": 45
+      },
+      "studio-completion.spec.ts": {
+        "expected": 21
+      },
+      "studio-redesign.spec.ts": {
+        "expected": 23,
+        "skipped": 1
+      },
+      "sync.spec.ts": {
+        "expected": 12
+      },
+      "vanilla-consumer.spec.ts": {
+        "expected": 21
+      },
+      "webgl.spec.ts": {
+        "expected": 30
+      }
+    },
+    "skips": [
+      {
+        "project": "firefox",
+        "file": "fallback.spec.ts",
+        "suite": [
+          "fallback.spec.ts"
+        ],
+        "test": "prefers-reduced-transparency uses the opaque path",
+        "status": "skipped",
+        "annotations": [
+          {
+            "type": "skip",
+            "description": "Emulation only available through Chromium CDP"
+          }
+        ],
+        "lastRun": "full-local"
+      },
+      {
+        "project": "mobile-emulated",
+        "file": "projects.spec.ts",
+        "suite": [
+          "projects.spec.ts",
+          "projects"
+        ],
+        "test": "the wizard creates a named project whose materials stay apart from other projects",
+        "status": "skipped",
+        "annotations": [
+          {
+            "type": "skip",
+            "description": "the project switcher lives in the breadcrumb, which phones hide; Home switches projects there"
+          }
+        ],
+        "lastRun": "full-local"
+      },
+      {
+        "project": "mobile-emulated",
+        "file": "studio-redesign.spec.ts",
+        "suite": [
+          "studio-redesign.spec.ts"
+        ],
+        "test": "preview preferences restore from the URL and keyboard panel resizing does not alter documents",
+        "status": "skipped",
+        "annotations": [
+          {
+            "type": "skip",
+            "description": "Resize separators belong to the desktop layout. Mobile reflow is covered by screenshots."
+          }
+        ],
+        "lastRun": "mobile-regression-final"
+      }
+    ]
+  },
+  "resolvedIssues": [
+    "Initial unit assertions still expected JSON-only Desktop capability; updated to verify both working adapters. The relay was initially blocked by sandbox EPERM and passed outside the sandbox.",
+    "Initial Desktop E2E: 16 passed, 5 failed. Consumer comparisons had different container padding/fonts and sampled in-flight transitions; matched integration conditions and polled current computed styles. The icon test now clicks its visible label.",
+    "Screenshot review found the phone drawer opening at the library rather than at the selected properties. Added local drawer scrolling and viewport assertions, without timers.",
+    "The screenshot refinement changed the Mobile pane preference and hid its material shortcut (3 browser failures in desktop-builder-final). Restored the Mobile preference; all affected Builder/Studio regressions passed in mobile-regression-final."
+  ],
+  "runtime": {
+    "version": "0.3.0",
+    "files": {
+      "jello.js": "9411d44c113d9b9bd2d4e18cf10f750c4bfed5946ab54aca40790e944a01bfd3",
+      "jello.css": "5fb34366844700a325d8d6d0bd1a4432d10265cdb10519db10a50cabb758fa1a",
+      "types/runtime/index.d.ts": "df63dd967e0bca62a3648cf8a7046582f85dff03ba4c284780f8d50d38685a82"
+    },
+    "notes": "Desktop consumer E2E compare these bytes with the packages and compare computed geometry/styles with the Stage."
+  },
+  "compatibility": {
+    "componentSchemaVersion": 1,
+    "typeVersion": 1,
+    "materialSchemaVersion": 2,
+    "indexedDBVersion": 4,
+    "breakingChanges": false
+  },
+  "screenshots": [
+    "docs/screenshots/navbar-m53/builder-1440.png",
+    "docs/screenshots/navbar-m53/builder-390.png",
+    "docs/screenshots/navbar-m53/builder-320.png"
+  ],
+  "limitations": [
+    "Desktop navigation semantics only; no tabs without a panel contract.",
+    "Logical groups have no independent runtime control; empty groups have no Canvas geometry.",
+    "No dropdown, hamburger or automatic Desktop/Mobile conversion.",
+    "Glass refraction requires a separate opaque source and SVG support; CSS/opaque fallback and existing WebGL2 DOM limits apply.",
+    "Safari/WebKit, physical devices, Android WebView and manual screen reader audits were not run.",
+    "Browser zoom at 200% and arbitrary material colour contrast were not audited."
+  ]
+}

@@ -177,3 +177,7 @@ di colore. Il reflow a 320 px è verificato; lo zoom reale del browser al 200% n
   i token del redesign sono centralizzati in `studio.css`, caricato solo dall'editor.
   Non vengono inclusi nei pacchetti runtime né nella preview leggera.
 - Nessun deploy, commit remoto, modifica di altre repository o nuova dipendenza UI.
+
+## Aggiornamento M5.3 — Desktop Navbar
+
+Il limite Desktop descritto nell’audit e nella consegna storica sopra è superato: il Builder visuale e gli adapter React/Vanilla sono implementati sullo stesso runtime M5.2. Albero per regioni, inspector contestuale Base/Avanzato, picker, token, font e Stage rimangono quelli del redesign. Nessuna nuova pagina o nuovo Inspector. [Consegna e verifiche aggiornate](navbar-m53-delivery.md).

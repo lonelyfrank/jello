@@ -225,3 +225,33 @@ export function moveNavbarItemToGroup<T extends ComponentDefinition>(def: T, id:
   }
   return checked(next);
 }
+
+/** Add a Desktop brand/action using the same canonical slots and validation as items. */
+export function addNavbarControl<T extends ComponentDefinition>(def: T, role: 'brand' | 'action', input: NavbarItemPatch = {}): { definition: T; id: string } {
+  checked(def);
+  if (def.type !== 'desktop-navbar') fail('Brand e azioni richiedono una Desktop Navbar');
+  if (role !== 'brand' && role !== 'action') fail('Ruolo richiesto: brand o action');
+  const id = uniqueId(role, nodeIds(def));
+  const next = replaceChildren(def, null, [...def.structure.children ?? [], { id, role }]);
+  return { definition: patchedItem(next, id, { label: role === 'brand' ? 'Your brand' : 'Action', value: role,
+    icon: { kind: 'builtin', name: role === 'brand' ? 'star' : 'plus' },
+    action: role === 'brand' ? { kind: 'navigate', href: '/' } : { kind: 'consumer', name: 'action' }, ...input }), id };
+}
+
+export function renameNavbarGroup<T extends ComponentDefinition>(def: T, id: string, label: string): T {
+  checked(def); group(def, id);
+  if (!label.trim() || label.length > 120) fail('Nome gruppo: richiesti da 1 a 120 caratteri');
+  return checked({ ...def, content: { ...def.content, [id]: { ...def.content[id], text: label } } });
+}
+
+/** Per-control style overrides; the renderer uses the same four numeric properties for all roles. */
+export function setNavbarItemStyle<T extends ComponentDefinition>(def: T, id: string, key: keyof import('./navbar').BnTabStyle, value: number | null): T {
+  checked(def); item(def, id);
+  if (!['iconSize', 'fontSize', 'fontWeight', 'letterSpacing'].includes(key)) fail('Proprietà di stile sconosciuta');
+  const styles = def.style.items as Record<string, Record<string, number>> | undefined;
+  const own = { ...styles?.[id] };
+  if (value === null) delete own[key]; else own[key] = value;
+  const items = { ...styles, [id]: own };
+  if (!Object.keys(own).length) delete items[id];
+  return checked({ ...def, style: { ...def.style, items } });
+}

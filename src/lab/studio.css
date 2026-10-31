@@ -388,3 +388,9 @@
   .studio-nav > button[aria-current='page'], .canvas-states button[aria-pressed='true'], .studio-inspector-tabs button[aria-pressed='true'], .studio-pane-tabs button[aria-pressed='true'] { border-color: Highlight; color: HighlightText; background: Highlight; }
   .welcome-copy h2 span { color: CanvasText; }
 }
+
+/* Canonical navbar hierarchy uses the existing tree and inspector tokens. */
+#app .tree .tree-region { color: var(--text-2); font-weight: 600; }
+#app .tree ul { min-width: 0; padding-inline-start: 12px; }
+#app .tree .tree-node > span:not(.tree-kind) { overflow-wrap: anywhere; min-width: 0; }
+#app .navbar-layout-status { margin: 0; padding: 6px 12px; color: var(--text-2); }

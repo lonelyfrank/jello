@@ -66,6 +66,17 @@ import { importComponentText, legacyPreset, legacyTemplate } from '../migration'
 import {
   addBreakpoint,
   addNavbarItem,
+  addNavbarControl,
+  isNavbarDefinition,
+  navbarGroups,
+  renameNavbarGroup,
+  moveNavbarGroup,
+  setNavbarItemStyle,
+  setDesktopNavbarRegion,
+  editDesktopNavbarBreakpoint,
+  parseDefinition,
+  toCanonicalPath,
+  type NavbarRegion,
   duplicateNavbarItem,
   moveNavbarItem,
   removeNavbarItem,
@@ -80,7 +91,6 @@ import {
   type NavbarAction,
   removeBreakpoint,
   updateBreakpoint,
-  updateTab,
   type BnOverrideKey,
   type BnRoot,
   type BnTabStyle,
@@ -149,9 +159,21 @@ function withoutMaterialOverrides(states: ComponentDefinition['states']): Compon
   return out;
 }
 
-const isNavbar = (doc: ComponentDefinition) => doc.type === 'mobile-navbar';
+const isNavbar = isNavbarDefinition;
 /** Tabs of a navbar; any other component has none. */
-const tabsOf = (doc: ComponentDefinition) => doc.type === 'desktop-navbar' ? navbarItems(doc) : (isNavbar(doc) ? navbarView(doc).children : []);
+const tabsOf = (doc: ComponentDefinition) => isNavbar(doc) ? navbarItems(doc) : [];
+const selectableNode = (doc: ComponentDefinition, id: string) => id === 'root' || id === 'material' || tabsOf(doc).some((n) => n.id === id) || (isNavbar(doc) && navbarGroups(doc).some((g) => g.id === id));
+
+/** Root order controls follow visible region order; members follow their canonical group. */
+function navbarMoveIndex(doc: ComponentDefinition, id: string, groupId: string | null, delta: number): number {
+  const parent = groupId ? doc.structure.children!.find((g) => g.id === groupId)! : doc.structure;
+  const all = parent.children ?? [];
+  const regions = doc.layout.regions as Record<string, NavbarRegion>;
+  const displayed = doc.type === 'desktop-navbar' && !groupId ? all.filter((n) => (regions[n.id] ?? 'main') === (regions[id] ?? 'main')) : all;
+  const target = displayed[displayed.findIndex((n) => n.id === id) + delta];
+  if (!target) throw new NavbarStructureError(['La voce è già al limite della sua regione o del gruppo.']);
+  return all.findIndex((n) => n.id === target.id);
+}
 
 function builderState(doc: ComponentDefinition, componentId: string, origin: BuilderState['origin'], modified: boolean): BuilderState {
   return { doc, componentId, origin, modified, selection: 'root', previewTab: doc.type === 'desktop-navbar' ? navbarActiveItem(doc) : isNavbar(doc) ? navbarView(doc).defaultTab : '', previewState: null, pick: false, messages: null };
@@ -890,7 +912,9 @@ export class LabSession {
     if (!c) return;
     if (this.state.options.mode !== 'components') this.setOption('mode', 'components', false);
     const b = this.state.builder;
-    const nav = c.showComponent(b.doc, { activeTab: b.previewTab, onChange: (id) => this.patchBuilder({ previewTab: id }) });
+    const nav = c.showComponent(b.doc, { activeTab: b.previewTab, onChange: (id) => this.patchBuilder({ previewTab: id }),
+      onAction: (id, event) => { if (event.action.kind === 'consumer') this.notify(`Azione: ${event.action.name} · ${id}`); },
+    });
     this.overlay?.destroy();
     this.overlay = new ComponentOverlay(c.main.root, nav, (id) => this.selectElement(id));
     this.overlay.setPicking(b.pick);
@@ -925,8 +949,8 @@ export class LabSession {
     const b = this.state.builder;
     const modified = opts.dirty === false ? false : b.origin === 'template' ? true : b.modified;
     if (this.state.workspace === 'builder') this.syncPreview(doc);
-    const previewTab = isNavbar(doc) || doc.type === 'desktop-navbar' ? navbarActiveItem(doc, b.previewTab) : '';
-    const selection = b.selection === 'root' || b.selection === 'material' || tabsOf(doc).some((t) => t.id === b.selection) ? b.selection : 'root';
+    const previewTab = isNavbar(doc) ? navbarActiveItem(doc, b.previewTab) : '';
+    const selection = selectableNode(doc, b.selection) ? b.selection : 'root';
     const components = b.origin === 'user' ? this.state.components.map((i) => (i.id === b.componentId ? { ...i, name: doc.name, doc } : i)) : this.state.components;
     this.store.set({ builder: { ...b, doc, modified, previewTab, selection }, components });
     this.syncSelection();
@@ -943,8 +967,33 @@ export class LabSession {
 
   selectElement(id: string): void {
     const doc = this.state.builder.doc;
-    if (id !== 'root' && id !== 'material' && !tabsOf(doc).some((t) => t.id === id)) return;
+    if (!selectableNode(doc, id)) return;
     this.patchBuilder({ selection: id, previewState: null });
+    const picking = this.state.builder.pick;
+    const pane = studioPreferences().builderPane;
+    const builderPane = doc.type === 'desktop-navbar' || (pane !== 'all' && pane !== 'layers') ? 'layers' : pane;
+    setStudioPreferences({ inspectorTab: 'all', ...(picking ? { area: 'editor', left: true, right: true, builderPane } : {}) });
+    if (picking) {
+      this.store.set({ layout: { ...this.state.layout, left: true, right: true } });
+      const narrow = matchMedia('(max-width: 900px)').matches;
+      if (narrow) this.setDrawer(true);
+      requestAnimationFrame(() => {
+        const panel = document.getElementById('panel');
+        if (!panel) return;
+        panel.scrollTop = 0;
+        if (narrow) {
+          const drawer = document.getElementById('controls')!;
+          const bar = drawer.querySelector<HTMLElement>('.controls-bar')!;
+          drawer.scrollTop += panel.getBoundingClientRect().top - drawer.getBoundingClientRect().top - bar.offsetHeight;
+          const field = panel.querySelector<HTMLElement>('input:not([type=radio]):not([type=range]), select, textarea');
+          if (field) {
+            const overflow = field.getBoundingClientRect().bottom - drawer.getBoundingClientRect().bottom + 16;
+            if (overflow > 0) drawer.scrollTop += overflow;
+          }
+        }
+        panel.focus({ preventScroll: true });
+      });
+    }
     this.syncSelection();
   }
 
@@ -960,7 +1009,7 @@ export class LabSession {
   }
 
   setPreviewTab(id: string): void {
-    if (!tabsOf(this.state.builder.doc).some((t) => t.id === id)) return;
+    if (navbarActiveItem(this.state.builder.doc, id) !== id) return;
     this.patchBuilder({ previewTab: id });
     this.navbarInstance()?.setActiveTab(id);
   }
@@ -975,7 +1024,7 @@ export class LabSession {
     const b = this.state.builder;
     const id = b.selection === 'material' ? 'root' : b.selection;
     const tab = tabsOf(b.doc).find((t) => t.id === id);
-    this.overlay?.setSelected(id, tab ? tab.label : b.doc.name);
+    this.overlay?.setSelected(id, tab ? tab.label : navbarGroups(b.doc).find((g) => g.id === id)?.label ?? b.doc.name);
     this.overlay?.refresh();
     // A navbar shows a state on the selected tab; a button, which has no parts, on itself.
     const target = tab ? tab.id : !isNavbar(b.doc) && b.selection === 'root' ? 'root' : null;
@@ -996,14 +1045,16 @@ export class LabSession {
    */
   setComponentField(path: string, value: unknown): boolean {
     const doc = this.state.builder.doc;
-    if (isNavbar(doc)) {
+    if (doc.type === 'mobile-navbar') {
       const root = setRootField(navbarView(doc), path, value);
       if (!root) return false;
       this.applyComponent(this.withRoot(root));
       return true;
     }
     const next = COMPONENTS.get(doc.type)?.setField(doc, path, value) ?? null;
-    if (!next) return false;
+    if (!next) { this.patchBuilder({ messages: { ok: false, messages: [`Valore non valido per ${path}. Consulta l’intervallo indicato.`] } }); return false; }
+    const parsed = parseDefinition(next);
+    if (!parsed.ok) { this.patchBuilder({ messages: { ok: false, messages: parsed.errors } }); return false; }
     this.applyComponent(next);
     return true;
   }
@@ -1073,6 +1124,16 @@ export class LabSession {
 
   setComponentRoot(patch: Partial<Pick<BnRoot, 'label' | 'semantics' | 'defaultTab'>>): void {
     if (!isNavbar(this.state.builder.doc)) return;
+    if (this.state.builder.doc.type === 'desktop-navbar') {
+      this.editNavbarStructure((doc) => {
+        if (patch.semantics && patch.semantics !== 'navigation') throw new NavbarStructureError(['Desktop supporta navigation; tabs richiede un contratto di pannelli.']);
+        if (patch.label !== undefined && !patch.label.trim()) throw new NavbarStructureError(['Nome accessibile richiesto']);
+        if (patch.defaultTab !== undefined && navbarActiveItem(doc, patch.defaultTab) !== patch.defaultTab) throw new NavbarStructureError(['Voce iniziale non disponibile']);
+        return { ...doc, content: patch.label === undefined ? doc.content : { ...doc.content, root: { ...doc.content.root, text: patch.label } },
+          interactions: { ...doc.interactions, behavior: { ...doc.interactions.behavior, ...(patch.defaultTab === undefined ? {} : { defaultItem: patch.defaultTab }) } } };
+      });
+      return;
+    }
     const root = navbarView(this.state.builder.doc);
     if (patch.defaultTab !== undefined && !root.children.some((t) => t.id === patch.defaultTab)) return;
     if (patch.label !== undefined && !patch.label.trim()) return;
@@ -1082,13 +1143,16 @@ export class LabSession {
   addTab(): string {
     if (!isNavbar(this.state.builder.doc)) return '';
     const b = this.state.builder;
-    const after = navbarView(b.doc).children.some((t) => t.id === b.selection) ? b.selection : undefined;
+    const after = tabsOf(b.doc).some((t) => t.id === b.selection) ? b.selection : undefined;
+    const selectedGroup = navbarGroups(b.doc).find((g) => g.id === b.selection);
     let id = '';
     this.editNavbarStructure((doc) => {
       const found = after ? navbarItemNodes(doc).find((n) => n.node.id === after) : undefined;
-      const parent = found?.groupId ? doc.structure.children!.find((n) => n.id === found.groupId)! : doc.structure;
-      const r = addNavbarItem(doc, {}, { groupId: found?.groupId ?? null, ...(after ? { index: parent.children!.findIndex((n) => n.id === after) + 1 } : {}) });
-      id = r.id; return r.definition;
+      const groupId = found?.groupId ?? selectedGroup?.id ?? null;
+      const parent = groupId ? doc.structure.children!.find((n) => n.id === groupId)! : doc.structure;
+      const r = addNavbarItem(doc, {}, { groupId, ...(after ? { index: parent.children!.findIndex((n) => n.id === after) + 1 } : {}) });
+      id = r.id;
+      return doc.type === 'desktop-navbar' && !groupId ? setDesktopNavbarRegion(r.definition, id, (doc.layout.regions as Record<string, NavbarRegion>)[after ?? ''] ?? 'main')! : r.definition;
     });
     if (id) this.selectElement(id);
     return id;
@@ -1096,15 +1160,11 @@ export class LabSession {
 
   removeTab(id: string): void {
     if (!isNavbar(this.state.builder.doc)) return;
-    const root = navbarView(this.state.builder.doc);
-    if (root.children.length <= 1) {
-      this.notify('Una navigazione ha almeno una tab: aggiungine un’altra prima di eliminare questa.');
-      return;
-    }
-    const i = root.children.findIndex((t) => t.id === id);
+    const nodes = tabsOf(this.state.builder.doc);
+    const i = nodes.findIndex((t) => t.id === id);
     if (this.editNavbarStructure((doc) => removeNavbarItem(doc, id))) {
-      const next = navbarView(this.state.builder.doc);
-      this.selectElement(next.children[Math.min(i, next.children.length - 1)]?.id ?? 'root');
+      const next = tabsOf(this.state.builder.doc);
+      this.selectElement(next[Math.min(i, next.length - 1)]?.id ?? 'root');
     }
   }
 
@@ -1113,7 +1173,7 @@ export class LabSession {
     let copyId = '';
     if (this.editNavbarStructure((doc) => {
       const r = duplicateNavbarItem(doc, id); copyId = r.id;
-      const source = navbarView(doc).children.find((t) => t.id === id)!;
+      const source = tabsOf(doc).find((t) => t.id === id)!;
       return updateNavbarItem(r.definition, r.id, { label: `${source.label} (copia)`.slice(0, 40) });
     })) this.selectElement(copyId);
   }
@@ -1124,20 +1184,26 @@ export class LabSession {
     this.editNavbarStructure((doc) => {
       const found = navbarItemNodes(doc).find((n) => n.node.id === id);
       if (!found) throw new NavbarStructureError([`Voce inesistente: ${id}`]);
-      const parent = found.groupId ? doc.structure.children!.find((n) => n.id === found.groupId)! : doc.structure;
-      return moveNavbarItem(doc, id, parent.children!.findIndex((n) => n.id === id) + delta);
+      return moveNavbarItem(doc, id, navbarMoveIndex(doc, id, found.groupId, delta));
     });
   }
 
   updateTab(id: string, patch: NavbarItemPatch): void {
     if (!isNavbar(this.state.builder.doc)) return;
-    if (patch.label !== undefined && (!patch.label.trim() || patch.label.length > 40)) return;
+    if (patch.label !== undefined && (!patch.label.trim() || patch.label.length > (this.state.builder.doc.type === 'desktop-navbar' ? 120 : 40))) { this.patchBuilder({ messages: { ok: false, messages: ['Etichetta: richiesti da 1 a 120 caratteri.'] } }); return; }
     this.editNavbarStructure((doc) => updateNavbarItem(doc, id, patch));
   }
 
   private editNavbarStructure(edit: (doc: ComponentDefinition) => ComponentDefinition): boolean {
     if (!isNavbar(this.state.builder.doc)) return false;
-    try { this.applyComponent(edit(this.state.builder.doc)); return true; }
+    try {
+      const next = edit(this.state.builder.doc);
+      const parsed = parseDefinition(next);
+      if (!parsed.ok) throw new NavbarStructureError(parsed.errors);
+      this.applyComponent(next);
+      this.patchBuilder({ messages: null });
+      return true;
+    }
     catch (error) {
       if (!(error instanceof NavbarStructureError)) throw error;
       this.patchBuilder({ messages: { ok: false, messages: error.errors } }); return false;
@@ -1147,7 +1213,8 @@ export class LabSession {
   setTabAction(id: string, action: NavbarAction): void { this.updateTab(id, { action }); }
 
   addNavbarGroup(label: string): void {
-    this.editNavbarStructure((doc) => addNavbarGroup(doc, label).definition);
+    let id = '';
+    if (this.editNavbarStructure((doc) => { const added = addNavbarGroup(doc, label); id = added.id; return added.definition; })) this.selectElement(id);
   }
 
   removeNavbarGroup(id: string): void { this.editNavbarStructure((doc) => removeNavbarGroup(doc, id)); }
@@ -1158,7 +1225,7 @@ export class LabSession {
 
   setTabStyle(id: string, key: keyof BnTabStyle, value: number | null): void {
     if (!isNavbar(this.state.builder.doc)) return;
-    this.applyComponent(this.withRoot(updateTab(navbarView(this.state.builder.doc), id, { style: { [key]: value } as Partial<BnTabStyle> as BnTabStyle })));
+    this.editNavbarStructure((doc) => setNavbarItemStyle(doc, id, key, value));
   }
 
   setTabIcon(id: string, icon: IconRef): void {
@@ -1181,19 +1248,46 @@ export class LabSession {
     return true;
   }
 
+  addDesktopControl(role: 'brand' | 'action'): void {
+    let id = '';
+    if (this.editNavbarStructure((doc) => {
+      const r = addNavbarControl(doc, role); id = r.id;
+      return setDesktopNavbarRegion(r.definition, id, role === 'brand' ? 'start' : 'end')!;
+    })) this.selectElement(id);
+  }
+
+  setNavbarRegion(id: string, region: NavbarRegion): void {
+    this.editNavbarStructure((doc) => {
+      const next = setDesktopNavbarRegion(doc, id, region);
+      if (!next) throw new NavbarStructureError(['Regione modificabile soltanto su elementi e gruppi della radice.']);
+      return next;
+    });
+  }
+
+  renameNavbarGroup(id: string, label: string): void { this.editNavbarStructure((doc) => renameNavbarGroup(doc, id, label)); }
+  moveNavbarGroup(id: string, delta: number): void {
+    this.editNavbarStructure((doc) => moveNavbarGroup(doc, id, navbarMoveIndex(doc, id, null, delta)));
+  }
+
   addBreakpoint(maxWidth = 480): void {
-    if (!isNavbar(this.state.builder.doc)) return;
-    this.applyComponent(this.withRoot(addBreakpoint(navbarView(this.state.builder.doc), maxWidth).root));
+    const doc = this.state.builder.doc;
+    if (!isNavbar(doc)) return;
+    if (doc.type === 'desktop-navbar') this.editNavbarStructure((d) => editDesktopNavbarBreakpoint(d, null, { maxWidth }));
+    else this.applyComponent(this.withRoot(addBreakpoint(navbarView(doc), maxWidth).root));
   }
 
   updateBreakpoint(id: string, patch: { maxWidth?: number; set?: [BnOverrideKey, number | string | boolean | null] }): void {
-    if (!isNavbar(this.state.builder.doc)) return;
-    this.applyComponent(this.withRoot(updateBreakpoint(navbarView(this.state.builder.doc), id, patch)));
+    const doc = this.state.builder.doc;
+    if (!isNavbar(doc)) return;
+    if (doc.type === 'desktop-navbar') this.editNavbarStructure((d) => editDesktopNavbarBreakpoint(d, id, { ...patch, ...(patch.set ? { set: [toCanonicalPath(patch.set[0]), patch.set[1]] } : {}) }));
+    else this.applyComponent(this.withRoot(updateBreakpoint(navbarView(doc), id, patch)));
   }
 
   removeBreakpoint(id: string): void {
-    if (!isNavbar(this.state.builder.doc)) return;
-    this.applyComponent(this.withRoot(removeBreakpoint(navbarView(this.state.builder.doc), id)));
+    const doc = this.state.builder.doc;
+    if (!isNavbar(doc)) return;
+    if (doc.type === 'desktop-navbar') this.editNavbarStructure((d) => editDesktopNavbarBreakpoint(d, id, { remove: true }));
+    else this.applyComponent(this.withRoot(removeBreakpoint(navbarView(doc), id)));
   }
 
   // ---------- the component's material ----------
@@ -1433,6 +1527,10 @@ export class LabSession {
     const r = importComponentText(text);
     if (!r.ok) {
       this.patchBuilder({ messages: { ok: false, messages: ['Import rifiutato: nessuna modifica applicata.', ...r.errors] } });
+      return false;
+    }
+    if (r.doc.type === 'desktop-navbar' && r.doc.interactions.behavior.semantics !== 'navigation') {
+      this.patchBuilder({ messages: { ok: false, messages: ['Import rifiutato: Desktop richiede navigation. Tabs senza pannelli non supportate. Nessuna modifica applicata.'] } });
       return false;
     }
     const taken = this.userComponents.has(r.doc.id) || componentTemplate(r.doc.id) !== undefined;
