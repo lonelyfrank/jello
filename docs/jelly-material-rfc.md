@@ -1,9 +1,12 @@
-# Jelly Material — RFC sperimentale M6.1
+# Jelly Material — RFC sperimentale M6.1 / M6.2
 
 Data: 31 ottobre 2026. Checkout di partenza: `main`,
 `6ce08f74670ba0e1353d217b2768a43fe96c08a4`, pulito.
-Stato: **modello candidato implementato; nessun renderer, solver o editor Jelly**.
-Consegna e verifiche: [report M6.1](jelly-m61-delivery.md).
+Stato: **modello candidato e renderer ottico privato SVG/CSS implementati;
+nessun solver, editor o runtime pubblico Jelly**.
+Consegne e verifiche: [M6.1](jelly-m61-delivery.md), [M6.2](jelly-m62-delivery.md).
+Le sezioni di audit M6.1 e i piani M6.3/M6.4 restano storici/proposti;
+la sezione «M6.2 implementata» distingue il codice eseguito dalla roadmap.
 
 ## Decisione e confine pubblico
 
@@ -37,7 +40,7 @@ di poter importare i candidati con un runtime produttivo 0.3.0.
 L'attivazione pubblica avverrà atomicamente in M6.4, dopo renderer e solver reali:
 unione dei documenti, dispatch del parser, definizione, runtime, binding,
 componenti, Studio, persistenza ed export nella stessa integrazione verificata.
-In M6.2 una fixture privata importerà il candidato direttamente, senza
+In M6.2 una [fixture privata](../tests/fixtures/jelly/index.html) importa il candidato direttamente, senza
 introdurlo nei flussi utente. I candidati non sono una versione Jelly pubblicata:
 nessuna migrazione fittizia da Jelly 0, nessuna conversione Glass/Solid → Jelly.
 Prima della pubblicazione si possono ancora correggere le decisioni sperimentali;
@@ -159,8 +162,8 @@ Gli override `states.{hover,pressed,active,disabled}` ammettono soltanto le cinq
 chiavi `O`, stessi tipi/range/default dei descrittori base. Un override assente
 eredita il materiale, non il default della tabella. Composizione: base → active
 → hover → pressed → disabled. Disabled ignora hover e pressed, conservando active.
-Disabilitare hover/press esclude i relativi override. Tutti gli stati iniziali sono
-vuoti: i look accessibili dei candidati vanno progettati e verificati in M6.2–4.
+Disabilitare hover/press esclude i relativi override. I default di schema restano
+vuoti; i quattro candidati ora contengono feedback statici M6.2 per tutti gli stati.
 Il resolver implementato risolve soltanto l'aspetto, non il solver.
 
 L'involucro ha id (pattern comune, max 64), name (1–80), format/schema/family/version,
@@ -173,7 +176,7 @@ i default comuni. Null, array e tipi errati non equivalgono a un campo assente.
 
 ## Ottica, geometria e alternative
 
-Proposta matematica per M6.2, **non ancora eseguita dal modello**: una coordinata
+Riferimento matematico della proposta M6.1, **non un campo volumetrico risolto**: una coordinata
 interna `u` vale 0 al bordo e 1 nel nucleo della silhouette; `e=(1-u)^edgeFalloff`,
 percorso normalizzato `L=1+e`. Trasmissione locale
 `T=transmission × exp(-absorption × thickness × L) × (1-scattering)`.
@@ -233,9 +236,9 @@ Esempi generati, non copiati manualmente:
 `node scripts/jelly-examples.mjs` rigenera;
 `node scripts/jelly-examples.mjs --check` confronta con il serializer.
 I preset hanno descrizioni, seed fissi distinti e `visuallyVerified: false`.
-Nessuna promessa di contrasto su sfondi arbitrari. La modalità opaca futura
-userà un corpo `#b8a2e8`/contenuto `#211735` o colori di sistema, con contrasto
-misurato nel browser su testo/focus/stati, prima di dichiararla leggibile.
+Nessuna promessa di contrasto su sfondi arbitrari. La modalità opaca M6.2 usa
+corpo `#b8a2e8`/contenuto `#211735` o colori di sistema; le catture della fixture
+misurano 7.57:1 per la coppia fissa, senza certificare altri sfondi/stati.
 
 ## M6.2 — Piano renderer e capability
 
@@ -245,7 +248,8 @@ Nessun filtro SVG che presupponga una cattura DOM. Il gate statico decide se il
 percorso è sufficiente; WebGL2 richiederà una motivazione di fedeltà e costo,
 prima di essere implementato o aggiunto alle preferenze del documento.
 
-Matrice progettata; oggi ogni riga ha stato **non implementata**:
+Matrice di roadmap M6.1. In M6.2 sono implementati soltanto SVG statico,
+CSS e opaco/colori di sistema: il moto indicato sotto resta una proposta M6.3.
 
 | Backend effettivo | Profilo ottico | Moto | Capacità ottiche | Sorgente disponibile | Ragione di degradazione |
 | --- | --- | --- | --- | --- | --- |
@@ -279,7 +283,7 @@ della sequenza; il cambio qualità elimina soltanto la coda. Reproiezione al
 resize senza riseminare; esclusione fuori clip mantiene gli indici originali.
 Con stessi seed, documento, dimensioni, profilo e tempo controllato: stessa
 distribuzione, tolleranza di progetto 1e-6 nel modello e 0.5 px fra renderer.
-Queste sono specifiche da testare in M6.2, non un PRNG implementato in M6.1.
+Queste specifiche, assenti in M6.1, sono ora verificate dai test M6.2 descritti sotto.
 
 Bolle: dimensione apparente `r × (1-0.35×depth)`, contrasto attenuato dalla
 profondità/volume, bordo e piccolo riflesso, clip e occlusione del corpo.
@@ -293,6 +297,78 @@ lilla/ciano e pattern a scacchi 8 px; geometrie 240×64, 96×48, 180×56 capsule
 testo e icona, bolle on/off, CSS e sorgente assente. Acquisire e **ispezionare**
 immagini reali, descrivendo silhouette, leggibilità e difetti; snapshot stabile
 non basta. Validare la riconoscibilità da fermo prima delle navbar.
+
+## M6.2 implementata — ottica privata e verifica reale
+
+Il [report M6.2](jelly-m62-delivery.md) contiene comandi, contact sheet realmente
+ispezionate, difetti residui e limiti delle misure. Non attiva alcun flusso pubblico.
+
+- [jelly-visual.ts](../src/model/experimental/jelly-visual.ts): Mulberry32, pool
+  massimo di 24 candidati normalizzati, proiezione/profondità, silhouette cubica
+  rounded/capsule e profilo ottico. Compilato anche senza DOM/Node.
+- [renderer](../src/runtime/experimental/jelly.ts): attach/update/resize/destroy,
+  stato statico via resolver M6.1, ID SVG monotoni per istanza indipendenti dal seed,
+  ResizeObserver e media query rimovibili. Nessun RAF, scheduler o solver.
+- [CSS](../src/runtime/experimental/jelly.css): fallback senza bolle; riusa
+  `elevationShadow` Solid per l'ombra key/ambient. SVG usa una singola ombra morbida
+  approssimata, con blur `2+2.5×elevation` e offset `1.5×elevation` (zero a livello 0).
+- [Fixture](../tests/fixtures/jelly/main.ts): solo Vite dev/test; un Button nativo
+  riusato per preset, sfondi, geometrie, stati, confronto ottico lazy e fallback.
+  Non è un Inspector o un componente pubblico. Cleanup anche durante HMR.
+
+La base ottica applica realmente `Acenter=1-transmission×exp(-absorption×thickness)
+×(1-scattering)` e `Aedge` con percorso 2. L'intero gruppo decorativo è composto
+con `bodyOpacity`, indipendentemente dal contenuto. Lo sfondo contribuisce tramite
+alpha, senza campionamento, backdrop-filter o rifrazione. Il valore di status
+`effectiveAlpha` è l'alpha del gruppo, non l'alpha finale di ogni pixel.
+
+Correzioni artistiche rispetto alla proposta: il campo `u` non viene calcolato
+pixel per pixel. Due alpha alimentano un gradiente verticale; una luce radiale
+interna di opacità `.3+.45×thickness`, pooling inferiore, bordo sfumato e riflessi
+asimmetrici suggeriscono la curvatura. Questi strati cambiano il compositing locale:
+la formula base non descrive da sola tutti i pixel. Il profilo usa
+`edgeStop=100×(1-0.5^(1/edgeFalloff))` e
+`rimWidth=min(shortSide/4, (1.5+.16×shortSide×thickness)×(.6+.4/edgeFalloff))`.
+Un falloff maggiore concentra la fascia; uno minore la allarga. Non è uno SDF
+né una misura fisica di densità. Roughness allarga il riflesso (`.13+.38×roughness`)
+e ne attenua l'intensità (`highlightStrength×(1-.55×roughness)`). La velatura
+post-inclusioni vale `.22×scattering`. Non si dichiara scattering fisico.
+
+Bolle: quattro draw per indice (x/y/size/depth), seed uint32 inclusivo di zero.
+Il pool è generato solo al primo uso/cambio seed o riabilitazione, mai al resize
+o per una variazione ottica/qualità. Conteggio richiesto per area CSS, floor,
+poi prefisso con cap 24/12/4; static e auto usano medium. Radius apparente
+`r×(1-.35×depth)` e contrasto
+`opacity×exp(-depth×(.45+.5×absorption×thickness))×(1-.5×scattering)`;
+la fascia centrale x=.18–.82/y=.28–.72 moltiplica il contrasto per .38.
+La minore attenuazione rispetto al piano M6.1 rende leggibili le bolle ai seed
+candidati senza trasformarle in luci autonome. Bordi/riflessi, velatura e clip
+le integrano nel corpo. Radius/depth cambiano la proiezione, non i draw casuali.
+Il resize conserva anche candidati fuori forma: la clip può nasconderli o
+mostrarne una frazione e il raggio può intersecare il bordo, senza rejection sampling.
+Hidden a dimensioni zero sospende le inclusioni ma conserva il pool. Disabled,
+density zero o backend CSS rimuovono pool e nodi delle bolle.
+
+Raggio host esplicito prioritario, clamp a metà lato corto; default capsule
+senza override host a metà lato corto. La posa diagnostica effimera è limitata
+al 5%, applicata ai punti della silhouette e ai centri delle bolle, con raggi
+inalterati. Non dimostra conservazione di volume o una deformazione fisica.
+SVG overflow visibile; il filtro ombra ha bounds espliciti con margine di tre
+sigma più offset/posa. Tutto il corpo, inclusi riflessi e bolle, è ritagliato
+alla silhouette; il contenuto/focus/hitbox appartengono all'host e non sono filtrati.
+
+Fallback e preferenze: richiesta/effettivo separati, policy deterministica
+`svgAvailable:false`, `opaque:true`, override `reducedTransparency`, media query
+live per reduced motion/transparency e forced colors. Opaque impone alpha 1 e
+trasmissione 0 con coppia fissa; forced colors usa ButtonFace/ButtonText,
+GrayText e Highlight, senza decorazioni ottiche. SVG disponibile è un criterio
+di routing, non una prova di fedeltà visiva. Tutti i profili sono statici.
+
+Applicati soltanto i cap per superficie. DPR, raster equivalente, cap di gruppo,
+numero di superfici in moto, adattamento hardware e soglie frame/memoria restano
+obiettivi di roadmap: nessun controllo fittizio del DPR di SVG inline.
+Parametri del solver/impulso sono dati non supportati e sono elencati nello status,
+senza slider di movimento. Nessun WebGL2 sperimentale aggiunto in questa fase.
 
 ## M6.3 — Piano solver, input e lifecycle
 

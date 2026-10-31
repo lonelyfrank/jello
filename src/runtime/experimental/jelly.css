@@ -1,0 +1,15 @@
+.jelly-surface { position: relative; isolation: isolate; color: var(--jelly-foreground); }
+.jelly-decoration { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: visible; }
+.jelly-decoration *, .jelly-decoration::before, .jelly-decoration::after { pointer-events: none; }
+.jelly-decoration > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.jelly-decoration[data-backend="css"] { box-shadow: var(--jelly-shadow); }
+.jelly-decoration[data-backend="css"]::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--jelly-css-body); opacity: var(--jelly-css-alpha); box-shadow: inset 0 var(--jelly-css-rim) 2px #ffffff60, inset 0 calc(-1 * var(--jelly-css-rim)) 3px #17122f38; }
+.jelly-decoration[data-backend="css"]::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(ellipse 70% var(--jelly-css-spread) at 40% 0%, #ffffffb0 0%, #ffffff20 50%, transparent 100%); opacity: calc(var(--jelly-css-highlight) * var(--jelly-css-alpha)); }
+.jelly-decoration[data-opaque="true"]::before { box-shadow: inset 0 1px #ffffff70, inset 0 -2px #21173530; }
+.jelly-decoration[data-forced="true"] { background: ButtonFace; border: 1px solid ButtonText; box-shadow: none; forced-color-adjust: none; }
+.jelly-decoration[data-forced="true"]::before, .jelly-decoration[data-forced="true"]::after { display: none; }
+@media (forced-colors: active) {
+  .jelly-surface:focus-visible { outline: 2px solid Highlight; }
+  .jelly-surface:disabled { color: GrayText; }
+  .jelly-surface[aria-pressed="true"] .jelly-decoration { border: 3px solid Highlight; }
+}

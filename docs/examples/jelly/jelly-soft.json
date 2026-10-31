@@ -10,7 +10,7 @@
   },
   "material": {
     "tint": "#b8a2e8",
-    "foreground": "#211735",
+    "foreground": "#171022",
     "bodyOpacity": 0.82,
     "highlightStrength": 0.35,
     "roughness": 0.55,
@@ -30,12 +30,12 @@
   "bubbles": {
     "enabled": "enabled",
     "seed": 10631,
-    "density": 2,
-    "radiusMin": 1,
-    "radiusMax": 3,
+    "density": 8,
+    "radiusMin": 2.5,
+    "radiusMax": 6,
     "depthMin": 0.15,
     "depthMax": 0.85,
-    "opacity": 0.35
+    "opacity": 0.8
   },
   "behavior": {
     "responseMs": 360,
@@ -54,15 +54,33 @@
     "fallback": "css"
   },
   "states": {
-    "hover": {},
-    "pressed": {},
-    "active": {},
-    "disabled": {}
+    "hover": {
+      "bodyOpacity": 0.94,
+      "highlightStrength": 0.65
+    },
+    "pressed": {
+      "tint": "#9b88c3",
+      "bodyOpacity": 0.98,
+      "highlightStrength": 0.12,
+      "shadowOpacity": 0.06
+    },
+    "active": {
+      "tint": "#a692d1",
+      "bodyOpacity": 0.98,
+      "highlightStrength": 0.5
+    },
+    "disabled": {
+      "tint": "#d4d0dd",
+      "foreground": "#534b62",
+      "bodyOpacity": 0.75,
+      "highlightStrength": 0.1,
+      "shadowOpacity": 0.04
+    }
   },
   "meta": {
     "createdAt": null,
     "updatedAt": null,
     "basedOn": null,
-    "notes": "Candidato M6.1, non verificato visivamente. Lilla, traslucenza moderata, poche inclusioni e ritorno morbido."
+    "notes": "Candidato sperimentale M6.2; evidenza e limiti visivi in docs/jelly-m62-delivery.md. Lilla, traslucenza moderata, inclusioni e ritorno morbido candidato."
   }
 }

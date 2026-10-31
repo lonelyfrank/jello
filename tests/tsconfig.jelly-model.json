@@ -4,5 +4,5 @@
     "lib": ["ES2022"],
     "types": []
   },
-  "include": ["../src/model/experimental/jelly.ts", "../src/model/experimental/jelly-presets.ts"]
+  "include": ["../src/model/experimental/jelly.ts", "../src/model/experimental/jelly-presets.ts", "../src/model/experimental/jelly-visual.ts"]
 }

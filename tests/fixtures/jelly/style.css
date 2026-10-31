@@ -1,0 +1,26 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #f1f0f5; color: #241e34; font: 14px/1.5 system-ui, sans-serif; }
+main { max-width: 1400px; padding: 32px; margin: auto; }
+header { margin-bottom: 28px; } h1 { font-size: 36px; margin: 4px 0; letter-spacing: -.04em; } h2 { margin: 32px 0 12px; font-size: 20px; }
+.eyebrow { font-size: 11px; letter-spacing: .16em; color: #665779; }
+.workbench { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+#main-preview { height: 180px; }
+pre { font-size: 11px; white-space: pre-wrap; padding: 16px; background: #e6e3ed; border-radius: 12px; }
+form { max-height: 640px; overflow: auto; padding: 16px; background: #fafafa; border-radius: 12px; }
+label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0; }
+select, input { max-width: 170px; padding: 5px; } input[type=number] { width: 100px; } input[type=checkbox] { margin-right: auto; }
+.matrix { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding-bottom: 32px; }
+.sample { position: relative; border-radius: 12px; min-height: 132px; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 16px; padding: 14px 4px; }
+.caption { font-size: 11px; color: #4e445e; }
+.light { background: #fafafa; } .dark { background: #101828; } .dark .caption { color: #b7c0d1; }
+.gradient { background: linear-gradient(120deg, #c6adf6, #8ee8ef); }
+.checker { background: conic-gradient(#d9d9df 25%, #fafafa 0 50%, #d9d9df 0 75%, #fafafa 0) 0 0 / 16px 16px; }
+.test-button { flex: none; width: 240px; height: 64px; border: 0; border-radius: 16px; background: transparent; padding: 0; font: 600 16px/1 system-ui, sans-serif; cursor: pointer; }
+.test-button.small { width: 96px; height: 48px; font-size: 14px; }
+.test-button.capsule { width: 180px; height: 56px; border-radius: 28px; }
+.button-content { display: inline-flex; align-items: center; gap: 9px; pointer-events: none; }
+.test-button:focus-visible { outline: 3px solid #6651bd; outline-offset: 4px; }
+.test-button:disabled { cursor: default; }
+#error { color: #a91f3f; }
+@media(max-width: 1100px) { .matrix { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media(max-width: 620px) { main { padding: 16px; } .workbench { grid-template-columns: 1fr; } .matrix { grid-template-columns: 1fr; } }

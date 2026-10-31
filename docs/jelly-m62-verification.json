@@ -1,0 +1,85 @@
+{
+  "phase": "M6.2",
+  "date": "2026-10-31",
+  "timezone": "Europe/Rome",
+  "baseline": "2011492eba10e2ad7c335367c107124174dc57a4",
+  "technical": "passed",
+  "visual": "inspected; accepted for the documented stylized private Button fixture",
+  "productionEnabled": false,
+  "presetVisuallyVerifiedFlag": false,
+  "checks": {
+    "typecheck": "passed",
+    "pureES2022WithoutDOMOrNode": "passed",
+    "unit": {
+      "passed": 513,
+      "files": 27,
+      "skipped": 0
+    },
+    "browser": {
+      "passed": 16,
+      "skipped": 0,
+      "failed": 0,
+      "flaky": 0
+    },
+    "build": "passed",
+    "examples": "4 verified",
+    "diffCheck": "passed"
+  },
+  "browserEvidence": [
+    {
+      "engine": "chromium",
+      "version": "156.0.8078.4",
+      "viewport": "1400×1100",
+      "dpr": 1,
+      "errors": []
+    },
+    {
+      "engine": "firefox",
+      "version": "157.0",
+      "viewport": "1400×1100",
+      "dpr": 1,
+      "errors": []
+    }
+  ],
+  "evidence": [
+    "screenshots/jelly-m62/chromium-preset.png",
+    "screenshots/jelly-m62/chromium-variant.png",
+    "screenshots/jelly-m62/chromium-state.png",
+    "screenshots/jelly-m62/chromium-optical.png",
+    "screenshots/jelly-m62/chromium-forced.png",
+    "screenshots/jelly-m62/firefox-preset.png",
+    "screenshots/jelly-m62/firefox-variant.png",
+    "screenshots/jelly-m62/firefox-state.png",
+    "screenshots/jelly-m62/firefox-optical.png",
+    "screenshots/jelly-m62/firefox-forced.png"
+  ],
+  "captures": "screenshots/jelly-m62/capture-environment.json",
+  "artifacts": [
+    {
+      "path": "dist-lib/jello.js",
+      "sha256": "9411d44c113d9b9bd2d4e18cf10f750c4bfed5946ab54aca40790e944a01bfd3",
+      "unchangedFromInitialBuild": true
+    },
+    {
+      "path": "dist-lib/jello.css",
+      "sha256": "5fb34366844700a325d8d6d0bd1a4432d10265cdb10519db10a50cabb758fa1a",
+      "unchangedFromInitialBuild": true
+    },
+    {
+      "path": "dist/assets/lab-Bv_Q91HJ.js",
+      "sha256": "edc5bf59419f1016f4592aedf4bf7f3d88c422ad768186fca442071d7d1acfa2",
+      "unchangedFromInitialBuild": true
+    }
+  ],
+  "notTested": [
+    "WebKit/Safari",
+    "Android/WebView",
+    "physical devices",
+    "mobile emulation",
+    "full production E2E suite",
+    "performance and heap/GC benchmarks",
+    "Jelly consumer export"
+  ],
+  "nextPhase": "M6.3; not implemented",
+  "pushMergePublish": false
+}
