@@ -54,13 +54,18 @@ export function ExportDialog({ session }: { session: LabSession }) {
   return (
     <dialog className="export-dialog" id="exportDialog" ref={ref} aria-labelledby="exportTitle" onClose={() => session.setExportOpen(false)}>
       <form method="dialog" className="export-inner" onSubmit={(e) => e.preventDefault()}>
+        <div className="hero export-hero">
         <header className="export-head">
-          <h2 id="exportTitle">Esporta</h2>
+          <div className="hero-title">
+            <p className="hero-eyebrow">PORTA FUORI IL TUO LAVORO</p>
+            <h2 id="exportTitle" className="hero-h1">Esporta</h2>
+          </div>
           <button type="button" className="tb-icon-button" id="exportClose" aria-label="Chiudi" onClick={() => session.setExportOpen(false)}>
             ×
           </button>
         </header>
         <ol className="export-steps" aria-label="Passi dell’esportazione">{STEPS.map((label, i) => <li key={label}><button type="button" aria-current={step === i ? 'step' : undefined} onClick={() => setStep(i)}><span className="export-step-number">{i + 1}</span>{label}</button></li>)}</ol>
+        </div>
         {step !== null && <p className="export-handoff" role="status">Passo {step + 1} di 5 · <button type="button" className="link export-overview" onClick={() => setStep(null)}>Mostra riepilogo completo</button></p>}
         {/* Summary (step null): every section. Guided: only what the step is about. Hidden sections stay
             mounted, so choices survive switching between the two. Nothing refers to a column's position:

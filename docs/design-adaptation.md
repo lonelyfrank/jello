@@ -59,3 +59,39 @@ senza modificare logica, contratti o documenti.
 Non sono state introdotte funzioni assenti dall'app (cronologia, template, varianti,
 registro eventi): le parti del mockup con dati dimostrativi restano fuori.
 Screenshot aggiornati in `docs/screenshots/studio/`.
+
+## Nuove viste «Jello Studio» (barra laterale e banner) — 2 novembre 2026
+
+Il canvas è stato aggiornato con una seconda generazione di viste (Home, Component
+Builder, Material Lab, Library, Preview & Test, Export, Asset); le precedenti restano nel
+canvas come «Archivio». L'applicazione le segue vista per vista, senza modificare logica,
+contratti, documenti o database.
+
+| Area | Cambiamenti |
+| --- | --- |
+| Shell | L'intestazione superiore è sostituita da una **barra laterale** a icone di 84 px: marchio, **Crea** (nuovo progetto), Home, Builder, Materiali, Library, Test, Export, Asset, stato di salvataggio e Impostazioni. Su schermi stretti diventa una barra orizzontale scorrevole. |
+| Banner di pagina | Ogni pagina apre con un banner a gradiente viola→magenta con titolo sfumato e, a destra, i comandi della pagina (progetto attivo, colonne, Salva, Esporta). Titoli: Component Builder, Material Lab, Preview & Test, «Colori, icone e font», Impostazioni, flussi guidati. |
+| Pannelli | Libreria, canvas e inspector sono schede arrotondate (`--panel` `#170f2e`) su sfondo `#120b22`, non più colonne a tutta altezza. |
+| Home | «Che cosa vuoi creare oggi?»: ricerca globale, schede Home / Template / Progetti, dodici scorciatoie circolari (Jelly «presto», disattivata), «Continua a creare» con filtri e anteprime runtime reali. Le scorciatoie che richiedono un progetto sono disattivate finché non ne esiste uno. Primo avvio: stesso banner, poi le tre scelte e il kit già esistenti. |
+| Library | Banner «Una forma per ogni idea.» con filtro Glass/Solid e ricerca, categorie circolari con conteggi reali, griglia e pannello **Anteprima**. |
+| Export | Il dialogo conserva i cinque passi e le tre colonne; titolo e passi sono nel banner del design. |
+| Asset | Banner «Colori, icone e font»; l'accesso è dalla barra laterale. |
+| Crea | Il tasto **+** della barra apre il pannello «Inizia a creare» (canvas `StudioCrea`): categorie a sinistra (Per te, Componenti, Navigazione, Materiali, Preset Jello, Asset, Da codice / JSON, Dimensioni personalizzate, Importa), ricerca, azioni rapide e schede con anteprime runtime reali. Template, materiali, preset e asset aprono ciò che esiste già; «Dimensioni personalizzate» imposta lo Stage libero e apre il Builder; «Importa» accetta `.jello` e `.json` (trascinamento incluso). |
+
+Differenze volute dal mockup:
+
+- Il profilo «Frank» in fondo alla barra non esiste nell'app: al suo posto c'è
+  Impostazioni. Il progetto attivo si cambia dal banner (o dalla Home e dalla Library).
+- Export resta un dialogo: la pagina a sé del mockup richiederebbe un nuovo flusso di
+  navigazione. I passi, gli id e gli adapter sono invariati.
+- Le barre degli strumenti di Builder, Material Lab e Preview restano sopra il canvas e non
+  sono spostate nel banner, per non duplicare i controlli dello Stage condiviso.
+- Home e Library mostrano solo dati reali (progetti, componenti, materiali dell'utente e
+  template Jello): nessuna cronologia o voce dimostrativa. Le schede «Asset del progetto»
+  e «Material Gallery» della vecchia Home sono state sostituite dalle scorciatoie e dalla
+  scheda Template.
+- Jelly resta in sviluppo: la scorciatoia è visibile ma non attiva.
+- Nel pannello Crea ho aggiunto l'azione rapida **Nuovo progetto** (assente nel mockup): il tasto + è l'unico accesso al wizard dalla barra. Card e Input restano «In arrivo» come nel Builder; i preset «Cable .vetro» e «BT navbar» del mockup non sono nell'app e non compaiono. Le voci che richiedono un progetto sono disattivate finché non ne esiste uno.
+- «Carica SVG» porta alla pagina Asset (icone): il flusso di importazione accetta solo `.jello` e `.json`.
+
+Screenshot aggiornati in `docs/screenshots/studio/` (vedi anche [Crea](screenshots/studio/crea-desktop.png)). Verifica del 2 novembre 2026: TypeScript, 595 test unitari e l'intera suite E2E locale (Chromium, Firefox, Pixel 7 emulato) superati: 699 passati, 3 saltati come previsto, nessun fallimento.

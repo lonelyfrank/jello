@@ -3,7 +3,7 @@
   "major": 157,
   "environment": "linux x64, Playwright 1.64.1, headless, progetto \"firefox\", viewport desktop",
   "mobileEmulated": false,
-  "date": "2026-10-30",
+  "date": "2026-11-02",
   "runtime": "0.3.0",
   "backend": "svg",
   "checks": [
@@ -20,17 +20,17 @@
     "blur renormalized at the source edge (no sharp content showing through)"
   ],
   "metrics": {
-    "rimMeanDifference": 26.178033680039867,
-    "passThroughMeanDifference": 0.00019049495845239268,
+    "rimMeanDifference": 23.965051765988054,
+    "passThroughMeanDifference": 0.0002568520216229887,
     "centreMeanDifference": 0,
-    "topMeanDifference": 12.562327823691465,
-    "bottomMeanDifference": 28.500494071146434,
-    "leftMeanDifference": 38.65493757094199,
-    "rightMeanDifference": 41.28452516080205,
+    "topMeanDifference": 12.019680500658767,
+    "bottomMeanDifference": 29.436983471074573,
+    "leftMeanDifference": 25.717411809092564,
+    "rightMeanDifference": 33.0390492359931,
     "foregroundRimDifference": 0,
     "navbarForegroundRimDifference": 0,
-    "edgeBlurContrastNormalized": 6.32397197398738,
-    "edgeBlurContrastUnnormalized": 22.821384410673986,
-    "innerBlurContrast": 5.709110517517993
+    "edgeBlurContrastNormalized": 5.595205729952546,
+    "edgeBlurContrastUnnormalized": 20.11623246639328,
+    "innerBlurContrast": 5.81370706303773
   }
 }

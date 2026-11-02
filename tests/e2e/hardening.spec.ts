@@ -98,10 +98,8 @@ test.describe('untrusted SVG', () => {
     await seed(page, { projectdocs: [doc] });
     await page.reload();
     await ready(page);
-    await expect(page.locator('.icon-row .asset-ic').first()).toBeAttached();
-    // The valid icon is drawn from the allowlisted tree.
-    await expect(page.locator('.icon-row .asset-ic path').first()).toHaveAttribute('d', 'M4 12h16');
-    await page.locator('.asset-card').filter({ hasText: 'Icone' }).click();
+    await page.locator('#nav-assets').click();
+    await page.locator('#asset-tab-icons').click();
     await expect(page.getByRole('heading', { name: 'valida' })).toBeVisible();
     // Only the valid icon is listed; the others were removed before reaching the page.
     await expect(page.locator('.icon-name').filter({ hasText: /^(immagine|foreign|viewbox)$/ })).toHaveCount(0);

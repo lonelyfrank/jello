@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { COMPONENTS } from '../../components';
 import { PATH_LABEL } from '../../stage/controller';
 import type { SaveState } from '../storage/autosave';
@@ -9,21 +9,19 @@ import { ExportDialog } from './ExportDialog';
 import { AssetsPage } from './Assets';
 import { Home } from './Home';
 import { FlowPage } from './Flows';
-import { GlobalSearch } from './Search';
 import { SettingsPage } from './Settings';
 import { ConfirmHost, DropOverlay } from './Overlays';
+import { CreateDialog } from './CreateDialog';
 import { Icon } from './icons';
 import { Ic } from './ui';
 import { Library } from './Library';
 import { Preview } from './Preview';
 import { Properties } from './Properties';
 import { TestInspector } from './TestInspector';
-import { StudioNav, openStudio } from './StudioNav';
+import { StudioRail } from './StudioNav';
 import { StudioLibrary } from './StudioLibrary';
 import { PanelResize } from './PanelResize';
 import { useStudioPreferences } from '../studio-preferences';
-
-const BASE = import.meta.env.BASE_URL;
 
 function saveLabel(s: SaveState, origin: 'builtin' | 'user', modified: boolean): string {
   switch (s.kind) {
@@ -58,6 +56,7 @@ export function App({ session }: { session: LabSession }) {
   const flow = useLab((s) => s.flow);
   const projects = useLab((s) => s.projects);
   const projectId = useLab((s) => s.projectId);
+  const [createOpen, setCreateOpen] = useState(false);
   const drawer = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
 
@@ -80,53 +79,52 @@ export function App({ session }: { session: LabSession }) {
   const hasProject = projectId !== null;
   const project = projects.find((p) => p.id === projectId) ?? null;
   const pageSave = saveLabel(save, 'user', false);
+  const railSave = inLab ? (isBuilder ? saveLabel(save, builder.origin === 'template' ? 'builtin' : 'user', builder.modified).replace('Preset incluso', 'Template incluso') : saveLabel(save, origin, modified)) : pageSave;
+  const saveShort = save.kind === 'saved' ? 'Salvato' : save.kind === 'error' ? 'Non salvato' : save.kind === 'memory' ? 'Solo scheda' : save.kind === 'saving' || save.kind === 'pending' ? 'In attesa' : 'Locale';
+  const showHero = !(page === 'home' && !flow) && !inLibrary;
+  const flowTitle = flow === 'component' ? 'Nuova componente' : flow === 'wizard' ? 'Nuovo progetto' : flow === 'import' ? 'Importazione' : flow === 'export' ? 'Esportazione' : '';
+  const hero: { eyebrow?: string | undefined; title: string; sub?: string | undefined } = flow
+    ? { eyebrow: project?.name ?? 'JELLO STUDIO', title: flowTitle }
+    : page === 'assets' ? { eyebrow: 'GLI INGREDIENTI DEL PROGETTO', title: 'Colori, icone e font' }
+    : page === 'settings' ? { eyebrow: 'JELLO STUDIO', title: 'Impostazioni' }
+    : isBuilder && studio.area !== 'preview' ? { title: 'Component Builder' }
+    : studio.area === 'preview' ? { title: 'Preview & Test' }
+    : { title: 'Material Lab' };
   return (
     <>
       <a className="skip" href={inLab ? '#panel' : '#main'}>
         {inLab ? (isBuilder ? 'Vai all’inspector' : 'Vai alle proprietà') : 'Vai al contenuto'}
       </a>
-      <header className="lab-header" data-page={flow ? 'flow' : page}>
-        <button type="button" className="brand" id="brandHome" aria-label="Jello: vai alla Home" onClick={() => openStudio(session, 'workspace')}>
-          <img className="brand-mark" src={`${BASE}brand/jello-mark-96.png`} srcSet={`${BASE}brand/jello-mark-96.png 1x, ${BASE}brand/jello-mark-192.png 2x`} alt="" width="40" height="33" />
-          <h1>
-            <span className="brand-name">Jello</span> <span className="brand-sub">Studio</span>
-          </h1>
-        </button>
-        <StudioNav session={session} />
-        <div className="studio-utilities">
-          {hasProject && <span className="studio-mobile-status" role="status" aria-label={pageSave} title={pageSave} data-kind={save.kind}>{save.kind === 'saved' ? 'Salvato' : save.kind === 'error' ? 'Non salvato' : save.kind === 'memory' ? 'Solo scheda' : save.kind === 'saving' || save.kind === 'pending' ? 'In attesa' : 'Locale'}</span>}
-          <button className="tb-icon-button" id="nav-assets" type="button" aria-label="Asset" title="Asset del progetto" disabled={!hasProject} onClick={() => session.setPage('assets')}><Ic name="palette" /></button>
-          <button className="tb-icon-button" id="studioSettings" type="button" aria-label="Impostazioni" title="Impostazioni" onClick={() => session.setPage('settings')}><Ic name="gear" /></button>
+      <div className="studio-shell">
+      <StudioRail session={session} saveShort={saveShort} saveFull={railSave} saveKind={save.kind} onCreate={() => setCreateOpen(true)} createOpen={createOpen} />
+      <div className="studio-body">
+      {showHero && (
+      <header className="lab-header hero" data-page={flow ? 'flow' : page}>
+        <span className="hero-bubble" aria-hidden="true" />
+        <div className="hero-title">
+          {hero.eyebrow && <p className="hero-eyebrow">{hero.eyebrow}</p>}
+          <h1 className="hero-h1" id="pageTitle">{hero.title}</h1>
+          {inLab && studio.area === 'preview' ? (
+            <p className="hero-sub">Lo stesso Stage del Builder: verifica prima di esportare</p>
+          ) : inLab ? (
+            <nav className="crumbs hero-sub" aria-label="Percorso">
+              {isBuilder ? (
+                <>
+                  <span className="visually-hidden" id="crumbType">{COMPONENTS.get(builder.doc.type)?.name ?? builder.doc.type}</span>
+                  <span className="crumb-current" id="crumbComponent" aria-current="page">{builder.doc.name}</span>
+                </>
+              ) : (
+                <span className="crumb-current" id="crumbPreset" aria-current="page">{doc.name}</span>
+              )}
+              <span aria-hidden="true">·</span>
+              <span className="hero-status" data-kind={save.kind}>{railSave}</span>
+            </nav>
+          ) : hero.sub ? <p className="hero-sub">{hero.sub}</p> : null}
         </div>
         <div className="studio-contextbar">
           <ProjectSwitch session={session} />
-        {page === 'home' && !flow && (
-          <>
-            <GlobalSearch session={session} />
-            <div className="header-actions">
-              <button className="header-button" id="headerImport" type="button" onClick={() => session.openFlow('import')}>
-                <Ic name="download" />
-                Importa
-              </button>
-              <button className="header-button primary" id="headerNewProject" type="button" onClick={() => session.openFlow('wizard')}>
-                <Ic name="plus" />
-                Nuovo progetto
-              </button>
-            </div>
-          </>
-        )}
-
-        {inLibrary && <><span className="crumb-current">Library</span><p className="save-status" id="saveStatus" role="status" data-kind={save.kind}>{pageSave}</p><button type="button" className="header-button primary" onClick={() => session.setExportOpen(true)}><Ic name="download" />Esporta…</button></>}
         {(page === 'assets' || page === 'settings' || flow) && (
           <>
-            <div className="page-title">
-              <span>{project?.name ?? 'Jello Studio'}</span>
-              <span aria-hidden="true">·</span>
-              <span className="crumb-current">{flow === 'component' ? 'Nuova componente' : flow === 'wizard' ? 'Nuovo progetto' : flow === 'import' ? 'Importazione' : flow === 'export' ? 'Esportazione' : page === 'assets' ? 'Asset' : 'Impostazioni'}</span>
-            </div>
-            <p className="save-status" id="saveStatus" role="status" data-kind={save.kind} title={save.kind === 'error' || save.kind === 'memory' ? save.message : undefined}>
-              {pageSave}
-            </p>
             <div className="header-actions">
               <button className="header-button primary" id="exportOpen" type="button" disabled={!hasProject} onClick={() => session.openFlow('export')}>
                 <Ic name="upload" />
@@ -138,26 +136,6 @@ export function App({ session }: { session: LabSession }) {
 
         {inLab && (
           <>
-            <nav className="crumbs" aria-label="Percorso">
-
-              {isBuilder ? (
-                <>
-                  <span className="visually-hidden" id="crumbType">{COMPONENTS.get(builder.doc.type)?.name ?? builder.doc.type}</span>
-                  <span className="crumb-current" id="crumbComponent" aria-current="page">
-                    {builder.doc.name}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="crumb-current" id="crumbPreset" aria-current="page">
-                    {doc.name}
-                  </span>
-                </>
-              )}
-            </nav>
-            <p className="save-status" id="saveStatus" role="status" data-kind={save.kind} title={save.kind === 'error' || save.kind === 'memory' ? save.message : undefined}>
-              {isBuilder ? saveLabel(save, builder.origin === 'template' ? 'builtin' : 'user', builder.modified).replace('Preset incluso', 'Template incluso') : saveLabel(save, origin, modified)}
-            </p>
             <div className="header-actions">
               <button className="tb-icon-button column-toggle" id="toggleLeft" type="button" aria-pressed={layout.left} aria-label="Mostra la libreria" title="Libreria" onClick={() => session.toggleColumn('left')}>
                 <Icon name="left" />
@@ -222,6 +200,7 @@ export function App({ session }: { session: LabSession }) {
         )}
         </div>
       </header>
+      )}
 
       {flow && (
         <main className="flow-page" id="main" tabIndex={-1}>
@@ -303,6 +282,9 @@ export function App({ session }: { session: LabSession }) {
             : ''}
         </p>
       </footer>
+      </div>
+      </div>
+      {createOpen && <CreateDialog session={session} onClose={() => setCreateOpen(false)} />}
       <ExportDialog session={session} />
       <ConfirmHost session={session} />
       <DropOverlay session={session} />
