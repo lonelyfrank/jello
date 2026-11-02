@@ -164,6 +164,34 @@ describe('relay shutdown', () => {
   });
 });
 
+describe('development relay: preview capacity', () => {
+  it('a ninth preview is refused with 429 and the connected ones keep receiving states', async () => {
+    const relay = createRelay();
+    await new Promise<void>((r) => relay.server.listen(0, '127.0.0.1', () => r()));
+    const base = `http://127.0.0.1:${(relay.server.address() as AddressInfo).port}`;
+    const token = newToken();
+    const ctrl = new AbortController();
+    try {
+      const readers: ReadableStreamDefaultReader<Uint8Array>[] = [];
+      for (let i = 0; i < 8; i++) {
+        const res = await fetch(`${base}/events?token=${token}`, { signal: ctrl.signal });
+        expect(res.status).toBe(200);
+        const reader = res.body!.getReader();
+        await reader.read();
+        readers.push(reader);
+      }
+      expect((await fetch(`${base}/events?token=${token}`, { signal: ctrl.signal })).status).toBe(429);
+      const post = await fetch(`${base}/state?token=${token}`, { method: 'POST', body: JSON.stringify({ type: 'state', protocol: 1, seq: 1 }) });
+      expect((await post.json()).previews).toBe(8);
+      const got = new TextDecoder().decode((await readers[0]!.read()).value);
+      expect(got).toContain('event: state');
+    } finally {
+      ctrl.abort();
+      await relay.close();
+    }
+  });
+});
+
 describe('development relay: global asset budget', () => {
   const png = (n: number, size = 400) => Buffer.alloc(size, n);
   const sha = (b: Buffer) => createHash('sha256').update(b).digest('hex');
