@@ -115,25 +115,25 @@
       "theme": "dark",
       "foreground": "--text",
       "background": "--surface",
-      "ratio": 16.4
+      "ratio": 16.05
     },
     {
       "theme": "dark",
       "foreground": "--text",
       "background": "--surface-raised",
-      "ratio": 13.65
+      "ratio": 13.96
     },
     {
       "theme": "dark",
       "foreground": "--muted",
       "background": "--surface",
-      "ratio": 7.63
+      "ratio": 7.44
     },
     {
       "theme": "dark",
       "foreground": "--muted",
       "background": "--surface-raised",
-      "ratio": 6.35
+      "ratio": 6.47
     },
     {
       "theme": "light",

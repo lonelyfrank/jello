@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { parseNumberInput, type Descriptor, type NumberDescriptor } from '../../core/descriptors';
 import type { Applicability } from '../applicability';
+import { rangeFill } from './ui';
 import { ColorField, useProjectTokens } from './ColorPicker';
 
 const digits = (d: NumberDescriptor) => (d.step < 0.01 ? 3 : d.step < 0.1 ? 2 : d.step < 1 ? 1 : 0);
@@ -185,6 +186,7 @@ function NumberField(props: {
         step={d.step}
         data-param={k}
         aria-describedby={`desc-${k}`}
+        style={{ ['--v' as string]: `${rangeFill(value, d.min, d.max)}%` }}
         value={value}
         disabled={disabled}
         onChange={(e) => {

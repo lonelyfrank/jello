@@ -16,6 +16,7 @@ type NavTarget = 'home' | 'projects' | 'materials' | 'components' | 'assets' | '
 /** Left rail of the start pages (Home and Impostazioni). */
 export function SideNav({ session, current }: { session: LabSession; current: NavTarget }) {
   const hasProject = useLab((s) => s.projectId !== null);
+  const counts = { projects: useLab((s) => s.projects.length), materials: useLab((s) => s.library.length), components: useLab((s) => s.components.length) };
   const go = (t: NavTarget) => {
     if (t === 'home' || t === 'projects') openStudio(session, 'workspace');
     else if (t === 'library' || t === 'preview') openStudio(session, t);
@@ -28,20 +29,21 @@ export function SideNav({ session, current }: { session: LabSession; current: Na
       session.setPage('lab', 'material');
     } else session.setPage('settings');
   };
-  const item = (t: NavTarget, icon: IcName, label: string, needsProject = false) => (
+  const item = (t: NavTarget, icon: IcName, label: string, needsProject = false, count?: number) => (
     <button key={t + label} type="button" className="nav-i" aria-current={current === t && t !== 'export' ? 'page' : undefined} disabled={needsProject && !hasProject} onClick={() => go(t)}>
       <Ic name={icon} />
       {label}
+      {count !== undefined && <span className="nav-count" aria-hidden="true">{count}</span>}
     </button>
   );
   return (
     <aside className="home-left" aria-label="Navigazione">
       <button type="button" className="button primary workspace-new" onClick={() => session.openFlow('wizard')}><Ic name="plus" />Nuovo progetto</button>
       <p className="eyebrow nav-group-label">Workspace</p>
-      {item('home', 'folder', 'Tutti i progetti')}
+      {item('home', 'folder', 'Tutti i progetti', false, counts.projects)}
       <p className="eyebrow nav-group-label">Crea ed esplora</p>
-      {item('materials', 'drop', 'Materiali', true)}
-      {item('components', 'box', 'Componenti', true)}
+      {item('materials', 'drop', 'Materiali', true, counts.materials)}
+      {item('components', 'box', 'Componenti', true, counts.components)}
       {item('library', 'grid', 'Library', true)}
       {item('preview', 'eye', 'Preview & Test', true)}
       {item('assets', 'palette', 'Asset', true)}
@@ -388,9 +390,12 @@ export function HomeEmpty({ session }: { session: LabSession }) {
 
 function StudioWelcome({ name }: { name?: string }) {
   return <section className="studio-welcome" aria-label="Jello Studio">
-    <div className="welcome-copy"><p className="eyebrow">JELLO STUDIO <span> / </span> {name ? 'IL TUO SPAZIO CREATIVO' : 'BENVENUTO NEL TUO SPAZIO CREATIVO'}</p><h2>Shape the<br /><span>Interface.</span></h2><p>{JELLO_DEMO.description}</p><span className="welcome-detail">Materiali da esplorare. Componenti da immaginare.</span></div>
+    <div className="welcome-copy"><p className="eyebrow">JELLO STUDIO <span> / </span> {name ? 'IL TUO SPAZIO CREATIVO' : 'BENVENUTO NEL TUO SPAZIO CREATIVO'}</p><h2>Shape the <span>Interface.</span></h2><p>{JELLO_DEMO.description}</p><span className="welcome-detail">Materiali da esplorare. Componenti da immaginare.</span></div>
     <img src={`${BASE}brand/jello-mark-192.png`} srcSet={`${BASE}brand/jello-mark-192.png 1x, ${BASE}assets/backgrounds/jelly-macro.png 3x`} alt="Gelatina viola luminosa, marchio originale Jello" className="welcome-jelly" />
     <span className="welcome-orbit" aria-hidden="true" />
+    <span className="welcome-bubble" style={{ right: '3%', top: '8%', width: 72, height: 72, filter: 'blur(1.5px)' }} aria-hidden="true" />
+    <span className="welcome-bubble" style={{ right: '27%', top: '-6%', width: 48, height: 48, filter: 'blur(2.5px)', opacity: .8 }} aria-hidden="true" />
+    <span className="welcome-bubble" style={{ right: '1%', bottom: '-10%', width: 110, height: 110 }} aria-hidden="true" />
   </section>;
 }
 
@@ -401,7 +406,7 @@ function QuickStart({ session }: { session: LabSession }) {
     { label: 'Crea componente', hint: 'Una forma, il tuo stile', icon: 'layers', run: () => session.openFlow('component') },
     { label: 'Importa progetto', hint: 'Riprendi da un file .jello', icon: 'download', run: () => session.openFlow('import') },
   ];
-  return <section className="home-section"><div className="section-head"><h2>Quick Start</h2><span className="muted small">Da un’idea alla prima forma</span></div><div className="quick-start-grid">{actions.map((a) => <button key={a.label} type="button" className="card quick-start-card" onClick={a.run}><Ic name={a.icon} size={24} /><strong>{a.label}</strong><span className="muted small">{a.hint}</span><Ic name="arrowRight" size={16} /></button>)}</div></section>;
+  return <section className="home-section"><div className="section-head"><h2>Inizia da qui</h2><span className="muted small">Da un’idea alla prima forma</span></div><div className="quick-start-grid">{actions.map((a) => <button key={a.label} type="button" className="card quick-start-card" onClick={a.run}><Ic name={a.icon} size={24} /><strong>{a.label}</strong><span className="muted small">{a.hint}</span><Ic name="arrowRight" size={16} /></button>)}</div></section>;
 }
 
 function DemoGallery({ session }: { session: LabSession }) {

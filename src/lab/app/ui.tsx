@@ -184,3 +184,8 @@ export function copyText(text: string): Promise<boolean> {
       )
     : Promise.resolve(false);
 }
+
+/** Filled share (0–100) of a range track, for the violet progress of sliders. */
+export function rangeFill(value: number, min: number, max: number): number {
+  return max > min ? Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100)) : 0;
+}

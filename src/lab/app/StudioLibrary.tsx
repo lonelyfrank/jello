@@ -17,6 +17,7 @@ export function StudioLibrary({ session }: { session: LabSession }) {
   const [category, setCategory] = useState<Category>('all');
   const [query, setQuery] = useState('');
   const [family, setFamily] = useState('all');
+  const [pickedKey, setPickedKey] = useState<string | null>(null);
   const entries: Entry[] = [...components.map((item): Entry => ({ kind: 'component', item })), ...materials.map((item): Entry => ({ kind: 'material', item }))];
   const matchCategory = (entry: Entry, id: Category) => id === 'all' || (id === 'materials' && entry.kind === 'material') || (id === 'button' && entry.kind === 'component' && entry.item.doc.type === 'button') || (id === 'navigation' && entry.kind === 'component' && entry.item.doc.type.includes('navbar')) || (id === 'mine' && entry.item.origin === 'user') || (id === 'favorites' && project?.favorites.includes(entry.item.id));
   const categories: { id: Category; label: string; icon: IcName }[] = [
@@ -25,6 +26,9 @@ export function StudioLibrary({ session }: { session: LabSession }) {
     { id: 'mine', label: 'Le mie creazioni', icon: 'user' }, { id: 'favorites', label: 'Preferiti', icon: 'heart' },
   ];
   const shown = entries.filter((entry) => matchCategory(entry, category) && (family === 'all' || (entry.kind === 'material' ? entry.item.doc.family : entry.item.doc.material.family) === family) && `${entry.item.name} ${entry.kind === 'material' ? entry.item.doc.family : entry.item.doc.type}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+  const keyOf = (entry: Entry) => `${entry.kind}-${entry.item.id}`;
+  const selected = shown.find((entry) => keyOf(entry) === pickedKey) ?? shown[0] ?? null;
+  const metaOf = (entry: Entry) => `${entry.kind === 'component' ? COMPONENTS.get(entry.item.doc.type)?.name : 'Materiale'} · ${(entry.kind === 'material' ? entry.item.doc.family : entry.item.doc.material.family) === 'glass' ? 'Glass' : 'Solid'} · ${entry.item.origin === 'user' ? 'Personale' : 'Jello'}`;
   const open = (entry: Entry) => {
     if (entry.kind === 'material') { session.openMaterial(entry.item.id); openStudio(session, 'material'); }
     else { session.openComponent(entry.item.id); openStudio(session, 'builder'); }
@@ -42,14 +46,25 @@ export function StudioLibrary({ session }: { session: LabSession }) {
         const item = entry.item;
         const favorite = project?.favorites.includes(item.id) ?? false;
         const materialFamily = entry.kind === 'material' ? entry.item.doc.family : entry.item.doc.material.family;
-        return <article key={`${entry.kind}-${item.id}`} className="card catalog-card" data-catalog-kind={entry.kind}>
+        return <article key={keyOf(entry)} className="card catalog-card" data-catalog-kind={entry.kind} data-selected={selected ? keyOf(entry) === keyOf(selected) : undefined} onClick={() => setPickedKey(keyOf(entry))}>
           {entry.kind === 'component' ? <RuntimeThumbnail doc={entry.item.doc} /> : <div className="catalog-material"><MaterialThumbnail runtime doc={entry.item.doc} /></div>}
           <button type="button" className="icon-btn catalog-favorite" aria-label={`${favorite ? 'Rimuovi' : 'Aggiungi'} ${item.name} ${favorite ? 'dai' : 'ai'} preferiti`} aria-pressed={favorite} onClick={() => session.projects.toggleFavorite(item.id)}><Ic name="heart" /></button>
-          <div className="catalog-card-info"><h2>{item.name}</h2><p className="muted small">{entry.kind === 'component' ? COMPONENTS.get(entry.item.doc.type)?.name : 'Materiale'} · {materialFamily === 'glass' ? 'Glass' : 'Solid'} · {item.origin === 'user' ? 'Personale' : 'Jello'}</p><p className="catalog-compat small">{entry.kind === 'component' && entry.item.doc.type === 'desktop-navbar' ? 'Builder · React / Vanilla / JSON' : 'Runtime CSS · anteprima'}</p>
+          <div className="catalog-card-info"><h2><button type="button" className="catalog-pick" aria-pressed={selected ? keyOf(entry) === keyOf(selected) : false} onClick={() => setPickedKey(keyOf(entry))}>{item.name}</button></h2><p className="muted small">{entry.kind === 'component' ? COMPONENTS.get(entry.item.doc.type)?.name : 'Materiale'} · {materialFamily === 'glass' ? 'Glass' : 'Solid'} · {item.origin === 'user' ? 'Personale' : 'Jello'}</p><p className="catalog-compat small">{entry.kind === 'component' && entry.item.doc.type === 'desktop-navbar' ? 'Builder · React / Vanilla / JSON' : 'Runtime CSS · anteprima'}</p>
           <div className="button-row"><button type="button" className="button small" onClick={() => open(entry)}>Apri<Ic name="arrowRight" size={14} /></button><button type="button" className="icon-btn" aria-label={`Duplica ${item.name}`} onClick={async () => { open(entry); if (entry.kind === 'material') await session.duplicate(); else await session.duplicateComponent(); }}><Ic name="copy" size={16} /></button></div></div>
         </article>;
       })}</div>
       {!shown.length && <EmptyState icon="search" title="Nessun elemento trovato">Cambia categoria, materiale o termine di ricerca.</EmptyState>}
     </main>
+    <aside className="catalog-preview" aria-label="Anteprima dell’elemento" id="catalogPreview">
+      <h2>Anteprima</h2>
+      {selected ? <>
+        <div className="catalog-preview-stage">{selected.kind === 'component' ? <RuntimeThumbnail doc={selected.item.doc} /> : <MaterialThumbnail runtime doc={selected.item.doc} />}</div>
+        <div className="catalog-preview-meta"><strong>{selected.item.name}</strong><span className="muted small">{metaOf(selected)}</span></div>
+        <div className="catalog-preview-actions">
+          <button type="button" className="button primary" onClick={() => open(selected)}><Ic name="arrowRight" />Apri nello Studio</button>
+          <button type="button" className="button" onClick={() => { open(selected); session.setExportOpen(true); }}><Ic name="upload" />Esporta…</button>
+        </div>
+      </> : <p className="muted small">Seleziona un elemento per vederne l’anteprima.</p>}
+    </aside>
   </div>;
 }

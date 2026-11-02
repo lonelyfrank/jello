@@ -40,3 +40,22 @@ Le immagini provengono dall’applicazione funzionante, con un progetto di esemp
   impostazioni e wizard; temi chiaro e scuro; editor a 320, 360, 390, 768, 850,
   1024 e 1440 px. Nessuno sforamento orizzontale nelle viste controllate e nessun
   errore JavaScript durante il percorso di verifica.
+
+## Allineamento alle viste «Jello Studio» — 2 novembre 2026
+
+Il canvas di design è stato riletto vista per vista (Workspace, Component Builder,
+Material Lab, Library, Preview & Test, Export) e l'interfaccia è stata riallineata
+senza modificare logica, contratti o documenti.
+
+| Area | Cambiamenti |
+| --- | --- |
+| Token | Palette viola scura del design (`#120b22` sfondo, `#130c25` pannelli, `#1a1230` campi, accento `#6d2bf0`), nuovi `--line-soft` e `--accent-edge`; tema chiaro invariato. |
+| Shell | Intestazione più compatta, marchio «Jello Studio» (700/300), navigazione a pillole con stato attivo a bordo viola, pulsante primario con alone. |
+| Workspace | Banner con bolle, titolo «Shape the Interface.» su una riga, contatori reali in sidebar (progetti, materiali, componenti), sezione «Inizia da qui» con schede centrate. |
+| Builder / Material Lab / Preview | Segmenti e tab come nel design, barra degli stati, cursori con riempimento viola→magenta, interruttori e righe dell'albero. |
+| Library | Tile con titolo e preferito in alto, anteprima in riquadro e pannello **Anteprima** a destra (apri nello Studio, esporta). |
+| Export | Dialogo a tre colonne: contenuto per passo, anteprima pacchetto (riepilogo reale) e formato. Passi, id e adapter invariati. |
+
+Non sono state introdotte funzioni assenti dall'app (cronologia, template, varianti,
+registro eventi): le parti del mockup con dati dimostrativi restano fuori.
+Screenshot aggiornati in `docs/screenshots/studio/`.

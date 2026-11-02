@@ -58,94 +58,117 @@ export function ExportDialog({ session }: { session: LabSession }) {
         </header>
         <ol className="export-steps" aria-label="Passi dell’esportazione">{['Elemento', 'Formato', 'Dipendenze', 'Contenuto', 'Export'].map((label, i) => <li key={label}><button type="button" aria-current={step === i ? 'step' : undefined} onClick={() => setStep(i)}><span className="export-step-number">{i + 1}</span>{label}</button></li>)}</ol>
         {step !== null && <p className="export-handoff" role="status">Passo {step + 1} di 5 · <button type="button" className="link export-overview" onClick={() => setStep(null)}>Mostra riepilogo completo</button></p>}
-        <fieldset className="export-targets" hidden={step !== null && step !== 0}>
-          <legend className="field-legend">Cosa esportare</legend>
-          {TARGETS.map((t) => {
-            const disabled = t.id === 'component' && !component;
-            return (
-              <label key={t.id} className="export-target" htmlFor={`export-target-${t.id}`} data-disabled={disabled || undefined}>
-                <input
-                  type="radio"
-                  name="exportTarget"
-                  id={`export-target-${t.id}`}
-                  checked={target === t.id}
-                  disabled={disabled}
-                  onChange={() => {
-                    setTarget(t.id);
-                    setAdapterId('');
-                    setResult(null);
-                  }}
-                />
-                <span>
-                  <strong>{t.label}</strong>
-                  <span className="hint">{disabled ? 'Apri il Component Builder per esportare una componente.' : t.hint}</span>
-                </span>
-              </label>
-            );
-          })}
-        </fieldset>
-        {adapters.length > 1 && (
-          <fieldset className="export-formats" hidden={step !== null && step !== 1}>
-            <legend className="field-legend">Formato</legend>
-            {adapters.map((a) => (
-              <label key={a.id} className="check" htmlFor={`export-adapter-${a.id}`}>
-                <input type="radio" name="exportAdapter" id={`export-adapter-${a.id}`} checked={adapter?.id === a.id} onChange={() => setAdapterId(a.id)} />
-                <span>{a.label}</span>
-              </label>
-            ))}
-          </fieldset>
-        )}
-        {step === 1 && adapters.length === 1 && <p className="hint">Formato disponibile: {adapter?.label}.</p>}
-        {!adapter && (
-          <p className="hint" id="exportNone">
-            Nessun formato disponibile per questa selezione.
-          </p>
-        )}
-        {plan && adapter && (
-          <section className="export-plan" id="exportPlan" aria-label="Contenuto dell’export" hidden={step !== null && step < 2}>
-            <p>
-              <strong>{adapter.label}</strong> → <code id="exportName">{plan.name}</code>
-            </p>
-            <h3 className="panel-sub" hidden={step === 2}>Verrà esportato</h3>
-            <ul className="export-files" hidden={step === 2}>
-              {plan.files.map((f) => (
-                <li key={f.path}>
-                  <code>{f.path}</code> — {f.description}
-                </li>
-              ))}
-            </ul>
-            <div hidden={step === 3}><h3 className="panel-sub">Dipendenze</h3>
-            {plan.dependencies.length ? (
-              <ul className="export-files" id="exportDeps">
-                {plan.dependencies.map((d) => (
-                  <li key={d.name} data-kind={d.kind}>
-                    <code>
-                      {d.name} {d.version}
-                    </code>{' '}
-                    · {d.kind === 'bundled' ? 'inclusa' : 'da installare nel progetto'} — {d.note}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="hint" id="exportDeps">
-                Nessuna.
+        <div className="export-cols">
+          <section className="export-col" aria-label="Contenuto">
+            <h3 className="export-col-title">{step === null ? 'Contenuto' : ['Elemento', 'Formato', 'Dipendenze', 'Contenuto', 'Export'][step]}</h3>
+            <fieldset className="export-targets" hidden={step !== null && step !== 0}>
+              <legend className="field-legend">Cosa esportare</legend>
+              {TARGETS.map((t) => {
+                const disabled = t.id === 'component' && !component;
+                return (
+                  <label key={t.id} className="export-target" htmlFor={`export-target-${t.id}`} data-disabled={disabled || undefined}>
+                    <input
+                      type="radio"
+                      name="exportTarget"
+                      id={`export-target-${t.id}`}
+                      checked={target === t.id}
+                      disabled={disabled}
+                      onChange={() => {
+                        setTarget(t.id);
+                        setAdapterId('');
+                        setResult(null);
+                      }}
+                    />
+                    <span>
+                      <strong>{t.label}</strong>
+                      <span className="hint">{disabled ? 'Apri il Component Builder per esportare una componente.' : t.hint}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </fieldset>
+            {step === 1 && <p className="hint">Il formato si sceglie nella colonna a destra.</p>}
+            {!adapter && (
+              <p className="hint" id="exportNone">
+                Nessun formato disponibile per questa selezione.
               </p>
             )}
-            </div>
-            {plan.notes.map((n) => (
-              <p key={n} className="hint">
-                {n}
-              </p>
-            ))}
+            {plan && adapter && (
+              <section className="export-plan" id="exportPlan" aria-label="Contenuto dell’export" hidden={step !== null && step < 2}>
+                <p>
+                  <strong>{adapter.label}</strong> → <code id="exportName">{plan.name}</code>
+                </p>
+                <h3 className="panel-sub" hidden={step === 2}>Verrà esportato</h3>
+                <ul className="export-files" hidden={step === 2}>
+                  {plan.files.map((f) => (
+                    <li key={f.path}>
+                      <code>{f.path}</code> — {f.description}
+                    </li>
+                  ))}
+                </ul>
+                <div hidden={step === 3}><h3 className="panel-sub">Dipendenze</h3>
+                {plan.dependencies.length ? (
+                  <ul className="export-files" id="exportDeps">
+                    {plan.dependencies.map((d) => (
+                      <li key={d.name} data-kind={d.kind}>
+                        <code>
+                          {d.name} {d.version}
+                        </code>{' '}
+                        · {d.kind === 'bundled' ? 'inclusa' : 'da installare nel progetto'} — {d.note}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="hint" id="exportDeps">
+                    Nessuna.
+                  </p>
+                )}
+                </div>
+                {plan.notes.map((n) => (
+                  <p key={n} className="hint">
+                    {n}
+                  </p>
+                ))}
+              </section>
+            )}
+            {result && (
+              <ul className="messages" id="exportMessages" role="status" data-ok={String(result.ok)}>
+                {result.messages.map((m, i) => (
+                  <li key={i}>{m}</li>
+                ))}
+              </ul>
+            )}
           </section>
-        )}
-        {result && (
-          <ul className="messages" id="exportMessages" role="status" data-ok={String(result.ok)}>
-            {result.messages.map((m, i) => (
-              <li key={i}>{m}</li>
-            ))}
-          </ul>
-        )}
+          <section className="export-col" aria-label="Anteprima pacchetto">
+            <h3 className="export-col-title">Anteprima pacchetto</h3>
+            <div className="export-package">
+              <strong>{component && target !== 'material' ? component.name : material.name}</strong>
+              <span className="hint">{target === 'material' ? 'Materiale' : target === 'component' ? 'Componente + materiale' : 'Configurazione JSON'}</span>
+              <span className="hint">{adapter ? adapter.label : 'Nessun formato'}</span>
+            </div>
+            <dl className="export-summary">
+              <div><dt>Contenuto</dt><dd>{TARGETS.find((t) => t.id === target)?.label}</dd></div>
+              <div><dt>Formato</dt><dd>{adapter?.label ?? '—'}</dd></div>
+              <div><dt>File</dt><dd>{plan ? <code>{plan.name}</code> : '—'}</dd></div>
+              <div><dt>File inclusi</dt><dd>{plan ? plan.files.length : 0}</dd></div>
+            </dl>
+          </section>
+          <section className="export-col" aria-label="Formato">
+            <h3 className="export-col-title">Formato</h3>
+            {adapters.length > 1 && (
+              <fieldset className="export-formats">
+                <legend className="field-legend">Formato</legend>
+                {adapters.map((a) => (
+                  <label key={a.id} className="check" htmlFor={`export-adapter-${a.id}`}>
+                    <input type="radio" name="exportAdapter" id={`export-adapter-${a.id}`} checked={adapter?.id === a.id} onChange={() => setAdapterId(a.id)} />
+                    <span>{a.label}</span>
+                  </label>
+                ))}
+              </fieldset>
+            )}
+            {adapters.length === 1 && <p className="hint">Formato disponibile: {adapter?.label}.</p>}
+          </section>
+        </div>
         <p className="export-project">
           <button
             type="button"

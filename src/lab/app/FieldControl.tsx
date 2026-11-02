@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react';
 import type { FieldDescriptor } from '../../components/fields';
 import { ColorField, useProjectTokens } from './ColorPicker';
+import { rangeFill } from './ui';
 
 export const fieldId = (path: string) => `bf-${path.replace(/\./g, '-')}`;
 
@@ -131,7 +132,7 @@ function NumberControl(props: { id: string; label: React.ReactNode; min: number;
           </span>
         </span>
       </div>
-      <input id={id} type="range" min={min} max={max} step={step} value={value} disabled={disabled} aria-describedby={`${id}-desc`} onChange={(e) => onChange(e.target.valueAsNumber)} />
+      <input id={id} type="range" min={min} max={max} step={step} value={value} disabled={disabled} aria-describedby={`${id}-desc`} style={{ ['--v' as string]: `${rangeFill(value, min, max)}%` }} onChange={(e) => onChange(e.target.valueAsNumber)} />
       <p className="param-desc" id={`${id}-desc`}>
         {description} {`${min} – ${max}${unit ? ` ${unit}` : ''}`.replace(/-(?=\d)/g, '−')}
       </p>
