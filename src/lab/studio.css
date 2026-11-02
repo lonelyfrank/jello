@@ -487,6 +487,11 @@
 .catalog-card-info { display: contents; }
 .catalog-card-info h2 { order: 1; margin: 0; padding: 12px 44px 10px 12px; font-size: 12px; font-weight: 600; }
 .catalog-pick { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+/* The name button covers the card (a click anywhere selects); the card's other buttons sit above it. */
+.catalog-pick::after { content: ''; position: absolute; inset: 0; z-index: 0; border-radius: inherit; }
+.catalog-pick:focus-visible { outline: none; }
+.catalog-pick:focus-visible::after { outline: 2px solid var(--accent-hi); outline-offset: -2px; }
+.catalog-card .button-row { position: relative; z-index: 1; }
 .catalog-card-info > p { order: 3; margin: 8px 12px 0; font-size: 11px; }
 .catalog-card-info > .catalog-compat { margin-top: 2px; }
 .catalog-card-info > .button-row { order: 4; padding: 10px 12px 12px; }
@@ -529,8 +534,12 @@
 .export-summary > div + div { border-top: 1px solid var(--line-soft); }
 .export-summary dt { color: var(--muted); }
 .export-summary dd { margin: 0; min-width: 0; text-align: right; overflow-wrap: anywhere; }
+/* Guided steps show one section; the last one shows the content next to the package preview. */
+.export-cols[data-step] { grid-template-columns: 1fr; }
+.export-cols[data-step='4'] { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+.export-cols[data-step] .export-col[hidden] + .export-col { border-left: 0; }
 @media (max-width: 900px) {
-  .export-cols { grid-template-columns: 1fr; }
+  .export-cols, .export-cols[data-step='4'] { grid-template-columns: 1fr; }
   .export-col + .export-col { border-left: 0; border-top: 1px solid var(--line-soft); }
 }
 .catalog-card .runtime-container { inset: 0 auto auto 0; display: grid; place-items: center; width: 140%; height: 140%; transform: scale(.714); transform-origin: 0 0; }

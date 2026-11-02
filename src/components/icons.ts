@@ -243,9 +243,47 @@ export function serializeSvgNodes(nodes: readonly SvgNode[]): string {
     .join('');
 }
 
-/** Body markup → tree, for renderers. The body must have been produced by this module. */
+/** Four finite numbers, positive width and height: the only view box a stored icon may carry. */
+const VIEW_BOX = /^\s*[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?([\s,]+[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?){3}\s*$/i;
+
+/**
+ * Body markup → tree, for renderers. The body comes from a document (a
+ * `.jello` file, IndexedDB, a component definition): it is untrusted and
+ * goes through the same allowlist as an uploaded file. The view box is
+ * checked before it is placed in the wrapper, so it cannot add attributes.
+ */
 export function parseSvgBody(viewBox: string, body: string): SvgParse {
+  if (typeof viewBox !== 'string' || typeof body !== 'string') return { ok: false, errors: ['icona non valida'] };
+  if (!VIEW_BOX.test(viewBox)) return { ok: false, errors: ['viewBox mancante o non valido'] };
   return parseSvg(`<svg viewBox="${viewBox}">${body}</svg>`);
+}
+
+declare const safeSvgBrand: unique symbol;
+/**
+ * Icon markup re-serialized by this module from the allowlisted tree. Only
+ * `validateSvgBody` produces one; the brand is a compile-time reminder, the
+ * guarantee is the runtime check that made it.
+ */
+export type SafeSvgBody = string & { readonly [safeSvgBrand]: true };
+
+export type SvgValidationResult =
+  | { ok: true; viewBox: string; body: SafeSvgBody; nodes: SvgNode[]; paint: IconPaint; warnings: string[] }
+  | { ok: false; errors: string[] };
+
+/**
+ * The single gate for stored icon markup: parses `body` with the allowlist
+ * and returns the canonical re-serialization (what renderers and exports may
+ * use) or every reason it was refused. Input that differs from its
+ * canonical form is reported with a warning.
+ */
+export function validateSvgBody(viewBox: unknown, body: unknown): SvgValidationResult {
+  if (typeof viewBox !== 'string' || typeof body !== 'string') return { ok: false, errors: ['icona non valida'] };
+  const r = parseSvgBody(viewBox, body);
+  if (!r.ok) return r;
+  const safe = serializeSvgNodes(r.nodes) as SafeSvgBody;
+  const warnings = [...r.warnings];
+  if (safe !== body) warnings.push('SVG normalizzato');
+  return { ok: true, viewBox: r.viewBox, body: safe, nodes: r.nodes, paint: r.paint, warnings };
 }
 
 export type IconImport = { ok: true; icon: Extract<IconRef, { kind: 'svg' }>; warnings: string[] } | { ok: false; errors: string[] };
@@ -321,12 +359,11 @@ export function checkIconRef(icon: IconRef, at: string, errors: string[], warnin
     return { kind: 'builtin', name: 'star' };
   }
   if (icon.kind !== 'svg') return icon;
-  const r = parseSvgBody(icon.viewBox, icon.body);
+  const r = validateSvgBody(icon.viewBox, icon.body);
   if (!r.ok) {
     errors.push(...r.errors.map((e) => `${at}: SVG ${e}`));
     return icon;
   }
-  const body = serializeSvgNodes(r.nodes);
-  if (body !== icon.body) warnings.push(`${at}: SVG normalizzato`);
-  return { ...icon, viewBox: r.viewBox, body };
+  if (r.body !== icon.body) warnings.push(`${at}: SVG normalizzato`);
+  return { ...icon, viewBox: r.viewBox, body: r.body };
 }

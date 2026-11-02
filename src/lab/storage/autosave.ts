@@ -56,6 +56,35 @@ export class Autosaver {
     await this.run();
   }
 
+  /**
+   * Runs an operation that writes by itself (create, import, delete a
+   * project; delete a record) between autosaves: what is pending is written
+   * first, no autosave starts while it runs, and edits made meanwhile are
+   * saved right after it. Without this, an autosave that read the state just
+   * before a delete committed could write the deleted record back. `fn` must
+   * not call `flush` (it would wait for itself).
+   */
+  async exclusive<T>(fn: () => Promise<T>): Promise<T> {
+    await this.flush();
+    while (this.running) await this.running;
+    const job = fn();
+    const running = job.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.running = running;
+    try {
+      return await job;
+    } finally {
+      await running;
+      if (this.running === running) this.running = null;
+      if (this.again) {
+        this.again = false;
+        void this.run();
+      }
+    }
+  }
+
   private async run(): Promise<void> {
     if (this.running) {
       this.again = true;

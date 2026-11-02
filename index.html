@@ -2,6 +2,8 @@
 <html lang="it" data-theme="system">
   <head>
     <meta charset="utf-8" />
+    <!-- Defence in depth: no inline script, no event-handler attribute, no plugin, no <base> rewrite. Styles, images and connections stay open (inline styles, blob: textures, the LAN relay). -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none'; base-uri 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <title>Jello Studio — Shape the Interface.</title>

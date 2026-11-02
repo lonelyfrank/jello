@@ -120,5 +120,46 @@ describe('development relay', () => {
     expect(other.status).toBe(404);
     const notImage = await fetch(`${base}/assets/${hash}?token=${token}`, { method: 'PUT', headers: { 'content-type': 'text/html' }, body: data });
     expect(notImage.status).toBe(415);
+    // SVG would be a document on the relay's origin: refused like any non-raster type.
+    const svg = await fetch(`${base}/assets/${hash}?token=${token}`, { method: 'PUT', headers: { 'content-type': 'image/svg+xml' }, body: data });
+    expect(svg.status).toBe(415);
+    expect(get.headers.get('x-content-type-options')).toBe('nosniff');
+  });
+
+  it('a refused upload never evicts a stored asset, even with the session full', async () => {
+    const t = newToken();
+    const put = (bytes: Uint8Array, type = 'image/png', hash = createHash('sha256').update(bytes).digest('hex')) =>
+      fetch(`${base}/assets/${hash}?token=${t}`, { method: 'PUT', headers: { 'content-type': type }, body: new Blob([bytes as BlobPart]) });
+    const first = new Uint8Array([1]);
+    const firstHash = createHash('sha256').update(first).digest('hex');
+    for (let i = 1; i <= 16; i++) expect((await put(new Uint8Array([i]))).status).toBe(200);
+    // Full (16). Wrong type, wrong hash, too large: none of them may push the oldest asset out.
+    expect((await put(new Uint8Array([99]), 'text/plain')).status).toBe(415);
+    expect((await put(new Uint8Array([99]), 'image/png', '0'.repeat(64))).status).toBe(400);
+    expect((await put(new Uint8Array(13 * 1024 * 1024))).status).toBe(413);
+    expect((await fetch(`${base}/assets/${firstHash}?token=${t}`)).status).toBe(200);
+    // A valid new asset does evict the oldest one.
+    expect((await put(new Uint8Array([200]))).status).toBe(200);
+    expect((await fetch(`${base}/assets/${firstHash}?token=${t}`)).status).toBe(404);
+  });
+});
+
+describe('relay shutdown', () => {
+  it('closes with a preview still connected over SSE, and the preview sees the stream end', async () => {
+    const relay = createRelay();
+    await new Promise<void>((r) => relay.server.listen(0, '127.0.0.1', () => r()));
+    const url = `http://127.0.0.1:${(relay.server.address() as AddressInfo).port}/events?token=${newToken()}`;
+    const res = await fetch(url);
+    const reader = res.body!.getReader();
+    await reader.read(); // "retry:" line: the stream is open
+    const t0 = Date.now();
+    const closed = await Promise.race([relay.close().then(() => 'closed'), new Promise((r) => setTimeout(() => r('timeout'), 3000))]);
+    expect(closed).toBe('closed');
+    expect(Date.now() - t0).toBeLessThan(3000);
+    // The client gets the end of the stream, not a hang.
+    let done = false;
+    for (let i = 0; i < 5 && !done; i++) done = (await reader.read()).done;
+    expect(done).toBe(true);
+    expect(relay.sessions.size).toBe(0);
   });
 });

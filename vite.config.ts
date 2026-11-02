@@ -53,7 +53,8 @@ export default defineConfig({
   preview: { port: 4173, strictPort: true, host: true },
   build: {
     target: 'es2022',
-    sourcemap: true,
+    // Source maps expose the whole source tree: not part of a distributed build. JELLO_SOURCEMAP=1 for debugging a build.
+    sourcemap: process.env.JELLO_SOURCEMAP === '1',
     rolldownOptions: {
       input: {
         lab: new URL('./index.html', import.meta.url).pathname,

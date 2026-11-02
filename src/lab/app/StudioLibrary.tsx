@@ -33,6 +33,18 @@ export function StudioLibrary({ session }: { session: LabSession }) {
     if (entry.kind === 'material') { session.openMaterial(entry.item.id); openStudio(session, 'material'); }
     else { session.openComponent(entry.item.id); openStudio(session, 'builder'); }
   };
+  /** The copy appears in the Library and becomes the selection; the page does not change. */
+  const duplicate = async (entry: Entry) => {
+    if (entry.kind === 'material') {
+      session.openMaterial(entry.item.id);
+      await session.duplicate();
+      setPickedKey(`material-${session.state.materialId}`);
+    } else {
+      session.openComponent(entry.item.id);
+      await session.duplicateComponent();
+      setPickedKey(`component-${session.state.builder.componentId}`);
+    }
+  };
   return <div className="studio-library-layout" id="studioLibrary">
     <aside className="catalog-sidebar" aria-label="Categorie della libreria">
       <p className="eyebrow">La tua collezione</p>
@@ -46,11 +58,13 @@ export function StudioLibrary({ session }: { session: LabSession }) {
         const item = entry.item;
         const favorite = project?.favorites.includes(item.id) ?? false;
         const materialFamily = entry.kind === 'material' ? entry.item.doc.family : entry.item.doc.material.family;
-        return <article key={keyOf(entry)} className="card catalog-card" data-catalog-kind={entry.kind} data-selected={selected ? keyOf(entry) === keyOf(selected) : undefined} onClick={() => setPickedKey(keyOf(entry))}>
+        // Selection is the name button (stretched over the card by CSS); the card itself has no handler,
+        // so the favourite, «Apri» and «Duplica» buttons never also select or act twice.
+        return <article key={keyOf(entry)} className="card catalog-card" data-catalog-kind={entry.kind} data-selected={selected ? keyOf(entry) === keyOf(selected) : undefined}>
           {entry.kind === 'component' ? <RuntimeThumbnail doc={entry.item.doc} /> : <div className="catalog-material"><MaterialThumbnail runtime doc={entry.item.doc} /></div>}
           <button type="button" className="icon-btn catalog-favorite" aria-label={`${favorite ? 'Rimuovi' : 'Aggiungi'} ${item.name} ${favorite ? 'dai' : 'ai'} preferiti`} aria-pressed={favorite} onClick={() => session.projects.toggleFavorite(item.id)}><Ic name="heart" /></button>
           <div className="catalog-card-info"><h2><button type="button" className="catalog-pick" aria-pressed={selected ? keyOf(entry) === keyOf(selected) : false} onClick={() => setPickedKey(keyOf(entry))}>{item.name}</button></h2><p className="muted small">{entry.kind === 'component' ? COMPONENTS.get(entry.item.doc.type)?.name : 'Materiale'} · {materialFamily === 'glass' ? 'Glass' : 'Solid'} · {item.origin === 'user' ? 'Personale' : 'Jello'}</p><p className="catalog-compat small">{entry.kind === 'component' && entry.item.doc.type === 'desktop-navbar' ? 'Builder · React / Vanilla / JSON' : 'Runtime CSS · anteprima'}</p>
-          <div className="button-row"><button type="button" className="button small" onClick={() => open(entry)}>Apri<Ic name="arrowRight" size={14} /></button><button type="button" className="icon-btn" aria-label={`Duplica ${item.name}`} onClick={async () => { open(entry); if (entry.kind === 'material') await session.duplicate(); else await session.duplicateComponent(); }}><Ic name="copy" size={16} /></button></div></div>
+          <div className="button-row"><button type="button" className="button small" onClick={() => open(entry)}>Apri<Ic name="arrowRight" size={14} /></button><button type="button" className="icon-btn" aria-label={`Duplica ${item.name}`} onClick={() => void duplicate(entry)}><Ic name="copy" size={16} /></button></div></div>
         </article>;
       })}</div>
       {!shown.length && <EmptyState icon="search" title="Nessun elemento trovato">Cambia categoria, materiale o termine di ricerca.</EmptyState>}

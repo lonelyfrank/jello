@@ -14,6 +14,7 @@ import type { ColorAsset, FontFamilyAsset, IconAsset, Palette, ProjectAssets, Ty
 import type { LabSession } from '../session';
 import { useLab, type AssetTab } from '../store';
 import { ColorField } from './ColorPicker';
+import { SafeSvg } from './SvgIcon';
 import { copyText, EmptyState, Ic, StateChip } from './ui';
 
 const TABS = [
@@ -326,7 +327,7 @@ function ColorDetail({ color, assets, session, onDelete }: { color: ColorAsset; 
 
 function IconSvg({ icon, size = 24, filled }: { icon: IconAsset; size?: number; filled?: boolean }) {
   const paint = (filled ?? icon.paint === 'fill') ? { fill: 'currentColor', stroke: 'none' } : { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  return <svg viewBox={icon.viewBox} width={size} height={size} aria-hidden="true" focusable="false" {...paint} dangerouslySetInnerHTML={{ __html: icon.body }} />;
+  return <SafeSvg viewBox={icon.viewBox} body={icon.body} width={size} height={size} aria-hidden="true" focusable="false" {...paint} />;
 }
 
 function Icons({ session, assets }: { session: LabSession; assets: ProjectAssets }) {

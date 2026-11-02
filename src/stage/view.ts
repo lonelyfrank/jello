@@ -60,5 +60,3 @@ export const CUSTOM_LIMITS = { minWidth: 240, maxWidth: 1600, minHeight: 240, ma
 export const isNav = (v: string | null): v is NavId => NAV_ITEMS.some((n) => n.id === v);
 export const isObject = (v: string | null): v is ObjectKind => OBJECTS.some((o) => o.id === v);
 
-/** Objects that are sized by CSS layout, not by geometry.width/height. */
-export const layoutSized = (o: ObjectKind) => o !== 'capsule';

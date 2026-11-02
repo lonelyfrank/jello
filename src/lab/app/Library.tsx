@@ -334,7 +334,7 @@ export function Library({ session }: { session: LabSession }) {
         </label>
         <input
           type="file"
-          accept="image/*"
+          accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
           id="localImage"
           className="visually-hidden"
           onChange={(e) => {

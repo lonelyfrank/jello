@@ -7,7 +7,7 @@
  *   POST /state?token=T          lab → relay: full state (JSON, ≤ 256 KB)
  *   GET  /events?token=T         preview ← relay: Server-Sent Events; the last
  *                                state is sent again on every (re)connection
- *   PUT  /assets/<sha256>?token  lab → relay: image bytes (checked against the hash)
+ *   PUT  /assets/<sha256>?token  lab → relay: raster image bytes (type, size and hash checked before storing)
  *   GET  /assets/<sha256>?token  preview ← relay
  *   GET  /health
  *
@@ -29,6 +29,9 @@ const MAX_STATE = 256 * 1024;
 const MAX_ASSET = 12 * 1024 * 1024;
 const MAX_ASSETS_PER_SESSION = 16;
 const MAX_SESSIONS = 32;
+const MAX_CLIENTS_PER_SESSION = 8;
+/** Raster images only: an SVG served from the relay's origin could run script there. */
+const ASSET_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif']);
 const IDLE_MS = 60 * 60 * 1000;
 
 export function createRelay({ log = () => {} } = {}) {
@@ -39,9 +42,10 @@ export function createRelay({ log = () => {} } = {}) {
     let s = sessions.get(token);
     if (!s && create) {
       if (sessions.size >= MAX_SESSIONS) {
-        // Drop the session idle for the longest time.
-        const oldest = [...sessions.entries()].sort((a, b) => a[1].seen - b[1].seen)[0];
-        if (oldest) close(oldest[0]);
+        // Drop the session idle for the longest time; one with a preview connected is never dropped.
+        const oldest = [...sessions.entries()].filter(([, x]) => !x.clients.size).sort((a, b) => a[1].seen - b[1].seen)[0];
+        if (!oldest) throw Object.assign(new Error('troppe sessioni attive'), { status: 503 });
+        close(oldest[0]);
       }
       s = { last: null, clients: new Set(), assets: new Map(), seen: Date.now() };
       sessions.set(token, s);
@@ -120,6 +124,7 @@ export function createRelay({ log = () => {} } = {}) {
 
       if (url.pathname === '/events' && req.method === 'GET') {
         const s = session(token, true);
+        if (s.clients.size >= MAX_CLIENTS_PER_SESSION) return send(res, 429, { ok: false, error: 'troppe anteprime collegate a questa sessione' });
         res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive', 'access-control-allow-origin': '*' });
         res.write(`retry: 2000\n\n`);
         if (s.last) res.write(`event: state\ndata: ${s.last}\n\n`);
@@ -137,12 +142,15 @@ export function createRelay({ log = () => {} } = {}) {
         const hash = asset[1];
         if (!SHA.test(hash)) return send(res, 400, { ok: false, error: 'hash SHA-256 atteso' });
         if (req.method === 'PUT') {
+          // Every check comes before the session changes: a refused upload never evicts a stored asset.
+          const type = String(req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
+          if (!ASSET_TYPES.has(type)) return send(res, 415, { ok: false, error: 'solo immagini PNG, JPEG, WebP, GIF o AVIF' });
+          const declared = Number(req.headers['content-length'] ?? NaN);
+          if (declared > MAX_ASSET) return send(res, 413, { ok: false, error: 'corpo troppo grande' });
           const data = await readBody(req, MAX_ASSET);
           if (createHash('sha256').update(data).digest('hex') !== hash) return send(res, 400, { ok: false, error: 'hash non corrispondente' });
           const s = session(token, true);
           if (!s.assets.has(hash) && s.assets.size >= MAX_ASSETS_PER_SESSION) s.assets.delete(s.assets.keys().next().value);
-          const type = String(req.headers['content-type'] ?? 'application/octet-stream');
-          if (!/^image\//.test(type)) return send(res, 415, { ok: false, error: 'solo immagini' });
           s.assets.set(hash, { type, data });
           return send(res, 200, { ok: true });
         }
@@ -150,6 +158,7 @@ export function createRelay({ log = () => {} } = {}) {
           const a = session(token, false)?.assets.get(hash);
           if (!a) return send(res, 404, { ok: false, error: 'asset non trovato' });
           res.setHeader('cache-control', 'private, max-age=3600');
+          res.setHeader('x-content-type-options', 'nosniff');
           return send(res, 200, a.data, a.type);
         }
       }
@@ -163,7 +172,20 @@ export function createRelay({ log = () => {} } = {}) {
     clearInterval(sweep);
     for (const t of [...sessions.keys()]) close(t);
   });
-  return { server, sessions, close: () => new Promise((r) => server.close(() => r())) };
+  /**
+   * Orderly shutdown. `server.close` waits for every open connection, and an
+   * SSE response stays open by design: the streams are ended first (each
+   * preview sees the end of its stream and stops), then idle keep-alive
+   * sockets are released, so close resolves even with previews connected.
+   */
+  const shutdown = () =>
+    new Promise((resolve) => {
+      clearInterval(sweep);
+      for (const t of [...sessions.keys()]) close(t);
+      server.close(() => resolve());
+      server.closeIdleConnections?.();
+    });
+  return { server, sessions, close: shutdown };
 }
 
 export function lanAddresses() {

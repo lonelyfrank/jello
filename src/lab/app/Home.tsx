@@ -1,13 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { JELLO_DEMO } from '../../stage/demo-content';
 import { RuntimeThumbnail } from './RuntimeThumbnail';
 import { openStudio } from './StudioNav';
-import { VERIFICATION } from '../../stage/verification';
 import { countColors, countIcons, PLATFORM_LABEL, type ProjectDoc } from '../../project/types';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
 import { MaterialThumbnail } from './Library';
-import { Ic, StateChip, type IcName } from './ui';
+import { SafeSvg } from './SvgIcon';
+import { Ic, type IcName } from './ui';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -247,7 +247,7 @@ export function Home({ session }: { session: LabSession }) {
               </span>
               <span className="icon-row" aria-hidden="true">
                 {icons.map((i) => (
-                  <svg key={i.id} viewBox={i.viewBox} width="22" height="22" className="asset-ic" dangerouslySetInnerHTML={{ __html: i.body }} />
+                  <SafeSvg key={i.id} viewBox={i.viewBox} body={i.body} width="22" height="22" className="asset-ic" />
                 ))}
               </span>
             </button>
@@ -273,54 +273,22 @@ export function Home({ session }: { session: LabSession }) {
   );
 }
 
-/** The compatibility card: the committed raster records, plus what could not be run (said as such). */
-export function CompatCard({ session }: { session: LabSession }) {
-  const records = useMemo(() => [...VERIFICATION].sort((a, b) => a.engine.localeCompare(b.engine)), []);
-  const date = records.map((r) => r.date).sort().at(-1);
-  const label = (engine: string) => (engine === 'chromium' ? 'Chromium' : engine === 'firefox' ? 'Firefox' : engine === 'webkit' ? 'WebKit' : engine);
-  return (
-    <section className="card compat">
-      <div className="section-head">
-        <h2>Compatibilità</h2>
-        <button
-          type="button"
-          className="link"
-          onClick={() => {
-            session.setPanelTab('rendering');
-            session.setPage('lab', 'material');
-          }}
-        >
-          Dettagli
-        </button>
-      </div>
-      <p className="muted small">Verifiche raster del laboratorio{date ? ` (${new Date(date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })})` : ''}.</p>
-      <ul className="kv-list">
-        {records.map((r) => (
-          <li key={`${r.engine}-${r.mobileEmulated}`}>
-            <span>
-              {r.mobileEmulated ? 'Pixel 7 emulato' : `${label(r.engine)} ${r.major}`}
-            </span>
-            {r.mobileEmulated ? <StateChip kind="neutral">Solo emulato</StateChip> : <StateChip kind="ok">Superata</StateChip>}
-          </li>
-        ))}
-        <li>
-          <span>WebKit</span>
-          <StateChip kind="warn">Non eseguibile</StateChip>
-        </li>
-        <li>
-          <span>Safari macOS / iOS</span>
-          <StateChip kind="neutral">Non verificato</StateChip>
-        </li>
-      </ul>
-    </section>
-  );
+/** A project from the Jello kit; on failure nothing was stored and the notice says why. */
+async function createKit(session: LabSession): Promise<boolean> {
+  try {
+    await session.projects.create({ name: 'Il mio progetto', platform: 'web', previewTheme: 'system', start: 'kit' });
+    return true;
+  } catch (e) {
+    session.notify(`Progetto non creato: ${(e as Error).message}`);
+    return false;
+  }
 }
 
 /** First launch: three ways to start, and the file drop area. */
 export function HomeEmpty({ session }: { session: LabSession }) {
   const [over, setOver] = useState(false);
   const start = async () => {
-    await session.projects.create({ name: 'Il mio progetto', platform: 'web', previewTheme: 'system', start: 'kit' });
+    if (!(await createKit(session))) return;
     session.setOption('scene', 'jelly-macro');
     session.setPage('lab', 'material');
   };
@@ -412,7 +380,7 @@ function QuickStart({ session }: { session: LabSession }) {
 function DemoGallery({ session }: { session: LabSession }) {
   const materials = useLab((s) => s.library);
   const create = async (id: string) => {
-    await session.projects.create({ name: 'Il mio progetto', platform: 'web', previewTheme: 'system', start: 'kit' });
+    if (!(await createKit(session))) return;
     session.openMaterial(id);
     openStudio(session, 'material');
   };
