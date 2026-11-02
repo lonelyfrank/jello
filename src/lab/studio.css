@@ -590,7 +590,7 @@
 .home-filters { display: flex; gap: 4px; }
 .chip-filter { height: 30px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text-2); font-size: 12px; cursor: pointer; }
 .chip-filter[aria-pressed='true'] { border-color: var(--accent-edge); background: var(--accent-soft); color: var(--text); }
-.section-tools .link { color: var(--text); font-size: 15px; font-weight: 500; }
+.section-tools .link { display: inline-flex; align-items: center; min-height: 24px; color: var(--text); font-size: 15px; font-weight: 500; }
 .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 22px; }
 .home-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
 .home-thumb { position: relative; display: flex; align-items: center; justify-content: center; height: 150px; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: radial-gradient(60% 70% at 70% 30%, #e040c8 0, transparent 60%), linear-gradient(135deg, #3a0f5e, #7a1a9a 50%, #2a0b4a); }

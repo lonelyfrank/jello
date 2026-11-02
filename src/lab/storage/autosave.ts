@@ -93,7 +93,9 @@ export class Autosaver {
     this.set({ kind: 'saving' });
     this.running = (async () => {
       try {
-        await this.write();
+        // A write that throws before returning a promise would run `finally` before `this.running`
+        // is assigned below, leaving a settled promise there for good: turn it into a rejection.
+        await (async () => this.write())();
         this.set(this.memoryReason ? { kind: 'memory', message: this.memoryReason } : { kind: 'saved', at: Date.now() });
       } catch (e) {
         const err = toStorageError(e);

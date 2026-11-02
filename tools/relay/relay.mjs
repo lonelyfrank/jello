@@ -28,13 +28,15 @@ const SHA = /^[0-9a-f]{64}$/;
 const MAX_STATE = 256 * 1024;
 const MAX_ASSET = 12 * 1024 * 1024;
 const MAX_ASSETS_PER_SESSION = 16;
+/** Across all sessions: a token is any 16–64 URL-safe characters, so anyone who can reach the relay can open sessions. */
+const MAX_TOTAL_ASSET_BYTES = 128 * 1024 * 1024;
 const MAX_SESSIONS = 32;
 const MAX_CLIENTS_PER_SESSION = 8;
 /** Raster images only: an SVG served from the relay's origin could run script there. */
 const ASSET_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif']);
 const IDLE_MS = 60 * 60 * 1000;
 
-export function createRelay({ log = () => {} } = {}) {
+export function createRelay({ log = () => {}, maxTotalAssetBytes = MAX_TOTAL_ASSET_BYTES } = {}) {
   /** @type {Map<string, { last: string | null, clients: Set<import('node:http').ServerResponse>, assets: Map<string, { type: string, data: Buffer }>, seen: number }>} */
   const sessions = new Map();
 
@@ -53,6 +55,12 @@ export function createRelay({ log = () => {} } = {}) {
     }
     if (s) s.seen = Date.now();
     return s ?? null;
+  };
+
+  const assetBytes = () => {
+    let n = 0;
+    for (const s of sessions.values()) for (const a of s.assets.values()) n += a.data.length;
+    return n;
   };
 
   const close = (token) => {
@@ -150,7 +158,19 @@ export function createRelay({ log = () => {} } = {}) {
           const data = await readBody(req, MAX_ASSET);
           if (createHash('sha256').update(data).digest('hex') !== hash) return send(res, 400, { ok: false, error: 'hash non corrispondente' });
           const s = session(token, true);
-          if (!s.assets.has(hash) && s.assets.size >= MAX_ASSETS_PER_SESSION) s.assets.delete(s.assets.keys().next().value);
+          // Make room with this session's oldest assets only, and only if that is enough: a refused upload evicts nothing.
+          let count = s.assets.size - (s.assets.has(hash) ? 1 : 0);
+          let total = assetBytes() - (s.assets.get(hash)?.data.length ?? 0);
+          const evict = [];
+          for (const [k, a] of s.assets) {
+            if (count < MAX_ASSETS_PER_SESSION && total + data.length <= maxTotalAssetBytes) break;
+            if (k === hash) continue;
+            evict.push(k);
+            count--;
+            total -= a.data.length;
+          }
+          if (count >= MAX_ASSETS_PER_SESSION || total + data.length > maxTotalAssetBytes) return send(res, 507, { ok: false, error: 'memoria del relay esaurita: libera le anteprime inattive' });
+          for (const k of evict) s.assets.delete(k);
           s.assets.set(hash, { type, data });
           return send(res, 200, { ok: true });
         }

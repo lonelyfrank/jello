@@ -163,3 +163,48 @@ describe('relay shutdown', () => {
     expect(relay.sessions.size).toBe(0);
   });
 });
+
+describe('development relay: global asset budget', () => {
+  const png = (n: number, size = 400) => Buffer.alloc(size, n);
+  const sha = (b: Buffer) => createHash('sha256').update(b).digest('hex');
+  const tokenA = `a${'x'.repeat(31)}`;
+  const tokenB = `b${'x'.repeat(31)}`;
+
+  async function withRelay(fn: (put: (t: string, b: Buffer) => Promise<number>, has: (t: string, b: Buffer) => Promise<boolean>) => Promise<void>) {
+    const relay = createRelay({ maxTotalAssetBytes: 1000 });
+    await new Promise<void>((r) => relay.server.listen(0, '127.0.0.1', () => r()));
+    const base = `http://127.0.0.1:${(relay.server.address() as AddressInfo).port}`;
+    const put = async (t: string, b: Buffer) => (await fetch(`${base}/assets/${sha(b)}?token=${t}`, { method: 'PUT', body: new Uint8Array(b), headers: { 'content-type': 'image/png' } })).status;
+    const has = async (t: string, b: Buffer) => (await fetch(`${base}/assets/${sha(b)}?token=${t}`)).status === 200;
+    try {
+      await fn(put, has);
+    } finally {
+      await relay.close();
+    }
+  }
+
+  it('a session over the budget replaces its own oldest assets', async () => {
+    await withRelay(async (put, has) => {
+      const [a, b, c] = [png(1), png(2), png(3)];
+      expect(await put(tokenA, a)).toBe(200);
+      expect(await put(tokenA, b)).toBe(200);
+      expect(await put(tokenA, c)).toBe(200);
+      expect(await has(tokenA, a)).toBe(false);
+      expect(await has(tokenA, b)).toBe(true);
+      expect(await has(tokenA, c)).toBe(true);
+    });
+  });
+
+  it('another session cannot grow the total, and a refused upload evicts nothing', async () => {
+    await withRelay(async (put, has) => {
+      const [a, b, other] = [png(1), png(2), png(3)];
+      await put(tokenA, a);
+      await put(tokenA, b);
+      expect(await put(tokenB, other)).toBe(507);
+      expect(await put(tokenA, png(4, 1200))).toBe(507);
+      expect(await has(tokenA, a)).toBe(true);
+      expect(await has(tokenA, b)).toBe(true);
+      expect(await has(tokenB, other)).toBe(false);
+    });
+  });
+});

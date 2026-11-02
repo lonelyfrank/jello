@@ -134,3 +134,23 @@ describe('project documents carry only allowlisted icons', () => {
     expect(iconSvg({ id: 'y', name: 'y', viewBox: '0 0 24 24', body: '<path d="M0 0h4"/>', paint: 'stroke', warning: null })).toContain('<path d="M0 0h4"/>');
   });
 });
+
+describe('attribute names that exist on Object.prototype', () => {
+  // `ATTRS[k]` on a plain object finds inherited members: the parser used to
+  // call `.test` on a function and throw, which crashed rendering of a stored icon.
+  for (const name of ['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf']) {
+    it(`${name} is dropped, not thrown on (inner element and root)`, () => {
+      const inner = validateSvgBody('0 0 24 24', `<path ${name}="x" d="M0 0h4"/>`);
+      expect(inner.ok).toBe(true);
+      if (inner.ok) expect(inner.body).toBe('<path d="M0 0h4"/>');
+      expect(() => parseSvgBody('0 0 24 24', `<g ${name}="x"><path d="M0 0h4"/></g>`)).not.toThrow();
+    });
+  }
+
+  it('an icon name inherited from Object.prototype is not a built-in', () => {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    expect(checkIconRef({ kind: 'builtin', name: 'constructor' }, 'x', errors, warnings)).toEqual({ kind: 'builtin', name: 'star' });
+    expect(warnings).toHaveLength(1);
+  });
+});

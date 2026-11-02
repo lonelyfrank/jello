@@ -81,4 +81,45 @@ describe('Autosaver', () => {
     await new Promise((r) => setTimeout(r, 5));
     expect(h.written).toEqual([1, 2]);
   });
+
+  it('a failed write is reported as an error, not as saved, and the next flush retries it', async () => {
+    let fail = true;
+    const writes: string[] = [];
+    const states: SaveState['kind'][] = [];
+    const save = new Autosaver(
+      async () => {
+        writes.push(fail ? 'fail' : 'ok');
+        if (fail) throw new DOMException('full', 'QuotaExceededError');
+      },
+      (s) => states.push(s.kind),
+      0,
+    );
+    await save.flush();
+    expect(save.status.kind).toBe('error');
+    expect(states).not.toContain('saved');
+    fail = false;
+    await save.flush();
+    expect(save.status.kind).toBe('saved');
+    expect(writes).toEqual(['fail', 'ok']);
+  });
+
+  it('a write that throws before returning a promise does not wedge the autosaver', async () => {
+    let fail = true;
+    let writes = 0;
+    const save = new Autosaver(
+      (() => {
+        writes++;
+        if (fail) throw new Error('boom');
+        return Promise.resolve();
+      }) as () => Promise<void>,
+      () => {},
+      0,
+    );
+    await save.flush();
+    expect(save.status.kind).toBe('error');
+    fail = false;
+    await save.flush();
+    expect(writes).toBe(2);
+    expect(save.status.kind).toBe('saved');
+  });
 });

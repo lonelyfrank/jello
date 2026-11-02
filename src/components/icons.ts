@@ -146,7 +146,7 @@ export function parseSvg(text: string): SvgParse {
       for (const [k, v] of attrs) {
         if (/^on/i.test(k)) errors.push(`svg: attributo ${k} non ammesso`);
         else if (!ROOT_KNOWN.has(k)) warnings.push(`svg: attributo ${k} ignorato`);
-        else if (ATTRS[k] && k !== 'width' && k !== 'height') {
+        else if (Object.hasOwn(ATTRS, k) && k !== 'width' && k !== 'height') {
           if (ATTRS[k]!.test(v.trim())) root.attrs.push([k, v.trim()]);
           else errors.push(`svg: valore non ammesso per ${k}`);
         }
@@ -176,7 +176,7 @@ export function parseSvg(text: string): SvgParse {
     }
     const node: SvgNode = { tag: name as SvgTag, attrs: [], children: [] };
     for (const [k, v] of attrs) {
-      const rule = ATTRS[k];
+      const rule = Object.hasOwn(ATTRS, k) ? ATTRS[k] : undefined;
       if (/^on/i.test(k) || /href$/i.test(k) || k === 'style') {
         errors.push(`<${name}>: attributo ${k} non ammesso`);
       } else if (!rule) {
@@ -338,7 +338,7 @@ export const BUILTIN_ICON_NAMES = Object.keys(BUILTIN_ICONS);
 export function iconTree(icon: IconRef): { viewBox: string; nodes: SvgNode[]; paint: IconPaint } | null {
   if (icon.kind === 'none') return null;
   if (icon.kind === 'builtin') {
-    const b = BUILTIN_ICONS[icon.name];
+    const b = Object.hasOwn(BUILTIN_ICONS, icon.name) ? BUILTIN_ICONS[icon.name] : undefined;
     if (!b) return null;
     const r = parseSvgBody('0 0 24 24', b.body);
     return r.ok ? { viewBox: '0 0 24 24', nodes: r.nodes, paint: 'stroke' } : null;
@@ -354,7 +354,7 @@ export function iconTree(icon: IconRef): { viewBox: string; nodes: SvgNode[]; pa
  * and only what this runtime would have written is kept.
  */
 export function checkIconRef(icon: IconRef, at: string, errors: string[], warnings: string[]): IconRef {
-  if (icon.kind === 'builtin' && !BUILTIN_ICONS[icon.name]) {
+  if (icon.kind === 'builtin' && !Object.hasOwn(BUILTIN_ICONS, icon.name)) {
     warnings.push(`${at}: icona "${icon.name}" sconosciuta a questo runtime, uso «star»`);
     return { kind: 'builtin', name: 'star' };
   }
