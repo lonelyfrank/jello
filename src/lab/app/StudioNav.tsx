@@ -5,11 +5,11 @@ import { Ic, type IcName } from './ui';
 
 const BASE = import.meta.env.BASE_URL;
 
-export function openStudio(session: LabSession, area: 'workspace' | 'builder' | 'material' | 'library' | 'preview' | 'export') {
+export function openStudio(session: LabSession, area: 'workspace' | 'builder' | 'material' | 'library' | 'preview' | 'jelly' | 'export') {
   if (area === 'workspace') { setStudioPreferences({ area: 'editor' }); session.setPage('home'); }
   else if (area === 'export') session.setExportOpen(true);
   else {
-    setStudioPreferences({ area: area === 'library' || area === 'preview' ? area : 'editor' });
+    setStudioPreferences({ area: area === 'library' || area === 'preview' || area === 'jelly' ? area : 'editor' });
     session.setPage('lab', area === 'builder' ? 'builder' : area === 'material' ? 'material' : undefined);
   }
 }
@@ -37,6 +37,7 @@ export function StudioRail({ session, saveShort, saveFull, saveKind, onCreate, c
     { id: 'preview', label: 'Test', full: 'Preview & Test', icon: 'eye', domId: 'ws-preview' },
     { id: 'export', label: 'Export', full: 'Export', icon: 'download', domId: 'ws-export' },
     { id: 'assets', label: 'Asset', full: 'Asset del progetto', icon: 'palette', domId: 'nav-assets' },
+    { id: 'jelly', label: 'Jello β', full: 'Jello Lab · sperimentale', icon: 'jelly', domId: 'ws-jelly' },
   ];
   const go = (id: RailId) => (id === 'assets' ? session.setPage('assets') : openStudio(session, id));
   const item = (it: (typeof items)[number]) => (
@@ -59,6 +60,8 @@ export function StudioRail({ session, saveShort, saveFull, saveKind, onCreate, c
       {items.slice(0, 6).map(item)}
       <span className="rail-div" aria-hidden="true" />
       {item(items[6]!)}
+      <span className="rail-div" aria-hidden="true" />
+      {item(items[7]!)}
       <span className="rail-grow" />
       {hasProject && saveKind !== null && (
         <p className="rail-save" id="saveStatus" role="status" data-kind={saveKind} title={saveFull}>

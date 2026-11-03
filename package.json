@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "vite",
     "build:lib": "vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/finalize-lib.mjs",
-    "build": "npm run build:lib && tsc --noEmit && vite build",
+    "build:jelly": "vite build --config vite.jelly.config.ts && node scripts/finalize-jelly.mjs",
+    "build": "npm run build:lib && npm run build:jelly && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -24,7 +25,9 @@
     "consumer:prepare": "npm run build:lib && node scripts/prepare-consumer.mjs",
     "consumer:serve": "node scripts/serve-static.mjs examples/react-consumer/dist 4176",
     "vanilla:prepare": "npm run build:lib && node scripts/prepare-vanilla.mjs",
-    "vanilla:serve": "node scripts/serve-static.mjs examples/vanilla-consumer 4177"
+    "vanilla:serve": "node scripts/serve-static.mjs examples/vanilla-consumer 4177",
+    "jelly-consumer:prepare": "npm run build:jelly && node scripts/prepare-jelly-consumer.mjs",
+    "jelly-consumer:serve": "node scripts/serve-static.mjs examples/jelly-consumer 4179"
   },
   "engines": {
     "node": ">=20"

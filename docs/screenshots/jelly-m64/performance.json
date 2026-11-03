@@ -1,0 +1,304 @@
+{
+  "generatedAt": "2026-11-02T23:20:19.594Z",
+  "base": "http://127.0.0.1:4180/",
+  "note": "Production build, headless, one run per scenario. Not budgets. Chromium-only fields come from CDP.",
+  "runs": [
+    {
+      "browser": "chromium",
+      "version": "156.0.8078.4",
+      "extra": {
+        "hiddenPreviewRafDelta": 0
+      },
+      "results": [
+        {
+          "scenario": "idle 1 surface, 1.5 s",
+          "surfaces": 1,
+          "ms": 1507,
+          "rafFrames": 0,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 16.7,
+          "intervalP95": 16.8,
+          "samples": 91,
+          "cdpScriptS": 0.0014,
+          "cdpLayoutS": 0,
+          "cdpStyleS": 0,
+          "cdpTaskS": 0.0113,
+          "heapMB": 7.68
+        },
+        {
+          "scenario": "one press 450 ms + release to rest",
+          "surfaces": 1,
+          "ms": 1074,
+          "rafFrames": 63,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 16.7,
+          "intervalP95": 16.7,
+          "samples": 64,
+          "cdpScriptS": 0.0207,
+          "cdpLayoutS": 0.0033,
+          "cdpStyleS": 0.0071,
+          "cdpTaskS": 0.0823,
+          "heapMB": 8.07
+        },
+        {
+          "scenario": "20 repeated presses (60 ms) to rest",
+          "surfaces": 1,
+          "ms": 2191,
+          "rafFrames": 130,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 16.7,
+          "intervalP95": 16.7,
+          "samples": 131,
+          "cdpScriptS": 0.0613,
+          "cdpLayoutS": 0.0128,
+          "cdpStyleS": 0.0277,
+          "cdpTaskS": 0.2672,
+          "heapMB": 9.55
+        },
+        {
+          "scenario": "60 rapid parameter changes (slider keys)",
+          "surfaces": 1,
+          "ms": 419,
+          "rafFrames": 0,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 16.7,
+          "intervalP95": 16.7,
+          "samples": 25,
+          "cdpScriptS": 0.1993,
+          "cdpLayoutS": 0.0315,
+          "cdpStyleS": 0.0165,
+          "cdpTaskS": 0.3192,
+          "heapMB": 17.77
+        },
+        {
+          "scenario": "20 resize steps (button size + zoom)",
+          "surfaces": 1,
+          "ms": 263,
+          "rafFrames": 0,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 16.7,
+          "intervalP95": 16.7,
+          "samples": 15,
+          "cdpScriptS": 0.0709,
+          "cdpLayoutS": 0.0167,
+          "cdpStyleS": 0.0064,
+          "cdpTaskS": 0.1905,
+          "heapMB": 15.77
+        },
+        {
+          "scenario": "compare: 4 surfaces idle 1.5 s",
+          "surfaces": 4,
+          "ms": 1505,
+          "rafFrames": null,
+          "svgNodes": [
+            258,
+            258
+          ],
+          "intervalMedian": 16.7,
+          "intervalP95": 16.7,
+          "samples": 90,
+          "cdpScriptS": 0.0012,
+          "cdpLayoutS": 0,
+          "cdpStyleS": 0,
+          "cdpTaskS": 0.0107,
+          "heapMB": 16.98
+        },
+        {
+          "scenario": "compare: press each of the 4 surfaces",
+          "surfaces": 4,
+          "ms": 3072,
+          "rafFrames": null,
+          "svgNodes": [
+            258,
+            258
+          ],
+          "intervalMedian": 16.7,
+          "intervalP95": 16.8,
+          "samples": 183,
+          "cdpScriptS": 0.0436,
+          "cdpLayoutS": 0.0094,
+          "cdpStyleS": 0.0235,
+          "cdpTaskS": 0.24,
+          "heapMB": 16.47
+        },
+        {
+          "scenario": "10 workspace switches (Jelly ↔ Materiali)",
+          "surfaces": 1,
+          "ms": 3033,
+          "rafFrames": 0,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 16.7,
+          "intervalP95": 16.73,
+          "samples": 181,
+          "cdpScriptS": 0.1265,
+          "cdpLayoutS": 0.0915,
+          "cdpStyleS": 0.0879,
+          "cdpTaskS": 0.5213,
+          "heapMB": 11.98
+        },
+        {
+          "scenario": "preview hidden (other workspace), 1.5 s",
+          "surfaces": 1,
+          "ms": 1505,
+          "rafFrames": 0,
+          "svgNodes": [
+            51,
+            51
+          ],
+          "intervalMedian": 16.7,
+          "intervalP95": 16.8,
+          "samples": 91,
+          "cdpScriptS": 0.0021,
+          "cdpLayoutS": 0,
+          "cdpStyleS": 0,
+          "cdpTaskS": 0.0135,
+          "heapMB": 13.55
+        }
+      ]
+    },
+    {
+      "browser": "firefox",
+      "version": "157.0",
+      "extra": {
+        "hiddenPreviewRafDelta": 0
+      },
+      "results": [
+        {
+          "scenario": "idle 1 surface, 1.5 s",
+          "surfaces": 1,
+          "ms": 1505,
+          "rafFrames": 0,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 17.06,
+          "intervalP95": 17.14,
+          "samples": 91
+        },
+        {
+          "scenario": "one press 450 ms + release to rest",
+          "surfaces": 1,
+          "ms": 1085,
+          "rafFrames": 64,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 17.08,
+          "intervalP95": 17.14,
+          "samples": 65
+        },
+        {
+          "scenario": "20 repeated presses (60 ms) to rest",
+          "surfaces": 1,
+          "ms": 2459,
+          "rafFrames": 165,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 16.3,
+          "intervalP95": 17.12,
+          "samples": 166
+        },
+        {
+          "scenario": "60 rapid parameter changes (slider keys)",
+          "surfaces": 1,
+          "ms": 631,
+          "rafFrames": 0,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 16.12,
+          "intervalP95": 17.1,
+          "samples": 50
+        },
+        {
+          "scenario": "20 resize steps (button size + zoom)",
+          "surfaces": 1,
+          "ms": 461,
+          "rafFrames": 0,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 17.08,
+          "intervalP95": 17.14,
+          "samples": 27
+        },
+        {
+          "scenario": "compare: 4 surfaces idle 1.5 s",
+          "surfaces": 4,
+          "ms": 1505,
+          "rafFrames": null,
+          "svgNodes": [
+            258,
+            258
+          ],
+          "intervalMedian": 17.08,
+          "intervalP95": 17.16,
+          "samples": 91
+        },
+        {
+          "scenario": "compare: press each of the 4 surfaces",
+          "surfaces": 4,
+          "ms": 3132,
+          "rafFrames": null,
+          "svgNodes": [
+            258,
+            258
+          ],
+          "intervalMedian": 17.08,
+          "intervalP95": 17.14,
+          "samples": 188
+        },
+        {
+          "scenario": "10 workspace switches (Jelly ↔ Materiali)",
+          "surfaces": 1,
+          "ms": 3566,
+          "rafFrames": 0,
+          "svgNodes": [
+            66,
+            66
+          ],
+          "intervalMedian": 17.08,
+          "intervalP95": 33.2,
+          "samples": 204
+        },
+        {
+          "scenario": "preview hidden (other workspace), 1.5 s",
+          "surfaces": 1,
+          "ms": 1505,
+          "rafFrames": 0,
+          "svgNodes": [
+            51,
+            51
+          ],
+          "intervalMedian": 17.04,
+          "intervalP95": 17.14,
+          "samples": 90
+        }
+      ]
+    }
+  ]
+}

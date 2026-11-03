@@ -233,7 +233,7 @@ export function checkFamily(family: unknown, familyVersion: unknown): string | n
   if (typeof family !== 'string') return 'family: attesa una stringa';
   const info = familyInfo(family);
   if (!info) return `family: "${family}" sconosciuta a questo runtime (${RUNTIME_VERSION})`;
-  if (info.status !== 'available') return `family: "${info.label}" non è ancora disponibile in questo runtime (${RUNTIME_VERSION})`;
+  if (info.status !== 'available') return `family: "${family}" (${info.label}) non è ancora disponibile in questo runtime (${RUNTIME_VERSION})`;
   if (typeof familyVersion === 'number' && familyVersion > info.version) {
     return `familyVersion: ${info.label} versione ${familyVersion} è più recente di quella supportata (${info.version})`;
   }

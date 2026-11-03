@@ -5,7 +5,9 @@ import { SCENES } from '../../stage/scenes';
 import { NAV_ITEMS, OBJECTS, type ObjectKind } from '../../stage/view';
 import { PHOTO } from '../../stage/scenes';
 import type { LabSession } from '../session';
+import { setStudioPreferences, useStudioPreferences } from '../studio-preferences';
 import { useLab, type LibraryItem } from '../store';
+import { presentItem } from './catalog-ui';
 import { Icon } from './icons';
 import { EmptyState, Ic } from './ui';
 
@@ -83,7 +85,13 @@ export function Library({ session }: { session: LabSession }) {
 
   const q = query.trim().toLowerCase();
   const visible = useMemo(() => library.filter((i) => i.doc.family === doc.family && (!q || i.name.toLowerCase().includes(q) || i.doc.family.includes(q))), [library, q, doc.family]);
-  const builtins = visible.filter((i) => i.origin === 'builtin');
+  const diagnosticsOn = useStudioPreferences().diagnostics;
+  const builtinsAll = visible.filter((i) => i.origin === 'builtin');
+  // Diagnostic configurations (Refraction Test) are listed apart, and only in advanced mode or while one is the active material.
+  const activeIsDiagnostic = presentItem(library.find((i) => i.id === materialId) ?? { id: '', origin: 'user', doc }).diagnostic;
+  const builtins = builtinsAll.filter((i) => !presentItem(i).diagnostic);
+  const diagnostic = builtinsAll.filter((i) => presentItem(i).diagnostic);
+  const showDiagnostic = tab === 'jello' && diagnostic.length > 0 && (diagnosticsOn || activeIsDiagnostic);
   const personal = visible.filter((i) => i.origin === 'user');
   const favs = visible.filter((i) => favorites.includes(i.id));
   const shown = tab === 'jello' ? builtins : tab === 'mine' ? personal : favs;
@@ -95,6 +103,7 @@ export function Library({ session }: { session: LabSession }) {
     const active = i.id === materialId;
     const name = i.approximation ? `≈ ${i.name.replace(/\s*\(approssimazione\)$/, '')}` : i.name;
     const fav = favorites.includes(i.id);
+    const info = presentItem(i);
     return (
       <div key={i.id} className="preset-wrap">
       <button
@@ -102,7 +111,7 @@ export function Library({ session }: { session: LabSession }) {
         className="preset-card"
         aria-pressed={active}
         aria-label={`${i.name}${i.origin === 'user' ? ' (personale)' : ''}`}
-        title={i.note}
+        title={info.description ? `${info.meta} — ${info.description}` : i.note}
         data-preset={i.id}
         data-origin={i.origin}
         onClick={() => session.openMaterial(i.id)}
@@ -144,7 +153,7 @@ export function Library({ session }: { session: LabSession }) {
         <div className="lib-tabs" role="tablist" aria-label="Raccolte">
           {(
             [
-              ['jello', 'Jello', builtins.length],
+              ['jello', 'Inclusi', builtins.length],
               ['mine', 'I miei', personal.length],
               ['favorites', 'Preferiti', favs.length],
             ] as const
@@ -157,7 +166,7 @@ export function Library({ session }: { session: LabSession }) {
         </div>
         <div id="libPanel" role="tabpanel" aria-labelledby={`libTab-${tab}`}>
           {shown.length ? (
-            <div className="preset-grid" role="group" aria-label={tab === 'jello' ? 'Preset ufficiali Jello' : tab === 'mine' ? 'Materiali personali' : 'Materiali preferiti'} id={tab === 'mine' ? 'personalGrid' : undefined}>
+            <div className="preset-grid" role="group" aria-label={tab === 'jello' ? 'Preset inclusi' : tab === 'mine' ? 'Materiali personali' : 'Materiali preferiti'} id={tab === 'mine' ? 'personalGrid' : undefined}>
               {shown.map(card)}
             </div>
           ) : q ? (
@@ -170,10 +179,19 @@ export function Library({ session }: { session: LabSession }) {
             </EmptyState>
           ) : tab === 'mine' ? (
             <EmptyState icon="drop" title="Nessun materiale personale" action={<button type="button" className="button small" onClick={() => void session.newMaterial()}>Nuovo materiale</button>}>
-              Duplica un preset Jello o creane uno nuovo.
+              Duplica un preset incluso o creane uno nuovo.
             </EmptyState>
           ) : null}
         </div>
+        {tab === 'jello' && diagnostic.length > 0 && !activeIsDiagnostic && (
+          <label className="check" htmlFor="libShowDiagnostics"><input id="libShowDiagnostics" type="checkbox" checked={diagnosticsOn} onChange={(e) => setStudioPreferences({ diagnostics: e.target.checked })} /><span>Avanzato: mostra la diagnostica</span></label>
+        )}
+        {showDiagnostic && (
+          <div id="diagnosticPanel">
+            <p className="side-caption">Diagnostica · non sono materiali per il design</p>
+            <div className="preset-grid" role="group" aria-label="Configurazioni diagnostiche">{diagnostic.filter((i) => !q || i.name.toLowerCase().includes(q)).map(card)}</div>
+          </div>
+        )}
         <div className="active-material">
           <MaterialThumbnail doc={doc} />
           <span className="active-text">
@@ -198,7 +216,7 @@ export function Library({ session }: { session: LabSession }) {
               <strong id="activeName">{doc.name}</strong>
             )}
             <span className="active-name" id="activeOrigin" data-origin={origin}>
-              {origin === 'builtin' ? (modified ? 'Preset incluso · modificato, non nella libreria' : 'Preset incluso · sola lettura') : 'Personale · salvataggio automatico'}
+              {origin === 'builtin' ? (modified ? 'Preset incluso · modificato, non nella libreria' : `${presentItem({ id: materialId, origin, doc }).diagnostic ? 'Configurazione diagnostica' : 'Preset incluso'} · sola lettura`) : 'Personale · salvataggio automatico'}
             </span>
             {usedBy > 0 && (
               <span className="active-name" id="activeUsage">
@@ -241,7 +259,7 @@ export function Library({ session }: { session: LabSession }) {
           )}
         </div>
         {skipped.length > 0 && <p className="param-note">Non leggibili: {skipped.join('; ')}</p>}
-        <p className="side-caption">Altre famiglie · in sviluppo, non utilizzabili</p>
+        <p className="side-caption">Altre famiglie · sperimentali o in sviluppo</p>
         <ul className="soon-grid" aria-label="Famiglie in sviluppo">
           {FAMILIES.filter((f) => f.status !== 'available').map((f) => (
             <li key={f.id} className="soon-card" title={f.description}>

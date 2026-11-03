@@ -63,11 +63,12 @@ export const FAMILIES: readonly FamilyInfo[] = [
     editor: false,
   },
   {
+    // `id` is the technical id persisted in documents and stays `jelly`; the family is shown as «Jello».
     id: 'jelly',
-    label: 'Jelly',
+    label: 'Jello',
     status: 'planned',
     version: 0,
-    description: 'Gelatina con massa e rimbalzo. In sviluppo: non disponibile in questa versione.',
+    description: 'Materiale gelatinoso digitale con corpo traslucido, inclusioni interne e deformazione elastica controllata. Sperimentale: disponibile solo nel laboratorio Jello, non in questa versione produttiva.',
     editor: false,
     planned: ['physics', 'deformation', 'bubbles'],
   },

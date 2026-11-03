@@ -53,6 +53,7 @@ const P = {
   sun: 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',
   moon: 'M20 14A8 8 0 1 1 10 4a6.5 6.5 0 0 0 10 10z',
   external: 'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
+  jelly: 'M4 20h16M6 20c0-6 1.5-12 6-12s6 6 6 12M12 8V4M9.5 13h.01M14.5 15h.01M12 12h.01',
 } as const;
 
 export type IcName = keyof typeof P;

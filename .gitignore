@@ -17,3 +17,5 @@ examples/react-consumer/dist/
 examples/vanilla-consumer/jello-*/
 examples/vanilla-consumer/index.html
 examples/vanilla-consumer/typecheck.ts
+dist-jelly/
+examples/jelly-consumer/jello-*/

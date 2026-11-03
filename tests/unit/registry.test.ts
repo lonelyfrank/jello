@@ -198,7 +198,7 @@ describe('Jelly: the contract, nothing more', () => {
     const base = JSON.parse(serializeMaterial(createGlassDocument({ id: 'j', name: 'J' })));
     const r = parseMaterialText(JSON.stringify({ ...base, family: 'jelly' }));
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors[0]).toMatch(/Jelly.*non è ancora disponibile/);
+    if (!r.ok) expect(r.errors[0]).toMatch(/"jelly" \(Jello\) non è ancora disponibile/);
     expect(materialRuntime('jelly')).toBeUndefined();
   });
 

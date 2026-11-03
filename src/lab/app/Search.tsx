@@ -40,7 +40,7 @@ export function GlobalSearch({ session }: { session: LabSession }) {
     const has = (s: string) => s.toLowerCase().includes(t);
     const out: Hit[] = [];
     for (const p of projects) if (has(p.name)) out.push({ key: `p-${p.id}`, icon: 'folder', kind: 'Progetto', label: p.name, run: () => (session.switchProject(p.id), session.setPage('lab', 'material')) });
-    for (const m of library) if (has(m.name)) out.push({ key: `m-${m.id}`, icon: 'drop', kind: m.origin === 'user' ? 'Materiale' : 'Materiale Jello', label: m.name, run: () => (session.openMaterial(m.id), session.setPage('lab', 'material')) });
+    for (const m of library) if (has(m.name)) out.push({ key: `m-${m.id}`, icon: 'drop', kind: m.origin === 'user' ? 'Materiale' : 'Preset incluso', label: m.name, run: () => (session.openMaterial(m.id), session.setPage('lab', 'material')) });
     for (const c of components) if (has(c.name)) out.push({ key: `c-${c.id}`, icon: 'box', kind: 'Componente', label: c.name, run: () => (session.openComponent(c.id), session.setPage('lab', 'builder')) });
     for (const pal of project?.assets.palettes ?? []) for (const c of pal.colors) if (has(c.name) || has(c.hex) || has(c.token)) out.push({ key: `col-${c.id}`, icon: 'palette', kind: 'Colore', label: `${c.name} · ${c.hex.toUpperCase()}`, run: () => session.setAssetTab('colors') });
     for (const s of project?.assets.iconSets ?? []) for (const i of s.icons) if (has(i.name)) out.push({ key: `i-${i.id}`, icon: 'image', kind: 'Icona', label: i.name, run: () => session.setAssetTab('icons') });

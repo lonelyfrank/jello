@@ -161,7 +161,7 @@ function Wizard({ session }: { session: LabSession }) {
     ['Nome', finalName],
     ['Destinazione', PLATFORM_LABEL[platform]],
     ['Percorso predefinito', 'Automatico'],
-    ['Materiali', start === 'kit' ? `${kitMaterials} preset Jello` : start === 'empty' ? 'Glass (valori iniziali)' : start === 'duplicate' ? `Copia di ${projects.find((p) => p.id === from)?.name ?? '—'}` : start === 'file' ? (file ? file.file : '—') : 'Nessuno'],
+    ['Materiali', start === 'kit' ? `${kitMaterials} preset inclusi` : start === 'empty' ? 'Glass (valori iniziali)' : start === 'duplicate' ? `Copia di ${projects.find((p) => p.id === from)?.name ?? '—'}` : start === 'file' ? (file ? file.file : '—') : 'Nessuno'],
     ['Componenti', start === 'kit' ? (navbar ? 'Navbar di esempio' : 'Nessuna') : start === 'duplicate' ? 'Copiate dal progetto' : 'Nessuna'],
     ['Asset', start === 'kit' ? (palettes ? '3 palette · icone Jello · 3 font' : 'Icone Jello · 3 font') : 'Brand Jello · icone Jello · 3 font'],
   ];

@@ -3,6 +3,7 @@ import { COMPONENTS } from '../../components';
 import { CUSTOM_LIMITS } from '../../stage/view';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
+import { presentItem } from './catalog-ui';
 import { MaterialThumbnail } from './Library';
 import { RuntimeThumbnail } from './RuntimeThumbnail';
 import { openStudio } from './StudioNav';
@@ -15,7 +16,7 @@ const CATS: { id: Cat; label: string; icon: IcName; color: string }[] = [
   { id: 'comp', label: 'Componenti', icon: 'box', color: '#e0569b' },
   { id: 'nav', label: 'Navigazione', icon: 'layers', color: '#7c4deb' },
   { id: 'mat', label: 'Materiali', icon: 'drop', color: '#c2398f' },
-  { id: 'preset', label: 'Preset Jello', icon: 'star', color: '#b4780f' },
+  { id: 'preset', label: 'Preset inclusi', icon: 'star', color: '#b4780f' },
   { id: 'asset', label: 'Asset', icon: 'palette', color: '#2f8f6a' },
   { id: 'code', label: 'Da codice / JSON', icon: 'code', color: '#2f6ea8' },
   { id: 'custom', label: 'Dimensioni personalizzate', icon: 'monitor', color: '#5b4e7e' },
@@ -76,11 +77,11 @@ export function CreateDialog({ session, onClose }: { session: LabSession; onClos
     const g = preset('glass'); const s = preset('solid');
     add({ id: 'glass', name: 'Materiale Glass', sub: 'Rifrazione, satinato, opaco', kw: 'vetro glass liquid materiale', project: true, thumb: g ? <MaterialThumbnail runtime doc={g.doc} /> : swatch('linear-gradient(180deg, rgba(255,150,225,.55), rgba(255,90,190,.28))'), run: newMaterial('glass') });
     add({ id: 'solid', name: 'Materiale Solid', sub: 'Superficie, bordo, elevazione', kw: 'solido css opaco materiale', project: true, thumb: s ? <MaterialThumbnail runtime doc={s.doc} /> : swatch('#5b3fc4'), run: newMaterial('solid') });
-    add({ id: 'jelly', name: 'Materiale Jelly', sub: 'Sperimentale', kw: 'gelatina jelly', project: true, soon: true, thumb: swatch('radial-gradient(circle at 32% 28%, rgba(255,255,255,.9) 0 6%, #e64bd6 40%, #6a1aa0 100%)', 'round'), run: () => undefined });
+    add({ id: 'jelly', name: 'Materiale Jello', sub: 'Sperimentale', kw: 'gelatina jelly jello', project: true, soon: true, thumb: swatch('radial-gradient(circle at 32% 28%, rgba(255,255,255,.9) 0 6%, #e64bd6 40%, #6a1aa0 100%)', 'round'), run: () => undefined });
     add({ id: 'card', name: 'Card', sub: 'Contenitore con titolo e azioni', kw: 'card scheda', project: true, soon: true, thumb: swatch('#fff', 'card'), run: () => undefined });
     add({ id: 'input', name: 'Input', sub: 'Campo di testo con stati', kw: 'input campo form', project: true, soon: true, thumb: swatch('#fff', 'input'), run: () => undefined });
     for (const m of library.filter((x) => x.origin === 'builtin')) {
-      add({ id: `p-${m.id}`, name: m.name, sub: `${m.doc.family === 'solid' ? 'Solid' : 'Glass'} · ${m.note || 'preset Jello'}`, kw: `preset ${m.doc.family}`, project: true, tag: m.approximation ? 'Approssimazione' : '',
+      add({ id: `p-${m.id}`, name: m.name, sub: `${presentItem(m).meta} · ${m.note || 'preset incluso'}`, kw: `preset ${m.doc.family}`, project: true, tag: m.approximation ? 'Approssimazione' : '',
         thumb: <MaterialThumbnail runtime doc={m.doc} />, run: go(() => { session.openMaterial(m.id); openStudio(session, 'material'); }) });
     }
     const assets = (tab: 'colors' | 'icons' | 'fonts') => go(() => { session.setAssetTab(tab); session.setPage('assets'); });
@@ -96,11 +97,11 @@ export function CreateDialog({ session, onClose }: { session: LabSession; onClos
   const presetIds = Object.keys(items).filter((id) => id.startsWith('p-'));
   const templateIds = (...ids: string[]) => ids.filter((id) => items[id]);
   const rows: Record<string, { title: string; hint: string; ids: string[] }[]> = {
-    perte: [{ title: 'Usati spesso', hint: 'I punti di partenza più comuni', ids: templateIds('mobile-navbar', 'desktop-navbar', 'button', 'glass', 'solid') }, { title: 'Preset Jello', hint: 'Materiali pronti da provare', ids: presetIds }],
+    perte: [{ title: 'Usati spesso', hint: 'I punti di partenza più comuni', ids: templateIds('mobile-navbar', 'desktop-navbar', 'button', 'glass', 'solid') }, { title: 'Preset inclusi', hint: 'Materiali pronti da provare', ids: presetIds }],
     comp: [{ title: 'Template ufficiali', hint: 'Parti da una componente reale', ids: templateIds('button', 'mobile-navbar', 'desktop-navbar', 'card', 'input') }],
     nav: [{ title: 'Navigazione', hint: 'Barre per app e siti', ids: templateIds('mobile-navbar', 'desktop-navbar') }],
     mat: [{ title: 'Famiglie di materiali', hint: 'Crea un materiale da applicare alle componenti', ids: ['glass', 'solid', 'jelly'] }],
-    preset: [{ title: 'Preset Jello', hint: 'Partono in sola lettura: modificandoli ne crei una copia', ids: presetIds }],
+    preset: [{ title: 'Preset inclusi', hint: 'Partono in sola lettura: modificandoli ne crei una copia', ids: presetIds }],
     asset: [{ title: 'Asset del progetto', hint: 'Gli ingredienti condivisi da tutte le componenti', ids: ['pal', 'ico', 'fnt'] }],
     code: [{ title: 'Da codice', hint: 'Carica una definizione esportata da Jello', ids: ['json-c', 'json-m'] }],
   };
