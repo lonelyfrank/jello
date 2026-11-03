@@ -31,7 +31,7 @@ Non toccati: formato `.jello`, `material.preset`, DB stabile, fisica M6.3, valor
 
 Non rieseguita dopo l'ultima correzione: la suite intera su Firefox/mobile (rieseguite le spec del Jello Lab e della Library).
 
-Build a confronto con M6.4: `dist-jelly` differisce solo per i nomi/note dei preset Stato e per la rinomina di simboli del minificatore (nessuna differenza di logica, verificato sulle stringhe); `dist-lib` differisce per i nuovi nomi, `revisionName` e `types/model/catalog/names.d.ts`. Nessun nome sperimentale nei bundle produttivi.
+Build a confronto con M6.4: `dist-jelly` differisce solo per i nomi e note dei preset Glass e Solid (la libreria li include) e per la rinomina di simboli del minificatore (nessuna differenza di logica, verificato sulle stringhe); `dist-lib` differisce per i nuovi nomi, `revisionName` e `types/model/catalog/names.d.ts`. Nessun nome sperimentale nei bundle produttivi.
 
 ## Difetti trovati lungo il percorso
 
