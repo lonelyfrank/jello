@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { COMPONENTS } from '../../components';
 import { PATH_LABEL } from '../../stage/controller';
 import type { SaveState } from '../storage/autosave';
@@ -22,6 +22,9 @@ import { StudioRail } from './StudioNav';
 import { StudioLibrary } from './StudioLibrary';
 import { PanelResize } from './PanelResize';
 import { useStudioPreferences } from '../studio-preferences';
+
+// Experimental Jelly: a separate chunk, fetched the first time the area is opened. Never imported statically.
+const JellyMain = lazy(() => import('../experimental/jelly/JellyMain'));
 
 function saveLabel(s: SaveState, origin: 'builtin' | 'user', modified: boolean): string {
   switch (s.kind) {
@@ -74,7 +77,10 @@ export function App({ session }: { session: LabSession }) {
   const e = report?.main.engine;
   const scene = report?.options.mode === 'scene';
   const isBuilder = workspace === 'builder';
-  const inLab = page === 'lab' && !flow && studio.area !== 'library';
+  const inJelly = page === 'lab' && !flow && studio.area === 'jelly';
+  const inLab = page === 'lab' && !flow && studio.area !== 'library' && studio.area !== 'jelly';
+  const [jellyOpened, setJellyOpened] = useState(false);
+  useEffect(() => { if (inJelly) setJellyOpened(true); }, [inJelly]);
   const inLibrary = page === 'lab' && !flow && studio.area === 'library';
   const hasProject = projectId !== null;
   const project = projects.find((p) => p.id === projectId) ?? null;
@@ -87,13 +93,14 @@ export function App({ session }: { session: LabSession }) {
     ? { eyebrow: project?.name ?? 'JELLO STUDIO', title: flowTitle }
     : page === 'assets' ? { eyebrow: 'GLI INGREDIENTI DEL PROGETTO', title: 'Colori, icone e font' }
     : page === 'settings' ? { eyebrow: 'JELLO STUDIO', title: 'Impostazioni' }
+    : inJelly ? { eyebrow: project?.name ?? 'JELLO STUDIO', title: 'Jelly Lab' }
     : isBuilder && studio.area !== 'preview' ? { title: 'Component Builder' }
     : studio.area === 'preview' ? { title: 'Preview & Test' }
     : { title: 'Material Lab' };
   return (
     <>
-      <a className="skip" href={inLab ? '#panel' : '#main'}>
-        {inLab ? (isBuilder ? 'Vai all’inspector' : 'Vai alle proprietà') : 'Vai al contenuto'}
+      <a className="skip" href={inJelly ? '#jl-panel' : inLab ? '#panel' : '#main'}>
+        {inJelly ? 'Vai all’inspector Jelly' : inLab ? (isBuilder ? 'Vai all’inspector' : 'Vai alle proprietà') : 'Vai al contenuto'}
       </a>
       <div className="studio-shell">
       <StudioRail session={session} saveShort={saveShort} saveFull={railSave} saveKind={save.kind} onCreate={() => setCreateOpen(true)} createOpen={createOpen} />
@@ -104,7 +111,9 @@ export function App({ session }: { session: LabSession }) {
         <div className="hero-title">
           {hero.eyebrow && <p className="hero-eyebrow">{hero.eyebrow}</p>}
           <h1 className="hero-h1" id="pageTitle">{hero.title}</h1>
-          {inLab && studio.area === 'preview' ? (
+          {inJelly ? (
+            <p className="hero-sub" id="jellyHeroSub">Materiale sperimentale · non ufficiale · il Button resta nativo</p>
+          ) : inLab && studio.area === 'preview' ? (
             <p className="hero-sub">Lo stesso Stage del Builder: verifica prima di esportare</p>
           ) : inLab ? (
             <nav className="crumbs hero-sub" aria-label="Percorso">
@@ -134,6 +143,20 @@ export function App({ session }: { session: LabSession }) {
           </>
         )}
 
+        {inJelly && (
+          <div className="header-actions">
+            <button className="tb-icon-button column-toggle" id="toggleLeft" type="button" aria-pressed={layout.left} aria-label="Mostra i preset" title="Preset e documento" onClick={() => session.toggleColumn('left')}>
+              <Icon name="left" />
+            </button>
+            <button className="tb-icon-button column-toggle" id="toggleRight" type="button" aria-pressed={layout.right} aria-label="Mostra l’inspector" title="Inspector" onClick={() => session.toggleColumn('right')}>
+              <Icon name="right" />
+            </button>
+            <button className="header-button panel-toggle" id="panelToggle" type="button" ref={toggle} aria-label="Regolazioni" aria-expanded={layout.drawer} aria-controls="jl-controls" onClick={() => session.setDrawer(!layout.drawer)}>
+              <Ic name="gear" />
+              <span className="panel-toggle-label">Regolazioni</span>
+            </button>
+          </div>
+        )}
         {inLab && (
           <>
             <div className="header-actions">
@@ -255,9 +278,16 @@ export function App({ session }: { session: LabSession }) {
         </div>
       </main>
 
-      <footer className="lab-footer" hidden={!inLab}>
+      {jellyOpened && (
+        <Suspense fallback={<main className="lab" id="jelly-lab" hidden={!inJelly}><section className="preview"><p className="hint" role="status">Caricamento di Jelly…</p></section></main>}>
+          <JellyMain session={session} active={inJelly} />
+        </Suspense>
+      )}
+
+      <footer className="lab-footer" hidden={!inLab && !inJelly}>
         <p className="status-chips" id="statusChips" aria-live="polite">
-          {report && (
+          {inJelly && <span className="chip" data-kind="warn">Jelly · sperimentale · SVG / CSS</span>}
+          {!inJelly && report && (
             <>
               <span className="chip" data-kind={scene ? 'webgl2' : report.main.effective}>
                 {solid ? 'Solid · renderer CSS' : scene ? `Backend: ${report.scene?.effective === 'webgl2' ? 'WebGL2' : 'CSS su texture'}` : `Percorso: ${PATH_LABEL[report.main.effective]}`}
@@ -275,7 +305,7 @@ export function App({ session }: { session: LabSession }) {
           )}
         </p>
         <p className="footer-engine" id="footerEngine">
-          {e
+          {inJelly ? 'Renderer M6.3 · archivio separato' : e
             ? scene && report!.scene
               ? `${e.engine}${e.major ? ` ${e.major}` : ''} · WebGL2 · ${report!.scene.counters.frames} frame · ${report!.scene.counters.mapUploads} mappe caricate`
               : `${e.engine}${e.major ? ` ${e.major}` : ''} · ${report!.stats.surfaces} superfici · ${report!.stats.mapRegenerations} mappe generate`

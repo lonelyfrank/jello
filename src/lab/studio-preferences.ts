@@ -2,7 +2,7 @@
 import { useSyncExternalStore } from 'react';
 
 export interface StudioPreferences {
-  area: 'editor' | 'library' | 'preview';
+  area: 'editor' | 'library' | 'preview' | 'jelly';
   zoom: number;
   leftWidth: number;
   rightWidth: number;
@@ -18,7 +18,7 @@ export function parseStudioPreferences(value: unknown): StudioPreferences {
   const p = value && typeof value === 'object' ? value as Record<string, unknown> : {};
   const number = (key: string, min: number, max: number, fallback: number) => typeof p[key] === 'number' && Number.isFinite(p[key]) ? Math.min(max, Math.max(min, p[key] as number)) : fallback;
   return {
-    area: p.area === 'library' || p.area === 'preview' ? p.area : 'editor',
+    area: p.area === 'library' || p.area === 'preview' || p.area === 'jelly' ? p.area : 'editor',
     zoom: number('zoom', .5, 1.5, 1),
     leftWidth: number('leftWidth', 224, 360, 256),
     rightWidth: number('rightWidth', 300, 440, 336),
@@ -35,7 +35,7 @@ let state = read();
 // Explicit scenarios continue to open their editor, regardless of the previous Studio area.
 if (typeof location !== 'undefined' && location.search) {
   const studio = new URLSearchParams(location.search).get('studio');
-  state = { ...state, area: studio === 'library' || studio === 'preview' ? studio : 'editor' };
+  state = { ...state, area: studio === 'library' || studio === 'preview' || studio === 'jelly' ? studio : 'editor' };
 }
 const listeners = new Set<() => void>();
 export function setStudioPreferences(patch: Partial<StudioPreferences>) {

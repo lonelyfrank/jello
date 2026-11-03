@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Servers for the Playwright suite, started in order from one process:
- *   1. build the library, the lab, the consumer example package and the
+ *   1. build the library, the experimental Jelly runtime, the lab, the consumer example package and the
  *      independent React project (sequentially: they share dist-lib);
  *   2. serve the example (4175), the React project (4176) and the relay (5174) on 127.0.0.1;
  *   3. serve the built lab (4173) last: Playwright waits for it.
@@ -10,6 +10,7 @@ import { execSync, spawn } from 'node:child_process';
 
 const run = (cmd) => execSync(cmd, { stdio: 'inherit' });
 run('npm run build:lib');
+run('npm run build:jelly');
 run('npx vite build');
 run('node scripts/prepare-example.mjs --now 2026-01-01T00:00:00.000Z');
 run('node scripts/prepare-consumer.mjs --now 2026-01-01T00:00:00.000Z');

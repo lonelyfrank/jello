@@ -1,0 +1,117 @@
+/* Experimental Jelly area. Loaded only with the lazy chunk. Layout, panels and controls come from the
+   Studio's own stylesheets; only what is specific to the Jelly preview lives here. */
+
+.jl-lab .jl-preview { position: relative; }
+.jl-toolbar { flex-wrap: wrap; row-gap: 8px; }
+.chip-warn { background: var(--warn-bg, #3a2d1a); color: var(--warn, #f5c77a); }
+
+/* ---- stage ---- */
+.jl-stage {
+  --jl-focus: #5b21b6;
+  position: relative; flex: 1 1 auto; min-height: 220px;
+  display: grid; place-items: center; overflow: hidden;
+  border: 1px solid var(--line-soft); border-radius: 16px;
+}
+.jl-stage[data-background='light'] { background: #f4f1fa; color: #241933; }
+.jl-stage[data-background='dark'] { background: #17131f; color: #f2edf9; --jl-focus: #ffffff; }
+.jl-stage[data-background='gradient'] { background: linear-gradient(135deg, #ff9ed0 0%, #8e7bff 48%, #38d1c5 100%); color: #1a1030; }
+.jl-stage[data-background='checker'] {
+  background: repeating-conic-gradient(#d9d3e6 0% 25%, #f7f5fb 0% 50%) 0 0 / 28px 28px; color: #241933;
+}
+.jl-scale { display: grid; place-items: center; padding: 28px; transform-origin: center; }
+
+/* ---- the generic Button that carries the Jelly decoration ---- */
+.jl-btn {
+  appearance: none; border: 0; background: transparent; margin: 0; padding: 0 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font: 600 15px/1.2 Inter, system-ui, sans-serif; letter-spacing: .1px;
+  color: var(--jelly-foreground, #211735); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.jl-btn:disabled { cursor: not-allowed; }
+.jl-btn:focus-visible { outline: 3px solid var(--jl-focus); outline-offset: 4px; }
+.jl-btn-content { display: inline-flex; align-items: center; gap: 8px; pointer-events: none; }
+@media (forced-colors: active) { .jl-btn:focus-visible { outline-color: Highlight; } }
+
+/* ---- comparison ---- */
+.jl-compare { display: grid; align-content: center; width: 100%; height: 100%; }
+.jl-compare .jl-scale { padding: 14px 4px; }
+.jl-compare-cell { margin: 0; display: grid; place-items: center; align-content: center; gap: 6px; padding: 8px; }
+.jl-compare-cell figcaption { font-size: 12px; font-weight: 600; opacity: .8; }
+.jl-compare-cell[data-selected='true'] figcaption::after { content: ' · base'; font-weight: 400; }
+
+/* ---- readout and banners ---- */
+.jl-readout { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.jl-hint { color: var(--muted); font-size: 12px; }
+.jl-banner {
+  margin: 0 0 4px; padding: 10px 12px; border: 1px solid var(--warn); border-radius: 10px;
+  background: var(--warn-bg); color: var(--text); font-size: 13px;
+}
+.jl-banner[data-kind='danger'] { border-color: var(--danger); background: var(--danger-bg); }
+.jl-banner p { margin: 0 0 8px; }
+.chip[data-kind='neutral'] { background: var(--surface-2); color: var(--text-2); }
+.chip[data-kind='warn'] { background: var(--warn-bg); color: var(--warn); }
+
+/* ---- library ---- */
+.jl-library { display: flex; flex-direction: column; gap: 18px; }
+.jl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.jl-record { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px; align-items: center; }
+.jl-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--surface-2); color: var(--text); cursor: pointer;
+}
+.jl-item:hover { background: var(--studio-hover); }
+.jl-item[aria-pressed='true'] { border-color: var(--accent-hi); background: var(--accent-soft); }
+.jl-item-text { display: grid; min-width: 0; }
+.jl-item-text strong { font-size: 13px; }
+.jl-item-text small { color: var(--muted); font-size: 11.5px; line-height: 1.3; }
+.jl-swatch {
+  flex: none; width: 28px; height: 28px; border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #ffffffcc 0 8%, transparent 26%), color-mix(in srgb, var(--swatch) calc(var(--swatch-alpha) * 100%), transparent);
+  box-shadow: inset 0 -3px 5px #0003, 0 0 0 1px #0002;
+}
+.jl-experimental-note { margin: 0 0 4px; }
+.jl-experimental-note .ic { vertical-align: -2px; margin-right: 4px; }
+.jl-title { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.jl-save[data-kind='error'] { color: var(--danger); }
+.jl-save[data-kind='dirty'] { color: var(--warn); }
+.jl-save[data-kind='saved'] { color: var(--ok); }
+
+/* ---- inspector ---- */
+.jl-changed-count {
+  margin-left: 8px; padding: 0 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text);
+  font-size: 11px; font-weight: 700;
+}
+.jl-section-hint { margin: 0 0 8px; }
+.jl-field[data-changed='true'] .control-label label::after { content: ' ●'; color: var(--accent-hi); font-size: 9px; vertical-align: middle; }
+.jl-rejection { margin-top: 2px; }
+.jl-state { border-top: 1px solid var(--line-soft); padding: 6px 0; }
+.jl-state > summary { cursor: pointer; font-size: 12.5px; font-weight: 600; }
+.jl-override[data-on='false'] { opacity: .85; }
+.jl-live { display: block; margin-top: 8px; padding: 6px 8px; border-radius: 8px; background: var(--surface-2); font: 11.5px/1.4 ui-monospace, monospace; word-break: break-word; }
+.jl-reasons { margin: 0; padding-left: 18px; font-size: 12px; color: var(--text-2); }
+.jl-env { display: grid; gap: 8px; }
+
+@media (max-width: 900px) {
+  .jl-stage { min-height: 200px; }
+  .jl-scale { padding: 18px; }
+  .jl-toolbar { gap: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { .jl-stage * { scroll-behavior: auto; } }
+
+/* ---- Inspector field layout ----
+   The Studio's parameter grid is label | slider | value, sized for short units. Jelly units are long
+   ("bolle / 10000 px² CSS"), so here the slider gets its own full-width row under label and value. */
+.jl-inspector .param { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; }
+.jl-inspector .param .control-label { grid-row: 1; grid-column: 1; min-width: 0; }
+.jl-inspector .param .num { grid-row: 1; grid-column: 2; max-width: 100%; }
+.jl-inspector .param > input[type='range'] { grid-row: 2; grid-column: 1 / -1; width: 100%; }
+.jl-inspector .param > select { grid-row: 1; grid-column: 2; min-width: 8.5em; }
+.jl-inspector .param .field-head > .cp-wrap, .jl-inspector .param .field-head > input[type='color'] { grid-row: 1; grid-column: 2; justify-self: end; }
+.jl-inspector .param > :is(.param-desc, .param-error, .param-note, .param-support) { grid-column: 1 / -1; grid-row: auto; }
+.jl-inspector .unit { max-width: 7.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jl-inspector #num-jelly-seed { width: 8.5em; }
+.jl-inspector .param > .button { grid-column: 1 / -1; grid-row: 2; justify-self: start; }
+.jl-inspector .panel-head .row-field { grid-template-columns: 48px minmax(0, 1fr); }
+
+/* ---- comparison: two columns while narrow, four when there is room ---- */
+.jl-compare { grid-template-columns: repeat(auto-fit, minmax(236px, 1fr)); }

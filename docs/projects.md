@@ -142,3 +142,7 @@ importa con conflitti, ricerca, tastiera).
 ## Materiali e recupero in M3.1
 
 Materiali e bozze dei progetti accettano `MaterialDocument` (Glass e Solid), senza cambiare lo schema `.jello` o IndexedDB. I documenti sono validati al recupero e all’importazione, inclusi gli stati Solid; gli import legacy conservano le migrazioni esistenti. Il salvataggio aggiorna anche l’URL: ricaricare subito dopo un save recupera l’elemento appena salvato. Gli indirizzi dello stesso progetto/materiale/componente recuperano anche le bozze; le opzioni esplicite di una scena nell’URL hanno precedenza sulla vista precedente.
+
+## Jelly sperimentale (M6.4)
+
+I materiali Jelly sperimentali **non** fanno parte di `jello-project` né di `.jello` e non usano `jello-lab` (IndexedDB v4): vivono in un database separato, `jello-lab-experimental`, per progetto. Vedi [jelly-m64-studio.md](jelly-m64-studio.md).

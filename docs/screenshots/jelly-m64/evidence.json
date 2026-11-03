@@ -1,0 +1,860 @@
+{
+  "generatedAt": "2026-11-02T23:20:10.800Z",
+  "base": "http://127.0.0.1:4180/",
+  "captures": [
+    {
+      "file": "chromium-lab-desktop.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-inspector-appearance.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-inspector-bubbles.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-inspector-motion.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-button-idle.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-button-pressed.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": 0.05789,
+          "v": 0.0345,
+          "target": 0.0585,
+          "pressed": true
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": 0.05944,
+          "v": 0.0027,
+          "target": 0.0585,
+          "pressed": true
+        }
+      }
+    },
+    {
+      "file": "chromium-button-rebound.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": 0.01073,
+          "v": -0.5664,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": -0.01527,
+          "v": -0.0515,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-compare.png",
+      "readings": {
+        "before": null,
+        "after": null
+      }
+    },
+    {
+      "file": "chromium-compare-gradient.png",
+      "readings": {
+        "before": null,
+        "after": null
+      }
+    },
+    {
+      "file": "chromium-compare-dark.png",
+      "readings": {
+        "before": null,
+        "after": null
+      }
+    },
+    {
+      "file": "chromium-css-fallback.png",
+      "readings": {
+        "before": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-opaque-fallback.png",
+      "readings": {
+        "before": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-reduced-motion.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": true,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": true,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-reduced-motion-lab.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": true,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": true,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-forced-colors.png",
+      "readings": {
+        "before": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": true,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": true,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "chromium-forced-colors-lab.png",
+      "readings": {
+        "before": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": true,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": true,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-lab-desktop.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-inspector-appearance.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-inspector-bubbles.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-inspector-motion.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-button-idle.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-button-pressed.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": 0.05784,
+          "v": 0.0349,
+          "target": 0.0585,
+          "pressed": true
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": 0.05944,
+          "v": 0.0031,
+          "target": 0.0585,
+          "pressed": true
+        }
+      }
+    },
+    {
+      "file": "firefox-button-rebound.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": 0.01297,
+          "v": -0.5836,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 9,
+          "x": -0.01505,
+          "v": -0.072,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-compare.png",
+      "readings": {
+        "before": null,
+        "after": null
+      }
+    },
+    {
+      "file": "firefox-compare-gradient.png",
+      "readings": {
+        "before": null,
+        "after": null
+      }
+    },
+    {
+      "file": "firefox-compare-dark.png",
+      "readings": {
+        "before": null,
+        "after": null
+      }
+    },
+    {
+      "file": "firefox-css-fallback.png",
+      "readings": {
+        "before": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-opaque-fallback.png",
+      "readings": {
+        "before": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-reduced-motion.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": true,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": true,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-reduced-motion-lab.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": true,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "static",
+          "opaque": false,
+          "forced": false,
+          "reduced": true,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-forced-colors.png",
+      "readings": {
+        "before": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": true,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": true,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "firefox-forced-colors-lab.png",
+      "readings": {
+        "before": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": true,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "css",
+          "motion": "static",
+          "opaque": true,
+          "forced": true,
+          "reduced": false,
+          "bubbles": 0,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "mobile-emulated-lab.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    },
+    {
+      "file": "mobile-emulated-drawer.png",
+      "readings": {
+        "before": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        },
+        "after": {
+          "backend": "svg",
+          "motion": "dynamic",
+          "opaque": false,
+          "forced": false,
+          "reduced": false,
+          "bubbles": 5,
+          "x": 0,
+          "v": 0,
+          "target": 0,
+          "pressed": false
+        }
+      }
+    }
+  ]
+}
