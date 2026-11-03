@@ -1,10 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { COMPONENTS } from '../../components';
 import { PATH_LABEL } from '../../stage/controller';
 import type { SaveState } from '../storage/autosave';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
 import { BuilderSidebar, Inspector } from './Builder';
+import { ExperimentalBoundary, retryableLazy } from './ExperimentalBoundary';
 import { ExportDialog } from './ExportDialog';
 import { AssetsPage } from './Assets';
 import { Home } from './Home';
@@ -24,7 +25,7 @@ import { PanelResize } from './PanelResize';
 import { useStudioPreferences } from '../studio-preferences';
 
 // Experimental Jelly: a separate chunk, fetched the first time the area is opened. Never imported statically.
-const JellyMain = lazy(() => import('../experimental/jelly/JellyMain'));
+const jellyMain = retryableLazy(() => import('../experimental/jelly/JellyMain'));
 
 function saveLabel(s: SaveState, origin: 'builtin' | 'user', modified: boolean): string {
   switch (s.kind) {
@@ -279,9 +280,11 @@ export function App({ session }: { session: LabSession }) {
       </main>
 
       {jellyOpened && (
-        <Suspense fallback={<main className="lab" id="jelly-lab" hidden={!inJelly}><section className="preview"><p className="hint" role="status">Caricamento di Jello…</p></section></main>}>
-          <JellyMain session={session} active={inJelly} />
-        </Suspense>
+        <ExperimentalBoundary what="Il Jello Lab" hidden={!inJelly} onRetry={() => jellyMain.retry()}>
+          <Suspense fallback={<main className="lab" id="jelly-lab" hidden={!inJelly}><section className="preview"><p className="hint" role="status">Caricamento di Jello…</p></section></main>}>
+            <jellyMain.Component session={session} active={inJelly} />
+          </Suspense>
+        </ExperimentalBoundary>
       )}
 
       <footer className="lab-footer" hidden={!inLab && !inJelly}>

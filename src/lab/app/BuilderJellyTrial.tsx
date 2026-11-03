@@ -1,10 +1,11 @@
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { resolveButton } from '../../components';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
+import { ExperimentalBoundary, retryableLazy } from './ExperimentalBoundary';
 
 // The only Builder door to experimental Jelly: a dynamic import, fetched when the person turns the trial on.
-const Trial = lazy(() => import('../experimental/jelly/BuilderTrial'));
+const trial = retryableLazy(() => import('../experimental/jelly/BuilderTrial'));
 
 /** Off by default and not persisted as a flag: opening a component never loads Jelly by itself. */
 export function BuilderJellyTrial({ session }: { session: LabSession }) {
@@ -18,13 +19,15 @@ export function BuilderJellyTrial({ session }: { session: LabSession }) {
     <>
       <label className="check" htmlFor="jl-trial-toggle">
         <input id="jl-trial-toggle" type="checkbox" checked={on} disabled={!projectId} onChange={(e) => setOn(e.target.checked)} />
-        <span>Prova con Jelly (sperimentale)</span>
+        <span>Prova con Jello (sperimentale)</span>
       </label>
-      <p className="hint">Mostra questo Button con il materiale Jelly sperimentale, senza cambiare il componente.</p>
+      <p className="hint">Mostra questo Button con il materiale Jello sperimentale, senza cambiare il componente.</p>
       {on && projectId && (
-        <Suspense fallback={<p className="hint" role="status">Caricamento di Jelly…</p>}>
-          <Trial key={`${projectId}::${componentId}`} session={session} def={def} projectId={projectId} componentId={componentId} />
-        </Suspense>
+        <ExperimentalBoundary what="La prova Jello" onRetry={() => trial.retry()}>
+          <Suspense fallback={<p className="hint" role="status">Caricamento di Jello…</p>}>
+            <trial.Component key={`${projectId}::${componentId}`} session={session} def={def} projectId={projectId} componentId={componentId} />
+          </Suspense>
+        </ExperimentalBoundary>
       )}
     </>
   );

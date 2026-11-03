@@ -1,0 +1,404 @@
+{
+  "date": "2026-11-03T12:17:57.169Z",
+  "packages": [
+    {
+      "name": "jello-jelly-jelly-candy",
+      "material": "jelly-candy",
+      "experimental": true,
+      "declaresUnsupported": [
+        "webgl2",
+        "android-native",
+        "refraction",
+        "drift",
+        "volumetric-simulation",
+        "typescript-types"
+      ],
+      "declaresLimits": 6,
+      "integrity": {
+        "ok": true,
+        "files": 5
+      }
+    },
+    {
+      "name": "jello-jelly-jelly-clear",
+      "material": "jelly-clear",
+      "experimental": true,
+      "declaresUnsupported": [
+        "webgl2",
+        "android-native",
+        "refraction",
+        "drift",
+        "volumetric-simulation",
+        "typescript-types"
+      ],
+      "declaresLimits": 6,
+      "integrity": {
+        "ok": true,
+        "files": 5
+      }
+    },
+    {
+      "name": "jello-jelly-jelly-dense",
+      "material": "jelly-dense",
+      "experimental": true,
+      "declaresUnsupported": [
+        "webgl2",
+        "android-native",
+        "refraction",
+        "drift",
+        "volumetric-simulation",
+        "typescript-types"
+      ],
+      "declaresLimits": 6,
+      "integrity": {
+        "ok": true,
+        "files": 5
+      }
+    },
+    {
+      "name": "jello-jelly-jelly-soft",
+      "material": "jelly-soft",
+      "experimental": true,
+      "declaresUnsupported": [
+        "webgl2",
+        "android-native",
+        "refraction",
+        "drift",
+        "volumetric-simulation",
+        "typescript-types"
+      ],
+      "declaresLimits": 6,
+      "integrity": {
+        "ok": true,
+        "files": 5
+      }
+    }
+  ],
+  "runs": [
+    {
+      "package": "jello-jelly-jelly-candy",
+      "engine": "chromium",
+      "reducedMotion": false,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto dynamic",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-clear",
+      "engine": "chromium",
+      "reducedMotion": false,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto dynamic",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-dense",
+      "engine": "chromium",
+      "reducedMotion": false,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto dynamic",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-soft",
+      "engine": "chromium",
+      "reducedMotion": false,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto dynamic",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-candy",
+      "engine": "chromium",
+      "reducedMotion": true,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto static",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-clear",
+      "engine": "chromium",
+      "reducedMotion": true,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto static",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-dense",
+      "engine": "chromium",
+      "reducedMotion": true,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto static",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-soft",
+      "engine": "chromium",
+      "reducedMotion": true,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto static",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-candy",
+      "engine": "firefox",
+      "reducedMotion": false,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto dynamic",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-clear",
+      "engine": "firefox",
+      "reducedMotion": false,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto dynamic",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-dense",
+      "engine": "firefox",
+      "reducedMotion": false,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto dynamic",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-soft",
+      "engine": "firefox",
+      "reducedMotion": false,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto dynamic",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-candy",
+      "engine": "firefox",
+      "reducedMotion": true,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto static",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-clear",
+      "engine": "firefox",
+      "reducedMotion": true,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto static",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-dense",
+      "engine": "firefox",
+      "reducedMotion": true,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto static",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    },
+    {
+      "package": "jello-jelly-jelly-soft",
+      "engine": "firefox",
+      "reducedMotion": true,
+      "mounted": true,
+      "status": "Backend effettivo: svg · moto static",
+      "idleRafIn1500ms": 0,
+      "nativeClicksAfterKeyboard": 2,
+      "pressedWhileHeld": true,
+      "nativeClicksAfterPointer": 3,
+      "restRafIn1200ms": 0,
+      "pressedAfterRelease": false,
+      "pressedWhileDisabled": false,
+      "afterDestroy": {
+        "decoration": false,
+        "surfaceClass": false
+      },
+      "rafAfterDestroyAndPress": 0,
+      "errors": []
+    }
+  ],
+  "verdict": {
+    "ok": true,
+    "packages": 4,
+    "runs": 16
+  }
+}

@@ -1,17 +1,24 @@
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { COMPONENTS } from '../../components';
 import { availabilityLabel, catalogByFamily, entryMeta, familyLabel, type MaterialCatalogEntry } from '../../model/catalog';
 import type { LabSession } from '../session';
 import { setStudioPreferences, useStudioPreferences } from '../studio-preferences';
 import { useLab, type ComponentItem, type LibraryItem } from '../store';
 import { isDiagnosticId, originLabel, presentItem } from './catalog-ui';
+import { ExperimentalBoundary, retryableLazy } from './ExperimentalBoundary';
 import { MaterialThumbnail } from './Library';
 import { RuntimeThumbnail } from './RuntimeThumbnail';
 import { openStudio } from './StudioNav';
 import { EmptyState, Ic, type IcName } from './ui';
 
 /** The experimental Jello preview is a separate chunk: the Library links no Jelly module, it loads one only when asked to show it. */
-const JellyCatalogPreview = lazy(() => import('../experimental/jelly/JellyCatalogPreview'));
+const jellyPreview = retryableLazy(() => import('../experimental/jelly/JellyCatalogPreview'));
+/** A preview that cannot be fetched says so inside its own card; the rest of the Library keeps working. */
+const JellyCatalogPreview = ({ presetId }: { presetId: string }) => (
+  <ExperimentalBoundary what="L’anteprima Jello" onRetry={() => jellyPreview.retry()}>
+    <Suspense fallback={<p className="hint" role="status">Caricamento…</p>}><jellyPreview.Component presetId={presetId} /></Suspense>
+  </ExperimentalBoundary>
+);
 
 type Category = 'all' | 'materials' | 'button' | 'navigation' | 'mine' | 'favorites' | 'diagnostic';
 /** `experimental`: a catalog entry of the Jello family, not a stored material; it is opened in the Jello lab, never in the stable editor. */
@@ -118,7 +125,7 @@ export function StudioLibrary({ session }: { session: LabSession }) {
         const pick = <button type="button" className="catalog-pick" aria-pressed={selected ? keyOf(entry) === keyOf(selected) : false} onClick={() => setPickedKey(keyOf(entry))}>{name}</button>;
         if (entry.kind === 'experimental') {
           return <article key={keyOf(entry)} className="card catalog-card" data-catalog-kind="experimental" data-preset={id} data-selected={selected ? keyOf(entry) === keyOf(selected) : undefined}>
-            <div className="catalog-material"><Suspense fallback={<p className="hint" role="status">Caricamento…</p>}><JellyCatalogPreview presetId={id} /></Suspense></div>
+            <div className="catalog-material"><JellyCatalogPreview presetId={id} /></div>
             <div className="catalog-card-info"><h2>{pick}</h2>
               <p className="muted small">{entryMeta(entry.entry)} <span className="state-chip" data-kind="warn">{availabilityLabel(entry.entry.availability)}</span></p>
               <p className="catalog-compat small">{entry.entry.description}</p>
@@ -142,7 +149,7 @@ export function StudioLibrary({ session }: { session: LabSession }) {
     <aside className="catalog-preview" aria-label="Anteprima dell’elemento" id="catalogPreview">
       <h2>Anteprima</h2>
       {selected ? <>
-        <div className="catalog-preview-stage">{selected.kind === 'experimental' ? <Suspense fallback={<p className="hint" role="status">Caricamento…</p>}><JellyCatalogPreview presetId={selected.entry.presetId} /></Suspense> : selected.kind === 'component' ? <RuntimeThumbnail doc={selected.item.doc} /> : <MaterialThumbnail runtime doc={selected.item.doc} />}</div>
+        <div className="catalog-preview-stage">{selected.kind === 'experimental' ? <JellyCatalogPreview presetId={selected.entry.presetId} /> : selected.kind === 'component' ? <RuntimeThumbnail doc={selected.item.doc} /> : <MaterialThumbnail runtime doc={selected.item.doc} />}</div>
         <div className="catalog-preview-meta"><strong>{nameOf(selected)}</strong><span className="muted small">{metaOf(selected)}</span></div>
         {selected.kind === 'experimental' && <ul className="catalog-limits small muted" aria-label="Limiti">{selected.entry.limitations?.map((l) => <li key={l}>{l}</li>)}</ul>}
         {selected.kind === 'material' && presentItem(selected.item).limitations.length > 0 && <ul className="catalog-limits small muted" aria-label="Limiti">{presentItem(selected.item).limitations.map((l) => <li key={l}>{l}</li>)}</ul>}
