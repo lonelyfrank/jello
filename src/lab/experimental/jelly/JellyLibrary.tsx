@@ -2,9 +2,10 @@
 import { useState } from 'react';
 import type { JellyExperimentalDocument } from '../../../model/experimental/jelly';
 import type { LabSession } from '../../session';
+import { presetDisplayName } from '../../../model/catalog';
 import { Ic } from '../../app/ui';
 import { exportJellyPackage } from './export-client';
-import { candidatePresets, type JellyWorkbench } from './workbench';
+import { candidatePresets, presetLabel, type JellyWorkbench } from './workbench';
 import { useWorkbench } from './studio';
 
 type Pending = { kind: 'preset' | 'record'; id: string; name: string } | null;
@@ -55,16 +56,16 @@ export function JellyLibrary({ wb, session }: { wb: JellyWorkbench; session: Lab
   return (
     <div className="jl-library" id="jl-library">
       <section className="side-section" aria-labelledby="jl-side-presets">
-        <h2 className="side-title" id="jl-side-presets">Preset Jelly</h2>
+        <h2 className="side-title" id="jl-side-presets">Preset Jello</h2>
         <p className="hint jl-experimental-note" id="jl-experimental-note">
-          <Ic name="alert" size={14} /> <strong>Sperimentale.</strong> Candidati non approvati: Jelly è «planned», non è un materiale ufficiale né è usato dai componenti.
+          <Ic name="alert" size={14} /> <strong>Sperimentale.</strong> Candidati non approvati: Jello è «planned» nel catalogo produttivo, non è un materiale ufficiale né è usato dai componenti.
         </p>
         <ul className="jl-list" aria-label="Preset candidati">
           {candidatePresets().map((p) => (
             <li key={p.doc.id}>
-              <button type="button" className="jl-item" id={`jl-preset-${p.doc.id}`} data-preset={p.doc.id} aria-pressed={state.base.kind === 'preset' && state.base.id === p.doc.id && state.recordId === null} onClick={() => go('preset', p.doc.id, p.doc.name)} title={p.description}>
+              <button type="button" className="jl-item" id={`jl-preset-${p.doc.id}`} data-preset={p.doc.id} aria-pressed={state.base.kind === 'preset' && state.base.id === p.doc.id && state.recordId === null} onClick={() => go('preset', p.doc.id, presetLabel(p.doc))} title={p.description}>
                 <span className="jl-swatch" aria-hidden="true" style={swatch(p.doc)} />
-                <span className="jl-item-text"><strong>{p.doc.name}</strong><small>{p.description}</small></span>
+                <span className="jl-item-text"><strong>{presetLabel(p.doc)}</strong><small>{p.description}</small></span>
               </button>
             </li>
           ))}
@@ -84,7 +85,7 @@ export function JellyLibrary({ wb, session }: { wb: JellyWorkbench; session: Lab
 
       <section className="side-section" aria-labelledby="jl-side-mine">
         <h2 className="side-title" id="jl-side-mine">Le mie copie sperimentali</h2>
-        {noProject ? <p className="hint">Crea o apri un progetto per salvare copie Jelly.</p> : state.loading ? <p className="hint">Caricamento…</p> : state.records.length === 0 ? (
+        {noProject ? <p className="hint">Crea o apri un progetto per salvare copie Jello.</p> : state.loading ? <p className="hint">Caricamento…</p> : state.records.length === 0 ? (
           <p className="hint" id="jl-empty">Nessuna copia salvata in questo progetto. Modifica un preset e usa «Salva copia».</p>
         ) : (
           <ul className="jl-list" aria-label="Copie personali del progetto">
@@ -92,7 +93,7 @@ export function JellyLibrary({ wb, session }: { wb: JellyWorkbench; session: Lab
               <li key={r.id} className="jl-record" data-record={r.id}>
                 <button type="button" className="jl-item" aria-pressed={state.recordId === r.id} onClick={() => go('record', r.id, r.doc.name)}>
                   <span className="jl-swatch" aria-hidden="true" style={swatch(r.doc)} />
-                  <span className="jl-item-text"><strong>{r.doc.name}</strong><small>{r.basePreset ? `da ${candidatePresets().find((p) => p.doc.id === r.basePreset)?.doc.name ?? r.basePreset}` : 'personale'}</small></span>
+                  <span className="jl-item-text"><strong>{r.doc.name}</strong><small>{r.basePreset ? `da ${presetDisplayName(r.basePreset) ?? r.basePreset}` : 'personale'}</small></span>
                 </button>
                 {confirmDelete === r.id ? (
                   <button type="button" className="button small danger" aria-label={`Conferma eliminazione di ${r.doc.name}`} onClick={() => { setConfirmDelete(null); void wb.deleteRecord(r.id); }}>Elimina</button>

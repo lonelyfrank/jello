@@ -193,7 +193,7 @@ describe('production remains gated', () => {
     expect(() => new publicModel.MaterialRegistry().register({ ...publicModel.MATERIALS.get('solid')!, id: 'jelly' })).toThrow(/non è disponibile/);
     const r = publicModel.parseMaterial(fresh());
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors.join()).toMatch(/Jelly.*non è ancora disponibile/);
+    if (!r.ok) expect(r.errors.join()).toMatch(/"jelly" \(Jello\) non è ancora disponibile/);
     // Unknown runtime input is tested at the trust boundary, despite the TS overload rejecting it.
     expect(() => Reflect.apply(createMaterialGroup, null, [{ material: fresh() }])).toThrow(/Nessun runtime.*jelly/);
   });

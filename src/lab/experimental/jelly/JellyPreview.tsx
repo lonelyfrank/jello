@@ -44,10 +44,10 @@ export function JellyPreview({ wb }: { wb: JellyWorkbench }) {
     <section className="preview jl-preview" aria-labelledby="jlPreviewTitle" data-jelly-preview>
       <div className="preview-head">
         <div className="jl-title">
-          <h2 className="preview-title" id="jlPreviewTitle">Jelly Canvas</h2>
+          <h2 className="preview-title" id="jlPreviewTitle">Jello Canvas</h2>
           <span className="chip chip-warn" title="Funzione sperimentale: non è un materiale ufficiale">Sperimentale</span>
         </div>
-        <div className="toolbar jl-toolbar" role="toolbar" aria-label="Controlli dell’anteprima Jelly">
+        <div className="toolbar jl-toolbar" role="toolbar" aria-label="Controlli dell’anteprima Jello">
           <label className="tb-select" htmlFor="jl-background">
             <span className="visually-hidden">Sfondo di prova</span>
             <select id="jl-background" value={view.background} onChange={(e) => setJellyView({ background: e.target.value as PreviewBackground })}>

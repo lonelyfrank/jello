@@ -20,7 +20,7 @@ import { JellyButton } from './JellyButton';
 import { editJellyParam } from './inspector-model';
 import { DEFAULT_ENV } from './preview-model';
 import { loadJellyStudio, type JellyStudio } from './studio';
-import { candidatePresets, presetDoc } from './workbench';
+import { candidatePresets, presetDoc, presetLabel } from './workbench';
 import type { JellyComponentLink, StoredJelly } from './repository';
 import './jelly-lab.css';
 
@@ -123,7 +123,7 @@ export default function BuilderTrial({ session, def, projectId, componentId }: {
       <label className="field row-field" htmlFor="jl-trial-source">
         <span>Preset</span>
         <select id="jl-trial-source" value={sourceId ?? ''} onChange={(e) => choose(e.target.value)}>
-          <optgroup label="Preset candidati">{candidatePresets().map((c) => <option key={c.doc.id} value={c.doc.id}>{c.doc.name}</option>)}</optgroup>
+          <optgroup label="Preset candidati">{candidatePresets().map((c) => <option key={c.doc.id} value={c.doc.id}>{presetLabel(c.doc)}</option>)}</optgroup>
           {records.length > 0 && <optgroup label="Copie del progetto">{records.map((r) => <option key={r.id} value={r.id}>{r.doc.name}</option>)}</optgroup>}
           {sourceId && !candidatePresets().some((c) => c.doc.id === sourceId) && !records.some((r) => r.id === sourceId) && <option value={sourceId}>Snapshot di prova</option>}
         </select>
@@ -134,8 +134,8 @@ export default function BuilderTrial({ session, def, projectId, componentId }: {
           {rejection[k] && <p className="param-error" role="alert">{rejection[k]}</p>}
         </div>
       ))}
-      <div className="library-actions" role="group" aria-label="Prova Jelly">
-        <button type="button" className="button small" id="jl-trial-open-lab" onClick={() => openStudio(session, 'jelly')}>Apri il Jelly Lab</button>
+      <div className="library-actions" role="group" aria-label="Prova Jello">
+        <button type="button" className="button small" id="jl-trial-open-lab" onClick={() => openStudio(session, 'jelly')}>Apri il Jello Lab</button>
         <button type="button" className="button small" id="jl-trial-remove" onClick={() => void remove()}>Rimuovi la prova</button>
       </div>
       {message && <p className="param-note" id="jl-trial-message" role="status">{message}</p>}

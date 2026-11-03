@@ -1,3 +1,4 @@
+import { presetName } from '../model/catalog/names';
 import { defaultParams, type GlassParams } from './params';
 
 export interface Preset {
@@ -14,38 +15,38 @@ const make = (overrides: Partial<GlassParams>): GlassParams => ({ ...defaultPara
 export const PRESETS: readonly Preset[] = [
   {
     id: 'jello',
-    label: 'Jello · iniziale',
-    note: 'Valori iniziali di Jello: rifrazione sul perimetro, centro neutro, blur leggero, aberrazione disattivata.',
+    label: presetName('jello'),
+    note: 'Configurazione iniziale di Glass: rifrazione perimetrale simulata, centro neutro, blur leggero e riflessi. Aberrazione cromatica disattivata.',
     approximation: false,
     params: make({}),
   },
   {
     id: 'optics',
-    label: 'Ottica nuda',
-    note: 'Blur, tinta, luce e ombra a zero: resta solo la deviazione geometrica. Usato dalle verifiche raster.',
+    label: presetName('optics'),
+    note: 'Configurazione diagnostica: blur, tinta, luce e ombra a zero, resta solo la deviazione geometrica del bordo. Usata dalle verifiche raster.',
     approximation: false,
     params: make({ blur: 0, tintOpacity: 0, light: 0, shadow: 0, saturation: 100 }),
   },
   {
     id: 'satin',
-    label: 'Satinato',
-    note: 'Nessuna rifrazione: solo blur, saturazione e tinta. Utile per isolare il contributo della lente.',
+    label: presetName('satin'),
+    note: 'Superficie traslucida: backdrop blur, saturazione e tinta, nessuna rifrazione. Non simula la microstruttura di un vetro smerigliato.',
     approximation: false,
     params: make({ refraction: 0, blur: 14, saturation: 160, tintOpacity: 0.16 }),
   },
   {
     id: 'deep',
-    label: 'Lente marcata',
-    note: 'Fascia più ampia e deviazione forte, quasi senza blur: rende evidente il profilo.',
+    label: presetName('deep'),
+    note: 'Fascia più ampia e rifrazione di bordo forte, con blur quasi nullo: rende evidente il profilo.',
     approximation: false,
     params: make({ band: 36, refraction: 36, blur: 0.5, tintOpacity: 0.04, light: 0.7 }),
   },
   {
     id: 'navbar',
-    label: 'Jello · navbar',
+    label: presetName('navbar'),
     note:
-      'Calibrato sulla navbar del laboratorio (barra larga e bassa sopra contenuti che scorrono): fascia stretta, ' +
-      'rifrazione moderata sul perimetro, centro neutro e leggibile, blur medio. Pressione con poca scala, più luce.',
+      'Rifrazione di bordo moderata su una fascia stretta, centro neutro e leggibile, blur medio: adatto a superfici ampie e poco profonde ' +
+      '(barre, toolbar, overlay). Pressione con poca scala, più luce. Nato dalla navbar del laboratorio.',
     approximation: false,
     params: make({
       band: 16,

@@ -143,7 +143,7 @@ function DocumentIo({ wb }: { wb: JellyWorkbench }) {
   };
   return (
     <div className="jl-io">
-      <div className="library-actions" role="group" aria-label="Documento Jelly">
+      <div className="library-actions" role="group" aria-label="Documento Jello">
         <button type="button" className="button small" id="jl-copy-json" onClick={() => { void copyText(wb.exportText()).then((ok) => setMessage({ ok, text: ok ? 'JSON copiato.' : 'Copia non riuscita.' })); }}><Ic name="copy" size={14} /> Copia JSON</button>
         <button type="button" className="button small" id="jl-download-json" onClick={download}><Ic name="download" size={14} /> Scarica</button>
         <button type="button" className="button small" id="jl-import-json" onClick={() => file.current?.click()}><Ic name="upload" size={14} /> Importa…</button>
@@ -175,7 +175,7 @@ export function JellyInspector({ wb }: { wb: JellyWorkbench }) {
     <div className="panel-inner jl-inspector" id="jl-inspector" data-level={view.level}>
       <div className="panel-head">
         <div className="panel-heading">
-          <h2>Jelly</h2>
+          <h2>Jello</h2>
           <span className="chip chip-warn" title="Non è un materiale ufficiale: stato «planned», nessuna garanzia di compatibilità">Sperimentale</span>
         </div>
         <label className="field row-field" htmlFor="jl-name">

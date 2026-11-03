@@ -37,7 +37,7 @@ export function StudioRail({ session, saveShort, saveFull, saveKind, onCreate, c
     { id: 'preview', label: 'Test', full: 'Preview & Test', icon: 'eye', domId: 'ws-preview' },
     { id: 'export', label: 'Export', full: 'Export', icon: 'download', domId: 'ws-export' },
     { id: 'assets', label: 'Asset', full: 'Asset del progetto', icon: 'palette', domId: 'nav-assets' },
-    { id: 'jelly', label: 'Jelly β', full: 'Jelly Lab · sperimentale', icon: 'jelly', domId: 'ws-jelly' },
+    { id: 'jelly', label: 'Jello β', full: 'Jello Lab · sperimentale', icon: 'jelly', domId: 'ws-jelly' },
   ];
   const go = (id: RailId) => (id === 'assets' ? session.setPage('assets') : openStudio(session, id));
   const item = (it: (typeof items)[number]) => (

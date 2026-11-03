@@ -100,8 +100,8 @@ describe('other boundaries', () => {
  * what the lab can reach, how, and what the experimental Studio code is allowed to reach in return.
  */
 describe('experimental Jelly Studio boundary (M6.4)', () => {
-  /** The only Studio modules allowed to name an experimental module, and only with import(). */
-  const DOORS = ['src/lab/app/App.tsx', 'src/lab/app/BuilderJellyTrial.tsx'];
+  /** The only Studio modules allowed to name an experimental module, and only with import(). StudioLibrary (M6.4.1) loads the live Jello preview of a catalog card, only when the Jello family is chosen. */
+  const DOORS = ['src/lab/app/App.tsx', 'src/lab/app/BuilderJellyTrial.tsx', 'src/lab/app/StudioLibrary.tsx'];
   const EXPERIMENTAL = /^src\/(lab\/experimental|model\/experimental|runtime\/experimental)\//;
 
   it('the Studio entry links no Jelly module into its own chunk: the startup path is Jelly-free', () => {
@@ -277,5 +277,34 @@ describe('built library (when present)', () => {
     const manifest = JSON.parse(readFileSync(join(lib, 'manifest.json'), 'utf8')) as { files: string[] };
     expect(manifest.files.some((f) => f.endsWith('.map'))).toBe(false);
     expect(manifest.files).toContain('types/runtime/index.d.ts');
+  });
+});
+
+/** M6.4.1: the catalog is lab-only metadata; the exportable runtime carries at most the preset names it always carried. */
+describe('material catalog boundary (M6.4.1)', () => {
+  it('the exportable runtime and every export entry reach only the display names, never the catalog', () => {
+    for (const entry of ['src/runtime/index.ts', 'src/export/adapters.ts', 'src/export/package.ts', 'src/core/index.ts']) {
+      const files = graph(entry).files;
+      expect(files.filter((f) => f.startsWith('src/model/catalog/') && f !== 'src/model/catalog/names.ts'), entry).toEqual([]);
+    }
+  });
+
+  it('the names module is dependency-free', () => {
+    const g = graph('src/model/catalog/names.ts');
+    expect(g.files).toEqual(['src/model/catalog/names.ts']);
+    expect(g.packages).toEqual([]);
+  });
+
+  it('the catalog itself never imports the experimental Jelly model, runtime or Studio', () => {
+    const g = graph('src/model/catalog/index.ts');
+    expect(g.files.filter((f) => f.includes('/experimental/') || f.startsWith('src/lab/') || f.startsWith('src/runtime/'))).toEqual([]);
+  });
+
+  it('the Library views reach the catalog but no experimental module statically', () => {
+    for (const entry of ['src/lab/app/StudioLibrary.tsx', 'src/lab/app/Library.tsx', 'src/lab/app/Home.tsx']) {
+      const g = graph(entry, { dynamic: false });
+      expect(g.files).toContain(entry === 'src/lab/app/Home.tsx' ? 'src/model/catalog/index.ts' : 'src/lab/app/catalog-ui.ts');
+      expect(g.files.filter((f) => f.includes('/experimental/')), entry).toEqual([]);
+    }
   });
 });

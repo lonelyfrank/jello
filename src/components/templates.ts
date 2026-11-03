@@ -5,6 +5,7 @@
  */
 
 import { builtinMaterial } from '../model/builtins';
+import { revisionName } from '../model/catalog/names';
 import { contentHash, type GlassDocument, type MaterialDocument } from '../model/document';
 import { checkKeys } from '../core/descriptors';
 import { MATERIALS } from '../model/registry';
@@ -23,14 +24,17 @@ import { setButtonIcon, setButtonText } from './button';
 import { COMPONENTS } from './registry';
 import { applyNavbarView, createRoot, createTab, type BnRoot, type BnTab } from './navbar';
 
-/** Content revision of a material: what it looks like and how it behaves (id and timestamps excluded). */
+/**
+ * Content revision of a material: what it looks like and how it behaves (id and timestamps excluded).
+ * The name is hashed through `revisionName`, so renaming a built-in preset (M6.4.1) keeps every stored revision valid.
+ */
 export function materialRevision(doc: MaterialDocument): string {
   if (doc.family === 'solid') {
-    const { name, family, familyVersion, material, geometry, behavior, states } = doc;
-    return contentHash(JSON.stringify({ name, family, familyVersion, material, geometry, behavior, states }));
+    const { family, familyVersion, material, geometry, behavior, states } = doc;
+    return contentHash(JSON.stringify({ name: revisionName(doc.id, doc.name), family, familyVersion, material, geometry, behavior, states }));
   }
-  const { name, family, familyVersion, material, geometry, behavior, quality, source, target } = doc;
-  return contentHash(JSON.stringify({ name, family, familyVersion, material, geometry, behavior, quality, source, target }));
+  const { family, familyVersion, material, geometry, behavior, quality, source, target } = doc;
+  return contentHash(JSON.stringify({ name: revisionName(doc.id, doc.name), family, familyVersion, material, geometry, behavior, quality, source, target }));
 }
 
 export type BindingState =

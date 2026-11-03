@@ -7,6 +7,7 @@
  * of this state or of what it persists. All persistence goes through JellyRepository
  * (separate database); the stable repository is never used.
  */
+import { presetDisplayName } from '../../../model/catalog';
 import { JELLY_CANDIDATE_PRESETS } from '../../../model/experimental/jelly-presets';
 import { parseExperimentalJellyText, serializeExperimentalJelly, type JellyExperimentalDocument, type JellyOverrideState, type JellyParamKey, type JellyStateOverride } from '../../../model/experimental/jelly';
 import {
@@ -40,6 +41,11 @@ export interface JellyWorkState {
 }
 
 export const candidatePresets = () => JELLY_CANDIDATE_PRESETS;
+/**
+ * Name shown for a document: the catalog's display name ("Jello · Soft") for an unmodified candidate preset, otherwise the
+ * document's own name. The stored name of a preset stays the technical one ("Jelly Soft"); a user's name is never replaced.
+ */
+export const presetLabel = (doc: Pick<JellyExperimentalDocument, 'id' | 'name'>): string => (JELLY_CANDIDATE_PRESETS.some((p) => p.doc.id === doc.id && p.doc.name === doc.name) ? presetDisplayName(doc.id) : undefined) ?? doc.name;
 export const presetDoc = (id: string): JellyExperimentalDocument | null => structuredClone(JELLY_CANDIDATE_PRESETS.find((p) => p.doc.id === id)?.doc ?? null);
 
 export interface WorkbenchDeps {
@@ -183,7 +189,7 @@ export class JellyWorkbench {
   async saveAsCopy(name?: string): Promise<boolean> {
     const source = this.state.doc;
     const id = this.newId();
-    const copyName = (name ?? (this.state.recordId ? `${source.name} copia` : `${source.name} personale`)).slice(0, 80);
+    const copyName = (name ?? (this.state.recordId ? `${source.name} copia` : `${presetLabel(source)} personale`)).slice(0, 80);
     const doc = personalJellyCopy(source, { id, name: copyName, basedOn: this.state.base.kind === 'preset' ? this.state.base.id : source.meta.basedOn, now: this.now() });
     return this.write(id, copyName, doc);
   }

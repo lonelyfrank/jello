@@ -93,14 +93,14 @@ export function App({ session }: { session: LabSession }) {
     ? { eyebrow: project?.name ?? 'JELLO STUDIO', title: flowTitle }
     : page === 'assets' ? { eyebrow: 'GLI INGREDIENTI DEL PROGETTO', title: 'Colori, icone e font' }
     : page === 'settings' ? { eyebrow: 'JELLO STUDIO', title: 'Impostazioni' }
-    : inJelly ? { eyebrow: project?.name ?? 'JELLO STUDIO', title: 'Jelly Lab' }
+    : inJelly ? { eyebrow: project?.name ?? 'JELLO STUDIO', title: 'Jello Lab' }
     : isBuilder && studio.area !== 'preview' ? { title: 'Component Builder' }
     : studio.area === 'preview' ? { title: 'Preview & Test' }
     : { title: 'Material Lab' };
   return (
     <>
       <a className="skip" href={inJelly ? '#jl-panel' : inLab ? '#panel' : '#main'}>
-        {inJelly ? 'Vai all’inspector Jelly' : inLab ? (isBuilder ? 'Vai all’inspector' : 'Vai alle proprietà') : 'Vai al contenuto'}
+        {inJelly ? 'Vai all’inspector Jello' : inLab ? (isBuilder ? 'Vai all’inspector' : 'Vai alle proprietà') : 'Vai al contenuto'}
       </a>
       <div className="studio-shell">
       <StudioRail session={session} saveShort={saveShort} saveFull={railSave} saveKind={save.kind} onCreate={() => setCreateOpen(true)} createOpen={createOpen} />
@@ -279,14 +279,14 @@ export function App({ session }: { session: LabSession }) {
       </main>
 
       {jellyOpened && (
-        <Suspense fallback={<main className="lab" id="jelly-lab" hidden={!inJelly}><section className="preview"><p className="hint" role="status">Caricamento di Jelly…</p></section></main>}>
+        <Suspense fallback={<main className="lab" id="jelly-lab" hidden={!inJelly}><section className="preview"><p className="hint" role="status">Caricamento di Jello…</p></section></main>}>
           <JellyMain session={session} active={inJelly} />
         </Suspense>
       )}
 
       <footer className="lab-footer" hidden={!inLab && !inJelly}>
         <p className="status-chips" id="statusChips" aria-live="polite">
-          {inJelly && <span className="chip" data-kind="warn">Jelly · sperimentale · SVG / CSS</span>}
+          {inJelly && <span className="chip" data-kind="warn">Jello · sperimentale · SVG / CSS</span>}
           {!inJelly && report && (
             <>
               <span className="chip" data-kind={scene ? 'webgl2' : report.main.effective}>

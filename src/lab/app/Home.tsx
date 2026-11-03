@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { COMPONENTS } from '../../components';
+import { familyLabel } from '../../model/catalog';
 import { RuntimeThumbnail } from './RuntimeThumbnail';
 import { GlobalSearch } from './Search';
 import { openStudio } from './StudioNav';
@@ -118,7 +119,7 @@ function useCategories(session: LabSession): Category[] {
     { key: 'btn', label: 'Button', icon: 'box', bg: 'linear-gradient(135deg, #ff9bb8, #f0457e)', project: true, run: template('button') },
     { key: 'glass', label: 'Glass', icon: 'drop', bg: 'radial-gradient(circle at 34% 28%, #fff 0 10%, #9aa6e8 45%, #3a3a9a 100%)', project: true, run: material('glass') },
     { key: 'solid', label: 'Solid', icon: 'box', bg: 'linear-gradient(135deg, #b79bff, #5a3aa0)', project: true, run: material('solid') },
-    { key: 'jelly', label: 'Jelly', icon: 'drop', bg: 'radial-gradient(circle at 34% 28%, #ffd0f6 0 8%, #f04fd8 40%, #8a22c8 100%)', project: true, soon: true, run: () => undefined },
+    { key: 'jelly', label: 'Jello', icon: 'drop', bg: 'radial-gradient(circle at 34% 28%, #ffd0f6 0 8%, #f04fd8 40%, #8a22c8 100%)', project: true, soon: true, run: () => undefined },
     { key: 'asset', label: 'Asset', icon: 'palette', bg: 'conic-gradient(from 200deg, #ff4fd8, #6a5cff, #2ec5ff, #8cffc8, #ffb04f, #ff4fd8)', project: true, run: () => session.setPage('assets') },
     { key: 'test', label: 'Preview & Test', icon: 'eye', bg: 'linear-gradient(135deg, #8b5cf6, #4c1d95)', project: true, run: () => openStudio(session, 'preview') },
     { key: 'export', label: 'Export', icon: 'upload', bg: 'linear-gradient(135deg, #f472b6, #9d174d)', project: true, run: () => openStudio(session, 'export') },
@@ -187,12 +188,12 @@ export function HomeHero({ session, mode, setMode }: { session: LabSession; mode
 const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
 /** One element of the Home grid: runtime thumbnail, name, family chip, line of context. */
-function ElementCard({ thumb, name, family, meta, onOpen }: { thumb: ReactNode; name: string; family: 'glass' | 'solid'; meta: string; onOpen(): void }) {
+function ElementCard({ thumb, name, family, meta, onOpen }: { thumb: ReactNode; name: string; family: string; meta: string; onOpen(): void }) {
   return (
     <button type="button" className="home-card" onClick={onOpen} aria-label={`${name}, ${meta}`}>
       <span className="home-thumb">{thumb}</span>
       <span className="home-card-name">{name}</span>
-      <span className="home-card-meta"><span className="fam" data-family={family}>{family === 'glass' ? 'Glass' : 'Solid'}</span><span>{meta}</span></span>
+      <span className="home-card-meta"><span className="fam" data-family={family}>{familyLabel(family)}</span><span>{meta}</span></span>
     </button>
   );
 }
@@ -211,21 +212,21 @@ export function Home({ session }: { session: LabSession }) {
   const pick = (m: Mode) => { setMode(m); setFilter(m === 'proj' ? 'proj' : 'all'); };
   const sortedProjects = [...projects].sort((x, y) => y.updatedAt.localeCompare(x.updatedAt));
   const componentCard = (c: (typeof components)[number], meta: string) => (
-    <ElementCard key={`c-${c.id}`} name={c.name} family={c.doc.material.family === 'solid' ? 'solid' : 'glass'} meta={meta}
+    <ElementCard key={`c-${c.id}`} name={c.name} family={c.doc.material.family} meta={meta}
       thumb={<RuntimeThumbnail doc={c.doc} />} onOpen={() => { session.openComponent(c.id); openStudio(session, 'builder'); }} />
   );
   const materialCard = (m: (typeof library)[number], meta: string) => (
-    <ElementCard key={`m-${m.id}`} name={m.name} family={m.doc.family === 'solid' ? 'solid' : 'glass'} meta={meta}
+    <ElementCard key={`m-${m.id}`} name={m.name} family={m.doc.family} meta={meta}
       thumb={<MaterialThumbnail runtime doc={m.doc} />} onOpen={() => { session.openMaterial(m.id); openStudio(session, 'material'); }} />
   );
 
   let heading = 'Continua a creare';
   let cards: ReactNode[] = [];
   if (mode === 'tpl') {
-    heading = 'Template e preset Jello';
+    heading = 'Template e preset inclusi';
     cards = [
       ...components.filter((c) => c.origin === 'template').map((c) => componentCard(c, `Template ufficiale · ${COMPONENTS.get(c.doc.type)?.name ?? c.doc.type}`)),
-      ...library.filter((m) => m.origin === 'builtin').map((m) => materialCard(m, 'Preset Jello')),
+      ...library.filter((m) => m.origin === 'builtin').map((m) => materialCard(m, 'Preset incluso')),
     ];
   } else {
     const mineC = components.filter((c) => c.origin === 'user').sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
@@ -308,8 +309,8 @@ export function HomeEmpty({ session }: { session: LabSession }) {
             <span className="plus-disc">
               <Ic name="drop" />
             </span>
-            <strong>Parti da un preset Jello</strong>
-            <span className="muted">Glass, Satinato o Lente: valori equilibrati da modificare.</span>
+            <strong>Parti da un preset incluso</strong>
+            <span className="muted">Glass Default, Frosted o Refractive: valori equilibrati da modificare.</span>
           </button>
           <button type="button" className="card start-card" onClick={() => session.openFlow('import')} id="startImport">
             <span className="plus-disc">

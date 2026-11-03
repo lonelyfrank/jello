@@ -257,7 +257,7 @@ describe('React packages of any component and material', () => {
     expect(m.material.family).toBe('solid');
     expect(m.backend).toMatchObject({ requested: 'none', candidates: [] });
     expect(m.component.unsupported.map((u) => u.path)).toContain('states.hover.style.background');
-    expect(r.warnings.join('\n')).toMatch(/Senza effetto|Proprietà senza effetto con Solid · neutro: states\.hover\.style\.background/);
+    expect(r.warnings.join('\n')).toMatch(/Senza effetto|Proprietà senza effetto con Solid · Matte: states\.hover\.style\.background/);
     expect(get(r, '/README.md')).toMatch(/## Proprietà non applicate a questo materiale[\s\S]*states\.hover\.style\.background/);
     expect(get(r, '/README.md')).toMatch(/Solid: una superficie CSS/);
     // No Glass source is needed: the example still compiles as written.
@@ -286,7 +286,7 @@ describe('React packages of any component and material', () => {
     const plan = componentReactAdapter.describe(req);
     expect(plan.name).toBe('jello-button-react.zip');
     expect(plan.files.map((f) => f.path).join(' ')).toContain('src/Button.tsx');
-    expect(plan.notes.join(' ')).toMatch(/Senza effetto con Solid · neutro: states\.hover\.style\.background/);
+    expect(plan.notes.join(' ')).toMatch(/Senza effetto con Solid · Matte: states\.hover\.style\.background/);
     const json = await exportAdapter('material-json')!.build(req);
     const text = new TextDecoder().decode(json.files[0]!.data);
     expect(parseMaterialText(text)).toMatchObject({ ok: true, doc: { family: 'solid' } });

@@ -10,10 +10,12 @@ export interface StudioPreferences {
   right: boolean;
   builderPane: 'all' | 'layers' | 'components' | 'assets';
   inspectorTab: 'all' | 'design' | 'interactions' | 'advanced';
+  /** Advanced mode of the libraries: also list diagnostic configurations (e.g. Refraction Test). */
+  diagnostics: boolean;
 }
 
 const KEY = 'jello-studio-preferences-v1';
-const defaults: StudioPreferences = { area: 'editor', zoom: 1, leftWidth: 256, rightWidth: 336, left: true, right: true, builderPane: 'all', inspectorTab: 'all' };
+const defaults: StudioPreferences = { area: 'editor', zoom: 1, leftWidth: 256, rightWidth: 336, left: true, right: true, builderPane: 'all', inspectorTab: 'all', diagnostics: false };
 export function parseStudioPreferences(value: unknown): StudioPreferences {
   const p = value && typeof value === 'object' ? value as Record<string, unknown> : {};
   const number = (key: string, min: number, max: number, fallback: number) => typeof p[key] === 'number' && Number.isFinite(p[key]) ? Math.min(max, Math.max(min, p[key] as number)) : fallback;
@@ -26,6 +28,7 @@ export function parseStudioPreferences(value: unknown): StudioPreferences {
     right: typeof p.right === 'boolean' ? p.right : true,
     builderPane: p.builderPane === 'layers' || p.builderPane === 'components' || p.builderPane === 'assets' ? p.builderPane : 'all',
     inspectorTab: p.inspectorTab === 'design' || p.inspectorTab === 'interactions' || p.inspectorTab === 'advanced' ? p.inspectorTab : 'all',
+    diagnostics: p.diagnostics === true,
   };
 }
 function read(): StudioPreferences {

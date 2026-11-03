@@ -20,6 +20,7 @@ import * as z from 'zod/mini';
 import { checkKeys, defaultsOf, type ColorDescriptor, type Descriptor, type EnumDescriptor, type NumberDescriptor } from '../core/descriptors';
 import type { ShapeKind } from '../core/params';
 import { formatIssues, ID_PATTERN, type ImportResult, type MaterialMeta } from './document';
+import { presetName } from './catalog/names';
 import { FAMILY_MIN_RUNTIME, MATERIAL_FORMAT, RUNTIME_VERSION, SCHEMA_VERSION, compareVersions, isVersion } from './version';
 
 // ---------------------------------------------------------------------------
@@ -502,11 +503,11 @@ const preset = (id: string, name: string, note: string, params: Partial<SolidPar
 });
 
 export const SOLID_PRESETS: readonly SolidPreset[] = [
-  preset('solid-neutral', 'Solid · neutro', 'Grigio chiaro con bordo sottile e ombra leggera. Valori iniziali di Solid.', {}),
+  preset('solid-neutral', presetName('solid-neutral'), 'Superficie piena grigio chiaro, finitura piatta (nessun riflesso simulato), bordo sottile e ombra contenuta. Valori iniziali di Solid.', {}),
   preset(
     'solid-dark',
-    'Solid · scuro',
-    'Superficie scura con contenuto chiaro; lo stato attivo si inverte.',
+    presetName('solid-dark'),
+    'Variante cromatica scura con contenuto chiaro ad alto contrasto; lo stato attivo si inverte.',
     { fill: '#1d2433', foreground: '#f5f7fa', borderColor: '#2e3748', elevation: 2, shadowOpacity: 0.35 },
     {
       hover: { fill: '#262f42', elevation: 3 },
@@ -516,8 +517,8 @@ export const SOLID_PRESETS: readonly SolidPreset[] = [
   ),
   preset(
     'solid-accent',
-    'Solid · accento',
-    'Blu pieno con contenuto bianco (contrasto ≥ 4,5:1), capsula e finitura soft.',
+    presetName('solid-accent'),
+    'Superficie piena blu con contenuto bianco (contrasto ≥ 4,5:1), capsula, finitura soft e stati interattivi dedicati.',
     { fill: '#2563eb', foreground: '#ffffff', finish: 'soft', borderColor: '#1d4ed8', shape: 'capsule', shadowColor: '#1e3a8a', shadowOpacity: 0.3 },
     {
       hover: { fill: '#1e56d4', elevation: 2 },
@@ -527,8 +528,8 @@ export const SOLID_PRESETS: readonly SolidPreset[] = [
   ),
   preset(
     'solid-outline',
-    'Solid · contorno',
-    'Sfondo bianco, bordo marcato, nessuna ombra a riposo.',
+    presetName('solid-outline'),
+    'Sfondo bianco con bordo dominante, nessuna ombra a riposo e stati visuali dedicati.',
     { fill: '#ffffff', borderColor: '#98a2b3', borderWidth: 1.5, elevation: 0 },
     {
       hover: { fill: '#f9fafb', borderColor: '#667085', elevation: 1 },

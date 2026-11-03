@@ -36,21 +36,21 @@ export default function JellyMain({ session, active }: { session: LabSession; ac
   const closeDrawer = () => session.setDrawer(false);
   return (
     <main className="lab jl-lab" id="jelly-lab" hidden={!active} data-studio-area="jelly" data-left={layout.left ? 'open' : 'closed'} data-right={layout.right ? 'open' : 'closed'} style={{ ['--side-w' as string]: `${layout.left ? prefs.leftWidth : 0}px`, ['--panel-w' as string]: `${layout.right ? prefs.rightWidth : 0}px` }}>
-      {studio ? <JellyPreview wb={studio.workbench} /> : <section className="preview"><p className="hint" role="status">Caricamento di Jelly…</p></section>}
+      {studio ? <JellyPreview wb={studio.workbench} /> : <section className="preview"><p className="hint" role="status">Caricamento di Jello…</p></section>}
       <PanelResize side="left" visible={layout.left} /><PanelResize side="right" visible={layout.right} />
       <div className={`controls${layout.drawer ? ' is-open' : ''}`} id="jl-controls" tabIndex={-1} ref={drawer} onKeyDown={(ev) => { if (ev.key === 'Escape' && layout.drawer) closeDrawer(); }}>
         <div className="controls-bar">
-          <span className="controls-title">Regolazioni Jelly</span>
+          <span className="controls-title">Regolazioni Jello</span>
           <nav className="controls-jump" aria-label="Sezioni">
             <a href="#jl-sidebar">Preset e documento</a>
             <a href="#jl-panel">Inspector</a>
           </nav>
           <button className="button" id="jl-panelClose" type="button" onClick={closeDrawer}>Chiudi</button>
         </div>
-        <aside className="sidebar" id="jl-sidebar" aria-label="Preset Jelly e documento" hidden={!layout.left}>
+        <aside className="sidebar" id="jl-sidebar" aria-label="Preset Jello e documento" hidden={!layout.left}>
           {studio && <JellyLibrary wb={studio.workbench} session={session} />}
         </aside>
-        <aside className="panel" id="jl-panel" aria-label="Inspector Jelly sperimentale" tabIndex={-1} hidden={!layout.right}>
+        <aside className="panel" id="jl-panel" aria-label="Inspector Jello sperimentale" tabIndex={-1} hidden={!layout.right}>
           {studio && <JellyInspector wb={studio.workbench} />}
         </aside>
       </div>
