@@ -34,7 +34,7 @@ Esito: **pulito dopo le correzioni** in tutti i viewport e le aree. Prima delle 
 | Tastiera sul consumer React (frecce, Invio, focus visibile) | `react-consumer.spec:69` |
 | `prefers-reduced-motion` | `solid.spec:113`, `fallback.spec:83-115`, `navbar.spec:385`, `jelly-studio.spec:239`, `vanilla-consumer.spec:111`, consumer Jello (moto «static») |
 | `prefers-reduced-transparency` | `fallback.spec`, `jelly-studio.spec:209,239`, `vanilla-consumer.spec:111` |
-| `forced-colors` | `solid.spec:189` (bordo visibile, testo colore di sistema; **saltato dove il motore non lo emula**: vedi `browser-compatibility.md`), `fallback.spec:59`, `navbar.spec:400`, `desktop-navigation.spec:310`, `jelly-studio.spec:239`, `screenshots/jello-env-forced-colors.png` |
+| `forced-colors` | `solid.spec:189` (bordo visibile, testo colore di sistema; condizionato all'emulazione del motore e in questa verifica **non saltato** in nessun progetto), `fallback.spec:59`, `navbar.spec:400`, `desktop-navigation.spec:310`, `jelly-studio.spec:239`, `screenshots/jello-env-forced-colors.png` |
 | Errori annunciati | campi del Material Lab: `aria-live="polite"` sempre montato + `aria-invalid`; **campi del Builder: ora lo stesso** (M642-13: prima il `<p role=status>` compariva insieme all'errore e non era annunciato in modo affidabile) |
 | Dialog di import/export: focus intrappolato e conferma distruttiva | `projects.spec:94` «keeps focus inside the dialog» |
 | Percorsi raggiungibili da tastiera (sezioni e flussi) | `projects.spec:325` «keyboard: the section buttons and the flows are reachable without a mouse» |

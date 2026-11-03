@@ -46,12 +46,12 @@ Verifiche di lifecycle esistenti, passate: «releases everything when the area i
 
 ## 3. Bundle (§13.4)
 
-Build finale (vedi `verification.json` per gli stessi numeri):
+Build finale (HEAD `09036f8`; confronto con la baseline `origin/main`). Il bundle dello Studio cresce di **+3,6 kB raw (+1,3 kB gzip)** per ciò che questa milestone aggiunge (confine d'errore, reset alla base, layout reset, scene): irrilevante, ma dichiarato:
 
 | Artefatto | raw | gzip |
 |---|---|---|
-| `dist/assets/lab-*.js` (**Studio**) | 625,4 kB | 176,7 kB |
-| `dist-lib/jello.js` (runtime produttivo) | 202,1 kB | 54,7 kB |
+| `dist/assets/lab-*.js` (**Studio**) | 628,9 kB (baseline 625,4) | 177,9 kB (baseline 176,7) |
+| `dist-lib/jello.js` (runtime produttivo) | 202,2 kB (baseline 202,1) | 54,7 kB |
 | `dist-jelly/jello-jelly-experimental.js` | 87,0 kB | 24,6 kB |
 | `jelly-lab` + `JellyMain` (chunk lazy dello Studio) | 65,5 + 45,4 kB | 21,4 + 14,6 kB |
 

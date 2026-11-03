@@ -62,7 +62,7 @@ Famiglia autonoma (renderer CSS, nessun filtro SVG, nessun termine «Glass/Refra
 
 (La percentuale è dell'intero Stage, di cui il bottone è una piccola parte.) **Matte e Outlined sono la coppia più vicina** (0,10–0,14 %): si distinguono per bordo più marcato, riempimento più chiaro e assenza di ombra (`solid-outline` non usa `shadow`/`elevation`, verificato da `validateCatalog`), non per colore. È coerente con il trattamento dichiarato; l'evidenza visiva è bassa su uno Stage chiaro. *Nessuna modifica.*
 
-**Stati (§6.3).** Differenza dal default, bottone Solid in Builder (`screenshots/component-button-solid-*`): hover max 23/255 (fill `#f1f3f5 → #e7eaee` + elevazione 2: **sottile**, O-2), pressed max 46, disabled max 141. Glass: hover 47, pressed 32, disabled 155. `disabled` mantiene il componente visibile e leggibile (opacità, `aria-disabled`, nessuna interazione): `solid.spec.ts`, `components.spec.ts:161,441,511`. Il focus resta riconoscibile quando l'estetica è modificata e con `forced-colors`: `solid.spec.ts` (test `forced-colors`, eseguito in Chromium; saltato in motori che non lo emulano, vedi `browser-compatibility.md`). Override di stato: coperti da `solid.test.ts` e `components.spec.ts`.
+**Stati (§6.3).** Differenza dal default, bottone Solid in Builder (`screenshots/component-button-solid-*`): hover max 23/255 (fill `#f1f3f5 → #e7eaee` + elevazione 2: **sottile**, O-2), pressed max 46, disabled max 141. Glass: hover 47, pressed 32, disabled 155. `disabled` mantiene il componente visibile e leggibile (opacità, `aria-disabled`, nessuna interazione): `solid.spec.ts`, `components.spec.ts:161,441,511`. Il focus resta riconoscibile quando l'estetica è modificata e con `forced-colors`: `solid.spec.ts` (test `forced-colors`, condizionato all'emulazione del motore; in questa verifica non è stato saltato in nessuno dei tre progetti, vedi `browser-compatibility.md`). Override di stato: coperti da `solid.test.ts` e `components.spec.ts`.
 
 ## 4. Jello (sperimentale)
 
@@ -86,7 +86,7 @@ Resta `planned` nel registro produttivo (`FAMILIES`), non importato dal runtime 
 - **Dense** è il più corto e senza rimbalzo: coerente con «comportamento meccanico meno vivace».
 - **Soft** ha un rimbalzo di 0,0027 (≈ 0,1 px): non percepibile. La «risposta morbida e controllata» è un ritorno liscio, non un rimbalzo; la deformazione di pressione (≈ 1,8 px) è leggibile ma modesta.
 
-### 4.2 Identità visiva — **giudizio da immagini** (`screenshots/jello-compare-*`, `jello-motion-*`, contact-sheet nel report di consegna)
+### 4.2 Identità visiva — **giudizio da immagini** (`screenshots/jello-compare-*`, `jello-motion-*`, foglio di contatto `jello-motion-sheet.png`: righe Soft, Clear, Candy, Dense; colonne idle, press, hold, release, rebound, rest)
 
 - Il corpo è riconoscibile come gel (bordo più denso in basso, luce diffusa in alto, ombra morbida colorata), distinto da Glass: nessuna rifrazione, nessun backdrop (dichiarato nel catalogo e nel pacchetto).
 - Le differenze fra preset sono **dominate da tinta e opacità** (lilla, rosa saturo, grigio-azzurro, verde). Candy è l'unico con bordo basso nettamente più scuro; Dense non appare «più corposo» di Soft a parità di dimensioni: la sensazione di corpo è data da trasmissione bassa e diffusione alta, poco visibili su fondo chiaro.
