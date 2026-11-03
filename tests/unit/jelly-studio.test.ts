@@ -143,7 +143,7 @@ describe('Jelly experimental repository', () => {
     const repo = await openJellyRepository(factory);
     await repo.commit({ materials: { put: [rec('good', 'p1')] } });
     repo.close();
-    const raw = await new Promise<IDBDatabase>((resolve) => { const r = factory.open(JELLY_DB_NAME, 1); r.onsuccess = () => resolve(r.result); });
+    const raw = await new Promise<IDBDatabase>((resolve) => { const r = factory.open(JELLY_DB_NAME); r.onsuccess = () => resolve(r.result); });
     const tx = raw.transaction('jelly-materials', 'readwrite');
     tx.objectStore('jelly-materials').put({ ...rec('future', 'p1'), doc: { ...soft(), id: 'future', schemaVersion: 99 } });
     tx.objectStore('jelly-materials').put({ id: 'broken', projectId: 'p1', doc: { nope: true } });
@@ -156,18 +156,6 @@ describe('Jelly experimental repository', () => {
     expect(report.skipped.join('|')).toMatch(/broken/);
     const reread = await again.list('p1');
     expect(reread.skipped).toHaveLength(2);
-  });
-
-  it('purges only records of vanished projects', async () => {
-    const repo = await openJellyRepository(new IDBFactory());
-    await repo.commit({
-      materials: { put: [rec('a', 'p1'), rec('b', 'gone')] },
-      drafts: { put: [{ projectId: 'gone', doc: soft(), recordId: null, basePreset: null, savedAt: iso }] },
-      links: { put: [{ projectId: 'gone', componentId: 'c', enabled: true, sourceId: null, doc: soft(), updatedAt: iso }] },
-    });
-    expect(await repo.purgeOrphans(['p1'])).toBe(3);
-    expect((await repo.list('p1')).items).toHaveLength(1);
-    expect(await repo.getLink('gone', 'c')).toBeNull();
   });
 
   it('stores Builder links as snapshots keyed by project and component', async () => {

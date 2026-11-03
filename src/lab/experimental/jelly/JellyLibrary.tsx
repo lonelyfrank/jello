@@ -5,6 +5,8 @@ import type { LabSession } from '../../session';
 import { presetDisplayName } from '../../../model/catalog';
 import { Ic } from '../../app/ui';
 import { exportJellyPackage } from './export-client';
+import { JellyConflictBanner, JellyIntegrityPanel } from './JellyIntegrity';
+import type { JellyRepository } from './repository';
 import { candidatePresets, presetLabel, type JellyWorkbench } from './workbench';
 import { useWorkbench } from './studio';
 
@@ -23,7 +25,7 @@ function saveText(s: ReturnType<JellyWorkbench['get']>): { text: string; kind: s
   }
 }
 
-export function JellyLibrary({ wb, session }: { wb: JellyWorkbench; session: LabSession }) {
+export function JellyLibrary({ wb, session, repo }: { wb: JellyWorkbench; session: LabSession; repo: JellyRepository }) {
   const state = useWorkbench(wb, (s) => s);
   const [pending, setPending] = useState<Pending>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -110,6 +112,7 @@ export function JellyLibrary({ wb, session }: { wb: JellyWorkbench; session: Lab
       <section className="side-section" aria-labelledby="jl-side-actions">
         <h2 className="side-title" id="jl-side-actions">Documento</h2>
         <p className="jl-save" id="jl-save-status" role="status" data-kind={status.kind}>{status.text}</p>
+        <JellyConflictBanner wb={wb} session={session} />
         {!state.persistent && <p className="param-note" id="jl-volatile">{state.note ?? 'Archiviazione non disponibile.'}</p>}
         <div className="library-actions" role="group" aria-label="Salvataggio">
           <button type="button" className="button small primary" id="jl-save" disabled={noProject || !state.recordId} onClick={() => void wb.save()} title={state.recordId ? 'Aggiorna la copia personale' : 'Un preset non si sovrascrive: salva una copia'}><Ic name="save" size={14} /> Salva</button>
@@ -122,6 +125,7 @@ export function JellyLibrary({ wb, session }: { wb: JellyWorkbench; session: Lab
         </div>
         <p className="hint">Il pacchetto contiene lo stesso runtime dell’anteprima. SVG e CSS nei browser; niente WebGL2 né Android nativo.</p>
         {exportMsg && <p className={exportMsg.ok ? 'param-note' : 'param-error'} id="jl-export-message" role="status">{exportMsg.text}</p>}
+        <JellyIntegrityPanel repo={repo} session={session} />
       </section>
     </div>
   );

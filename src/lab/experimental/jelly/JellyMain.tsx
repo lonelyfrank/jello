@@ -48,7 +48,7 @@ export default function JellyMain({ session, active }: { session: LabSession; ac
           <button className="button" id="jl-panelClose" type="button" onClick={closeDrawer}>Chiudi</button>
         </div>
         <aside className="sidebar" id="jl-sidebar" aria-label="Preset Jello e documento" hidden={!layout.left}>
-          {studio && <JellyLibrary wb={studio.workbench} session={session} />}
+          {studio && <JellyLibrary wb={studio.workbench} session={session} repo={studio.repo} />}
         </aside>
         <aside className="panel" id="jl-panel" aria-label="Inspector Jello sperimentale" tabIndex={-1} hidden={!layout.right}>
           {studio && <JellyInspector wb={studio.workbench} />}

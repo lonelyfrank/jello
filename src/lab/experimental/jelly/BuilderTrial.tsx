@@ -21,7 +21,7 @@ import { editJellyParam } from './inspector-model';
 import { DEFAULT_ENV } from './preview-model';
 import { loadJellyStudio, type JellyStudio } from './studio';
 import { candidatePresets, presetDoc, presetLabel } from './workbench';
-import type { JellyComponentLink, StoredJelly } from './repository';
+import { JellyConflictError, linkKey, type JellyComponentLink, type StoredJelly } from './repository';
 import './jelly-lab.css';
 
 const QUICK: readonly JellyParamKey[] = ['tint', 'bodyOpacity', 'transmission', 'density', 'dampingRatio', 'maxDeformation', 'pressStrength'];
@@ -44,6 +44,13 @@ export default function BuilderTrial({ session, def, projectId, componentId }: {
   const pending = useRef<{ projectId: string; componentId: string; doc: JellyExperimentalDocument; sourceId: string | null } | null>(null);
   const live = useRef({ studio });
   live.current = { studio };
+  // Revision of this component's trial row as last seen (null = none). A write is refused if another tab changed it since.
+  const rev = useRef<number | null>(null);
+  const held = useRef<NonNullable<typeof pending.current> | null>(null);
+  const [conflict, setConflict] = useState(false);
+  // An answer about the component we just left must not touch the one shown now.
+  const shown = useRef('');
+  shown.current = linkKey(projectId, componentId);
 
   useEffect(() => () => coordinator.destroy(), [coordinator]);
   useEffect(() => { void loadJellyStudio().then(setStudio); }, []);
@@ -55,8 +62,35 @@ export default function BuilderTrial({ session, def, projectId, componentId }: {
     pending.current = null;
     const repo = live.current.studio?.repo;
     if (!p || !repo) return;
+    write(repo, p, rev.current);
+  };
+  const write = (repo: JellyStudio['repo'], p: NonNullable<typeof pending.current>, expected: number | null) => {
+    const key = linkKey(p.projectId, p.componentId);
     const link: JellyComponentLink = { projectId: p.projectId, componentId: p.componentId, enabled: true, sourceId: p.sourceId, doc: p.doc, updatedAt: new Date().toISOString() };
-    repo.commit({ links: { put: [link] } }).then(() => setMessage('Configurazione di prova salvata separatamente.'), (e: Error) => setMessage(`Non salvata: ${e.message}`));
+    return repo.commit({ links: { put: [link], expect: { [key]: expected } } }).then(
+      (r) => {
+        if (key !== shown.current) return;
+        held.current = null; rev.current = r.links[key] ?? rev.current; setConflict(false); setMessage('Configurazione di prova salvata separatamente.');
+      },
+      (e: Error) => {
+        if (key !== shown.current) return;
+        if (e instanceof JellyConflictError) { held.current = p; setConflict(true); setMessage('Un’altra scheda ha cambiato la prova di questo componente: la tua versione non è stata salvata e nulla è stato sovrascritto.'); }
+        else setMessage(`Non salvata: ${e.message}`);
+      },
+    );
+  };
+  const keepMine = async () => {
+    const p = held.current;
+    if (!studio || !p) return;
+    rev.current = await studio.repo.revisionOf('links', linkKey(p.projectId, p.componentId));
+    await write(studio.repo, p, rev.current);
+  };
+  const takeTheirs = async () => {
+    if (!studio) return;
+    const l = await studio.repo.getLink(projectId, componentId);
+    held.current = null; setConflict(false);
+    rev.current = l?.rev ?? null;
+    if (l) { setDoc(l.doc); setSourceId(l.sourceId); setMessage('Caricata la configurazione salvata dall’altra scheda.'); }
   };
   const persist = (next: JellyExperimentalDocument, source: string | null) => {
     pending.current = { projectId, componentId, doc: next, sourceId: source };
@@ -73,6 +107,9 @@ export default function BuilderTrial({ session, def, projectId, componentId }: {
       if (stale) return;
       setRecords(list.items);
       setRejection({});
+      rev.current = link?.rev ?? null;
+      held.current = null;
+      setConflict(false);
       if (link) { setDoc(link.doc); setSourceId(link.sourceId); setMessage('Ripristinata la configurazione di prova di questo componente.'); }
       else { setDoc(presetDoc('jelly-soft')!); setSourceId('jelly-soft'); setMessage(null); }
     });
@@ -103,7 +140,7 @@ export default function BuilderTrial({ session, def, projectId, componentId }: {
     if (!studio) return;
     pending.current = null;
     if (timer.current) clearTimeout(timer.current);
-    await studio.repo.commit({ links: { delete: [`${projectId}::${componentId}`] } }).catch((e: Error) => setMessage(e.message));
+    await studio.repo.commit({ links: { delete: [linkKey(projectId, componentId)] } }).then(() => { rev.current = null; held.current = null; setConflict(false); }, (e: Error) => setMessage(e.message));
     setDoc(presetDoc('jelly-soft')!); setSourceId('jelly-soft'); setMessage('Configurazione di prova rimossa. Il componente non è stato modificato.');
   };
   const values = jellyParams(doc);
@@ -138,6 +175,12 @@ export default function BuilderTrial({ session, def, projectId, componentId }: {
         <button type="button" className="button small" id="jl-trial-open-lab" onClick={() => openStudio(session, 'jelly')}>Apri il Jello Lab</button>
         <button type="button" className="button small" id="jl-trial-remove" onClick={() => void remove()}>Rimuovi la prova</button>
       </div>
+      {conflict && (
+        <div className="library-actions" role="group" aria-label="Conflitto con un’altra scheda" id="jl-trial-conflict">
+          <button type="button" className="button small" id="jl-trial-theirs" onClick={() => void takeTheirs()}>Usa quella dell’altra scheda</button>
+          <button type="button" className="button small" id="jl-trial-mine" onClick={() => void keepMine()}>Sovrascrivi con la mia</button>
+        </div>
+      )}
       {message && <p className="param-note" id="jl-trial-message" role="status">{message}</p>}
     </div>
   );
