@@ -1,0 +1,400 @@
+{
+  "env": {
+    "date": "2026-11-03T12:02:34.984Z",
+    "cpu": "Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz",
+    "cores": 8,
+    "memGB": 31,
+    "os": "linux 7.2.13-200.fc44.x86_64",
+    "base": "http://127.0.0.1:4173/",
+    "windowMs": 3000,
+    "headless": true
+  },
+  "runs": [
+    {
+      "engine": "chromium",
+      "version": "156.0.8078.4",
+      "results": [
+        {
+          "scenario": "studio opened (first launch → ready)",
+          "ms": 237,
+          "heap": 6449452,
+          "nodes": 2447,
+          "listeners": 568
+        },
+        {
+          "scenario": "Home idle",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 5.61,
+          "layoutMs": 0,
+          "styleMs": 0.01,
+          "nodes": 2453,
+          "listeners": 676,
+          "heapMB": 7.24
+        },
+        {
+          "scenario": "Material Lab · Glass idle",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 0,
+          "layoutMs": 0,
+          "styleMs": 0,
+          "nodes": 2802,
+          "listeners": 1470,
+          "heapMB": 9.45
+        },
+        {
+          "scenario": "Material Lab · Solid idle",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 0,
+          "layoutMs": 0,
+          "styleMs": 0,
+          "nodes": 4973,
+          "listeners": 2286,
+          "heapMB": 11.69
+        },
+        {
+          "scenario": "Glass · 60 rapid parameter edits",
+          "rafScheduled": 44,
+          "frames": 44,
+          "interval": {
+            "p50": 16.6,
+            "p95": 19.6,
+            "p99": 20
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 199.12,
+          "layoutMs": 35.35,
+          "styleMs": 38.47,
+          "nodes": 7353,
+          "listeners": 9055,
+          "heapMB": 20.81
+        },
+        {
+          "scenario": "Jello idle",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 0,
+          "layoutMs": 0,
+          "styleMs": 0,
+          "nodes": 5277,
+          "listeners": 510,
+          "heapMB": 13.04
+        },
+        {
+          "scenario": "Jello · pointer held 3 s (hold)",
+          "rafScheduled": 37,
+          "frames": 37,
+          "interval": {
+            "p50": 16.7,
+            "p95": 17,
+            "p99": 17
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 12.56,
+          "layoutMs": 1.84,
+          "styleMs": 4.46,
+          "nodes": 5282,
+          "listeners": 522,
+          "heapMB": 15.04
+        },
+        {
+          "scenario": "Jello · release → rebound → rest",
+          "rafScheduled": 37,
+          "frames": 37,
+          "interval": {
+            "p50": 16.7,
+            "p95": 17,
+            "p99": 17
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 11.17,
+          "layoutMs": 2.01,
+          "styleMs": 3.99,
+          "nodes": 5282,
+          "listeners": 534,
+          "heapMB": 16.83
+        },
+        {
+          "scenario": "Jello idle after rebound (RAF must have stopped)",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 0,
+          "layoutMs": 0,
+          "styleMs": 0,
+          "nodes": 5282,
+          "listeners": 534,
+          "heapMB": 16.84
+        },
+        {
+          "scenario": "navigation · 3 batches × 12 rounds × 7 areas (forced GC after each batch)",
+          "nodes": [
+            3319,
+            3319,
+            3319,
+            3319
+          ],
+          "listeners": [
+            532,
+            532,
+            532,
+            532
+          ],
+          "heapMB": [
+            8.38,
+            9.71,
+            10.03,
+            10.42
+          ]
+        },
+        {
+          "scenario": "Home at rest after navigation (no timers/RAF left behind)",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 0,
+          "layoutMs": 0,
+          "styleMs": 0,
+          "nodes": 3594,
+          "listeners": 1022,
+          "heapMB": 11.63
+        },
+        {
+          "scenario": "Material Lab · 8 viewport changes",
+          "rafScheduled": 16,
+          "frames": 16,
+          "interval": {
+            "p50": 16.2,
+            "p95": 137.4,
+            "p99": 137.4
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 32.89,
+          "layoutMs": 41.82,
+          "styleMs": 41.33,
+          "nodes": 3125,
+          "listeners": 1123,
+          "heapMB": 11.78
+        },
+        {
+          "scenario": "Library · Jello family, 4 live previews",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "scriptMs": 0,
+          "layoutMs": 0,
+          "styleMs": 0,
+          "nodes": 3559,
+          "listeners": 595,
+          "heapMB": 11.33,
+          "library": {
+            "cards": 4,
+            "svgNodes": 241
+          }
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "version": "157.0",
+      "results": [
+        {
+          "scenario": "studio opened (first launch → ready)",
+          "ms": 479
+        },
+        {
+          "scenario": "Home idle",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0
+        },
+        {
+          "scenario": "Material Lab · Glass idle",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0
+        },
+        {
+          "scenario": "Material Lab · Solid idle",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0
+        },
+        {
+          "scenario": "Glass · 60 rapid parameter edits",
+          "rafScheduled": 48,
+          "frames": 48,
+          "interval": {
+            "p50": 26,
+            "p95": 41,
+            "p99": 49
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0
+        },
+        {
+          "scenario": "Jello idle",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0
+        },
+        {
+          "scenario": "Jello · pointer held 3 s (hold)",
+          "rafScheduled": 37,
+          "frames": 37,
+          "interval": {
+            "p50": 17,
+            "p95": 18,
+            "p99": 18
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0
+        },
+        {
+          "scenario": "Jello · release → rebound → rest",
+          "rafScheduled": 37,
+          "frames": 37,
+          "interval": {
+            "p50": 17,
+            "p95": 18,
+            "p99": 21
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0
+        },
+        {
+          "scenario": "Jello idle after rebound (RAF must have stopped)",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0
+        },
+        {
+          "scenario": "navigation · 3 batches × 12 rounds × 7 areas (forced GC after each batch)",
+          "note": "DOM counters need CDP (Chromium)"
+        },
+        {
+          "scenario": "Home at rest after navigation (no timers/RAF left behind)",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0
+        },
+        {
+          "scenario": "Material Lab · 8 viewport changes",
+          "rafScheduled": 16,
+          "frames": 16,
+          "interval": {
+            "p50": 51,
+            "p95": 147,
+            "p99": 147
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0
+        },
+        {
+          "scenario": "Library · Jello family, 4 live previews",
+          "rafScheduled": 0,
+          "frames": 0,
+          "interval": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          },
+          "longTasks": 0,
+          "longTaskMaxMs": 0,
+          "library": {
+            "cards": 4,
+            "svgNodes": 241
+          }
+        }
+      ]
+    }
+  ]
+}
