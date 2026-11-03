@@ -1,0 +1,50 @@
+{
+  "model": "src/model/experimental/jelly-motion.ts",
+  "scenario": "press 0 ms, hold 600 ms, release, observe 3 s, 1 ms grid",
+  "rows": [
+    {
+      "preset": "jelly-soft",
+      "responseMs": 360,
+      "dampingRatio": 0.65,
+      "maxDeformation": 0.06,
+      "pressStrength": 0.65,
+      "releaseImpulse": 0.15,
+      "pressPeak": 0.0417,
+      "releaseSwing": 0.0027,
+      "restMs": 587
+    },
+    {
+      "preset": "jelly-clear",
+      "responseMs": 360,
+      "dampingRatio": 0.65,
+      "maxDeformation": 0.06,
+      "pressStrength": 0.65,
+      "releaseImpulse": 0.15,
+      "pressPeak": 0.0417,
+      "releaseSwing": 0.0027,
+      "restMs": 587
+    },
+    {
+      "preset": "jelly-candy",
+      "responseMs": 360,
+      "dampingRatio": 0.4,
+      "maxDeformation": 0.09,
+      "pressStrength": 0.65,
+      "releaseImpulse": 0.15,
+      "pressPeak": 0.0733,
+      "releaseSwing": 0.0155,
+      "restMs": 927
+    },
+    {
+      "preset": "jelly-dense",
+      "responseMs": 220,
+      "dampingRatio": 1.05,
+      "maxDeformation": 0.035,
+      "pressStrength": 0.65,
+      "releaseImpulse": 0.05,
+      "pressPeak": 0.0227,
+      "releaseSwing": 0,
+      "restMs": 330
+    }
+  ]
+}

@@ -10,7 +10,7 @@ import {
   type PreviewBackground, type PreviewSize, type PreviewState,
 } from './preview-model';
 import { setJellyView, setPrimaryBridge, useJellyView, useWorkbench } from './studio';
-import { presetDoc, type JellyWorkbench } from './workbench';
+import { presetDoc, presetLabel, type JellyWorkbench } from './workbench';
 
 const BACKEND_NAME = { svg: 'SVG', css: 'CSS' } as const;
 
@@ -138,7 +138,7 @@ function Compare({ wb, coordinator }: { wb: JellyWorkbench; coordinator: JellyCo
           <div className="jl-scale">
             <JellyButton testId={`compare-${d.id}`} doc={d} env={view.env} state={view.state} size={view.size} coordinator={coordinator} label={d.name.replace('Jelly ', '')} />
           </div>
-          <figcaption>{d.name}</figcaption>
+          <figcaption>{presetLabel(d)}</figcaption>
         </figure>
       ))}
     </div>

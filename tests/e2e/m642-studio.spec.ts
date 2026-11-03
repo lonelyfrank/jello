@@ -22,7 +22,7 @@ async function startKit(page: Page) {
 const readableText = (page: Page, selector: string) =>
   page.locator(selector).evaluate((root) => {
     // The sample Button of the preview is demonstration content, not interface text.
-    const skip = 'pre, code, textarea, input, select, script, style, [hidden], .visually-hidden, .jl-stage, .jl-compare';
+    const skip = 'pre, code, textarea, input, select, script, style, [hidden], .visually-hidden, #jl-primary';
     const out: string[] = [];
     const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let n = walk.nextNode(); n; n = walk.nextNode()) {
@@ -146,6 +146,8 @@ test.describe('Jello vocabulary (M642-05)', () => {
     const toggle = page.locator('#panelToggle');
     if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
     await expect(page.locator('#jl-reset-all')).toBeVisible();
+    await page.locator('#jl-compare').click();
+    await expect(page.locator('.jl-compare figcaption')).toHaveText(['Jello · Soft', 'Jello · Candy', 'Jello · Clear', 'Jello · Dense']);
     const text = await readableText(page, '#jelly-lab');
     await expect(page.locator('#jl-panel').getByText('Base:')).toContainText('Base: Jello · Soft');
     await expect(page.locator('#jl-reset-all')).toHaveText('Ripristina «Jello · Soft»');
