@@ -3,6 +3,7 @@
  * (docs/m642/audit-baseline.md, ids M642-NN) or a guarantee the mandate asks to be demonstrated.
  */
 import { expect, test, type Page } from '@playwright/test';
+import { showPanel } from './helpers';
 
 const ready = (page: Page) => page.waitForSelector('html[data-ready=true]');
 
@@ -161,7 +162,7 @@ test.describe('Jello vocabulary (M642-05)', () => {
     await startKit(page);
     await page.locator('#ws-builder').click();
     await page.evaluate(() => (window as unknown as { __jello: { builder: { open(id: string): void } } }).__jello.builder.open('button'));
-    await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+    await showPanel(page); // on phones the inspector is a drawer
     await expect(page.getByRole('heading', { name: 'Prova Jello · sperimentale' })).toBeAttached();
     await expect(page.getByRole('heading', { name: /Prova Jelly/ })).toHaveCount(0);
   });
@@ -172,7 +173,7 @@ test.describe('Builder fields (M642-12, 13)', () => {
     await startKit(page);
     await page.locator('#ws-builder').click();
     await page.evaluate(() => (window as unknown as { __jello: { builder: { open(id: string): void } } }).__jello.builder.open('button'));
-    await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+    await showPanel(page);
     await page.locator('select[id$="layout-radius"]').selectOption('px');
     const field = page.getByRole('textbox', { name: /Raggio/ });
     await expect(field).toBeVisible();
@@ -195,7 +196,7 @@ test.describe('reset goes back to the base, not to a generic default (M642-17, �
   async function openLab(page: Page, query: string) {
     await page.goto(`./?${query}&scene=grid&animate=0`);
     await ready(page);
-    await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+    await showPanel(page);
   }
 
   test('built-in Glass · Frosted: the field ↺ returns to 14, «Ripristina «Glass · Frosted»» to the whole preset, «Valori di base» to the family defaults', async ({ page }) => {
@@ -239,7 +240,7 @@ test.describe('reset goes back to the base, not to a generic default (M642-17, �
     if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
     await page.locator('#libTab-mine').click();
     await page.locator('[data-origin=user]').filter({ hasText: /^Glass · Frosted$/ }).first().click();
-    await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+    await showPanel(page);
     expect((await params(page)).blur).toBe(14);
     await page.locator('#num-blur').fill('33');
     await page.locator('[data-param-field="blur"] .control-reset').click();
@@ -279,8 +280,8 @@ test.describe('test backgrounds really are what their name says (M642-20)', () =
     const gradient = await raster(page, 'gradient');
     const a = at(gradient, 12, 12);
     const b = at(gradient, gradient.width - 12, gradient.height - 12);
-    // The stage frames part of a taller scene, so only a slice of the gradient shows: still a clear luminance ramp (measured ≈ 45).
-    expect(Math.abs(luminance(...a) - luminance(...b)), 'Gradient changes across the stage').toBeGreaterThan(25);
+    // The stage frames part of a taller scene, so only a slice of the gradient shows: still a clear luminance ramp (measured ≈ 45 on a desktop stage, ≈ 19 on the narrower phone stage).
+    expect(Math.abs(luminance(...a) - luminance(...b)), 'Gradient changes across the stage').toBeGreaterThan(10);
     expect(luminance(...a), 'Gradient starts dark').toBeLessThan(90);
     for (const scene of ['checkerboard', 'contrast']) {
       const share = darkShare(await raster(page, scene));
@@ -303,5 +304,22 @@ test.describe('layout (§4.1)', () => {
     await expect(page.getByRole('heading', { name: 'Layout dello Studio' })).toBeVisible();
     await page.locator('#resetLayout').click();
     expect(await stored()).toEqual({ area: 'editor', zoom: 1, leftWidth: 256, rightWidth: 336, left: true, right: true, builderPane: 'all', inspectorTab: 'all', diagnostics: true }); // the diagnostics choice is not layout
+  });
+});
+
+test.describe('typing survives a re-render (regression guard for M642-17)', () => {
+  test('an invalid value stays flagged, and the text stays, when the panel re-renders around it', async ({ page }) => {
+    await page.goto('./?preset=satin&scene=grid&animate=0'); // base blur 14 ≠ descriptor default 2: the reset descriptor differs from the stock one
+    await ready(page);
+    await showPanel(page);
+    const field = page.locator('#num-blur');
+    await field.fill('abc');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    // Anything that re-renders the Inspector (an option the panel reads) must not wipe what the person is typing.
+    await page.evaluate(() => (window as unknown as { __jello: { setOption(k: string, v: unknown): void } }).__jello.setOption('scene', 'text'));
+    await page.waitForTimeout(300);
+    await expect(field).toHaveValue('abc');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('#err-blur')).toContainText('Non è un numero');
   });
 });

@@ -4,6 +4,7 @@
  * works once the network is back.
  */
 import { expect, test, type Page } from '@playwright/test';
+import { showPanel } from './helpers';
 
 const JELLY_CHUNKS = /\/assets\/(JellyMain|jelly-lab|JellyCatalogPreview|BuilderTrial)-/;
 
@@ -58,7 +59,7 @@ test('the Builder trial chunk fails: the component, its inspector and the stable
   await page.locator('#ws-builder').click();
   await page.evaluate(() => (window as unknown as { __jello: { builder: { open(id: string): void } } }).__jello.builder.open('button'));
   const before = await page.evaluate(() => JSON.stringify((window as unknown as { __jello: { builder: { doc: unknown } } }).__jello.builder.doc));
-  await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+  await showPanel(page); // on phones the inspector is a drawer
   await page.locator('#jl-trial-toggle').check();
   await expect(page.locator('[data-experimental-failed]')).toContainText('La prova Jello non si è caricato');
   const after = await page.evaluate(() => JSON.stringify((window as unknown as { __jello: { builder: { doc: unknown } } }).__jello.builder.doc));

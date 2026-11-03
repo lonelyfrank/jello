@@ -230,6 +230,10 @@ P2 · `CreateDialog.tsx:72`: `family === 'solid' ? 'Solid' : 'Glass'` — il mod
 | Nessun import statico Jelly nel runtime produttivo | grafo import |
 | Orfani Jello (componente eliminato) conservati e recuperabili | `reconcile.ts` + `jelly-integrity.test.ts` (classificazione `orphan`, mai cancellazione automatica) |
 
+## 5.1 Dopo la baseline
+
+Questo documento è la fotografia **iniziale** e non viene riscritto. Altri problemi sono emersi durante l'implementazione con lo stesso metodo (riproduzione prima della correzione): M642-17 (reset ai default generici invece che alla base), M642-18 (chunk lazy mancante → Studio vuoto), M642-19 (`createSceneView` memorizza una promessa rifiutata), M642-20 (scene Dark/Light/Gradient/Checker/Contrast bianche), più la mancanza di un «Ripristina il layout» (§4.1). Stato, correzioni e test di tutti: `issues-and-fixes.md`.
+
 ## 6. Limiti della baseline
 
 - WebKit: NOT RUN (host).

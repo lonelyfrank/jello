@@ -29,7 +29,7 @@ Verificato in 6 viewport + landscape basso (320×640, 390×844, 768×1024, 844×
 
 ## 3. Gerarchia visiva e densità (§10.2)
 
-Lo Stage resta il centro: in Material Lab e Builder la rail è 83 px, l'Inspector 336 px (ridimensionabile e richiudibile, preferenze in `studio-preferences`, ripristino del layout in Impostazioni; `studio-redesign.spec.ts`). Nessuna sovrapposizione di pannelli e nessuna sezione che scompare in 7 viewport. Da screenshot (`studio-desktop-*`): titoli di pagina, bottoni primari (viola), azioni distruttive («Elimina…» in menu con conferma `alertdialog`), messaggi informativi e di errore sono coerenti fra loro. Tema: la chrome è scura; lo Stage segue lo schema colore (verificato con scene chiaro/scuro).
+Lo Stage resta il centro: in Material Lab e Builder la rail è 83 px, l'Inspector 336 px (ridimensionabile con trascinamento o tastiera — Home/End a min/max — e richiudibile; preferenze in `studio-preferences`, per browser; `studio-redesign.spec.ts`). **Il ripristino del layout non esisteva**: ora Impostazioni → «Layout dello Studio» → «Ripristina il layout» (larghezze, pannelli chiusi, pannello del Builder, scheda dell'Inspector, zoom; non tocca l'area corrente né «Avanzato: diagnostica»), con unit test e un e2e. Nessuna sovrapposizione di pannelli e nessuna sezione che scompare in 7 viewport. Da screenshot (`studio-desktop-*`): titoli di pagina, bottoni primari (viola), azioni distruttive («Elimina…» in menu con conferma `alertdialog`), messaggi informativi e di errore sono coerenti fra loro. Tema: Impostazioni → «Tema dell'interfaccia di prova» (Sistema / Chiaro / Scuro). In **entrambi** i temi tutte le 8 aree passano la stessa sonda (nessun nome mancante, id duplicato, overflow o secondo h1) e le coppie di token `--text`/`--muted` su `--surface`/`--surface-raised` restano ≥ 4,5:1 (`m642-a11y.spec › light/dark theme`). Con tema «Sistema» la chrome ha reso scuro in tutte le mie esecuzioni headless.
 
 Giudizi di sola interfaccia, **non** correzioni:
 - Nel Builder la sezione «Prova Jello · sperimentale» sta dentro l'Inspector del Button: va aperta per vederla; è coerente con «sperimentale, non esportabile».
@@ -48,4 +48,4 @@ Limite individuato e **non** corretto (P2): nell'area Jello β la rail mostra lo
 
 - Nessuna sessione con utenti reali, nessun eye-tracking, nessun test di comprensione del testo.
 - Nessuna revisione tipografica/spaziatura sistematica: sono stati corretti solo problemi concreti.
-- Il tema chiaro della chrome dello Studio non esiste (la chrome è scura): non è stato valutato «tema scuro vs chiaro» della chrome, solo dello Stage.
+- La coerenza fra tema chiaro e scuro è stata verificata sui **token di testo e sulle sonde strutturali**, non confrontando visivamente ogni schermata nei due temi (gli screenshot sono con tema «Sistema»).

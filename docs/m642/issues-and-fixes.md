@@ -1,6 +1,6 @@
 # M6.4.2 — Problemi e correzioni
 
-Registro finale. Gli ID M642-00…16 sono quelli di `audit-baseline.md` (riprodotti **prima** di toccare il codice); M642-17…20 sono emersi durante l'implementazione, con lo stesso metodo (riproduzione nel browser o test che fallisce prima della correzione). Nessun problema è stato inventato per giustificare una modifica: ogni riga ha un test o una prova citata.
+Registro finale. Gli ID M642-00…16 sono quelli di `audit-baseline.md` (riprodotti **prima** di toccare il codice); M642-17…21 sono emersi durante l'implementazione, con lo stesso metodo (riproduzione nel browser o test che fallisce prima della correzione). Nessun problema è stato inventato per giustificare una modifica: ogni riga ha un test o una prova citata.
 
 Priorità: **P0** bloccante · **P1** importante · **P2** rifinitura. Stato: **Corretto** · **Rinviato** (decisione esplicita, vedi motivo) · **Documentato** (non è un difetto, è una proprietà da conoscere).
 
@@ -11,8 +11,8 @@ Priorità: **P0** bloccante · **P1** importante · **P2** rifinitura. Stato: **
 | Priorità | Trovati | Corretti | Parzialmente | Rinviati |
 |---|---|---|---|---|
 | P0 | 0 | 0 | 0 | 0 |
-| P1 | 11 | 11 | 0 | 0 |
-| P2 | 10 | 7 | 1 (M642-13) | 2 (M642-14, M642-15) |
+| P1 | 11 (+1 introdotto e corretto in M6.4.2: M642-22) | 12 | 0 | 0 |
+| P2 | 11 | 8 | 1 (M642-13) | 2 (M642-14, M642-15) |
 
 ## P1
 
@@ -30,6 +30,8 @@ Priorità: **P0** bloccante · **P1** importante · **P2** rifinitura. Stato: **
 | M642-19 | **Runtime pubblico** · `createSceneView` | `loaded ??= import(...)` memorizzava per sempre una promessa rifiutata: dopo un errore di rete transitorio ogni chiamata falliva fino al reload | Un caricamento fallito non è ricordato: la chiamata successiva ritenta | `scene-loader.test.ts` (**fallisce senza la correzione**: `expected true to be false`) | `7c35a07` |
 | M642-20 | Stage DOM · scene | **Le scene «Jello Dark», «Jello Light», «Gradient», «Checker», «Contrast» (voci di «Sfondo di prova») disegnavano una pagina bianca vuota**: la regola base `.scene` (una classe, più in basso) sovrascriveva per ordine di sorgente i loro `background` | Selettori `.scene.scene-*`; `min-height` delle scene Jello come previsto | `m642-studio › test backgrounds really are what their name says` (Chromium + Firefox) | `bd6838b` |
 
+| M642-22 | Material Lab · campi numerici | **Regressione introdotta da M642-17 durante questa milestone**: il descrittore con il valore-base era un oggetto nuovo a ogni render e `NumberField` risincronizza il testo quando cambia `d`: un valore digitato (anche non valido) veniva cancellato da un re-render del pannello. Trovata dalla verifica finale completa (test esistente `navbar.spec:348` instabile su `mobile-emulated`), non dai test scritti per M642-17 | Descrittori memoizzati (`useMemo` su `[base]`) in Glass e Solid | `m642-studio › typing survives a re-render` — **fallisce sulla build con il difetto** (`Expected: "abc" · Received: "14"`), passa dopo; `navbar.spec:348` 8/8 su phone e desktop | (commit finale) |
+
 M642-20 è stato scoperto dalla matrice di screenshot, non dai test: la regressione visiva ha trovato un difetto che nessuna asserzione DOM vedeva (il confronto `m642-compare` contro `origin/main` mostra le scene cambiate al 96–98 % dei pixel, mentre `text`, `photo` e `solid` sono **identiche**).
 
 ## P2
@@ -46,6 +48,7 @@ M642-20 è stato scoperto dalla matrice di screenshot, non dai test: la regressi
 | M642-14 | Ciclo di import `definition` ↔ `navbar-desktop` ↔ `navbar-structure` | **Rinviato** | Nessun malfunzionamento: gli usi sono dentro funzioni. Rischio di un refactor > beneficio; il grafo è rieseguibile (`docs/m642/tools/import-graph.mjs`) |
 | M642-15 | `raster.spec.ts` riscrive `verification/*.json` (campo `date`) a ogni esecuzione | **Rinviato** | È un registro volontario ("verificato in questo browser, questo giorno"): va aggiornato solo quando la suite raster passa. Prima di ogni commit i file sono stati ripristinati (`git checkout verification/`) |
 | M642-16 | `CreateDialog` deduceva «Glass» da «non è Solid» | Corretto | `familyLabel()` |
+| M642-21 | Nessun modo di **ripristinare il layout** (larghezze, pannelli chiusi, scheda dell'Inspector, zoom): richiesto da §4.1 | Corretto | Impostazioni → «Layout dello Studio» → «Ripristina il layout» (`resetLayoutPreferences`: non tocca area corrente né «Avanzato: diagnostica»); `m642-quality.test.ts` + `m642-studio › layout (§4.1)` |
 
 ## Documentato (non sono difetti)
 

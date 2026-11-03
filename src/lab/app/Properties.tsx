@@ -67,7 +67,9 @@ function SolidProperties({ session }: { session: LabSession }) {
   const materialId = useLab((s) => s.materialId);
   const base = baseMaterial(doc, origin, materialId);
   // The per-field reset goes back to the base preset's value (as in the Jello lab); with no base, to the descriptor default.
-  const withBase = (d: (typeof def.params)[number]) => { const v = baseValue(base, d.key); return v === null || v === d.default ? d : ({ ...d, default: v } as typeof d); };
+  // Memoised: a NEW descriptor object makes the numeric field re-sync its text (its effect depends on `d`), which would wipe what is being typed.
+  const based = useMemo(() => new Map(def.params.map((d) => { const v = baseValue(base, d.key); return [d.key, v === null || v === d.default ? d : ({ ...d, default: v } as typeof d)] as const; })), [def, base]);
+  const withBase = (d: (typeof def.params)[number]) => based.get(d.key) ?? d;
   const [previewState, setPreviewState] = useState('default');
   return <div className="panel-inner" id="panelInner" data-family={doc.family}>
     <div className="panel-head"><h2>{doc.name}</h2><span className="chip chip-accent">{def.name}</span></div>
@@ -105,13 +107,13 @@ function GlassProperties({ session, doc }: { session: LabSession; doc: GlassDocu
   const preset = origin === 'builtin' && !modified ? materialId : '';
   const base = useMemo(() => baseMaterial(doc, origin, materialId), [doc, origin, materialId]);
   const presetInfo = BUILTIN_MATERIALS.find((b) => b.doc.id === preset);
+  // The per-field reset goes back to the base preset's value (as in the Jello lab); with no base, to the descriptor default.
+  // Memoised: a NEW descriptor object makes the numeric field re-sync its text (its effect depends on `d`), which would wipe what is being typed.
+  const resettable = useMemo(() => new Map<string, ParamDescriptor>(PARAMS.map((p) => { const from = baseValue(base, p.key); return [p.key, from === null || from === p.default ? p : ({ ...p, default: from } as ParamDescriptor)]; })), [base]);
 
   const fields = (keys: readonly string[]) =>
     keys.map((k) => {
-      const plain = PARAM_INDEX[k as keyof typeof PARAM_INDEX] as ParamDescriptor;
-      // The per-field reset goes back to the base preset's value (as in the Jello lab); with no base, to the descriptor default.
-      const from = baseValue(base, plain.key);
-      const d = from === null || from === plain.default ? plain : ({ ...plain, default: from } as ParamDescriptor);
+      const d = resettable.get(k)!;
       return (
         <ParamField
           key={d.key}
