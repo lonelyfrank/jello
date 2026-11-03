@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { COMPONENTS } from '../../components';
+import { familyLabel } from '../../model/catalog';
 import { CUSTOM_LIMITS } from '../../stage/view';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
@@ -69,7 +70,7 @@ export function CreateDialog({ session, onClose }: { session: LabSession; onClos
     const out: Record<string, Item> = {};
     const add = (i: Item) => { out[i.id] = i; };
     for (const c of components.filter((x) => x.origin === 'template')) {
-      add({ id: c.id, name: COMPONENTS.get(c.doc.type)?.name ?? c.name, sub: c.description, kw: `${c.doc.type} ${c.name} template`, project: true, tag: c.doc.material.family === 'solid' ? 'Solid' : 'Glass',
+      add({ id: c.id, name: COMPONENTS.get(c.doc.type)?.name ?? c.name, sub: c.description, kw: `${c.doc.type} ${c.name} template`, project: true, tag: familyLabel(c.doc.material.family),
         thumb: <RuntimeThumbnail doc={c.doc} />, run: go(() => { session.openComponent(c.id); openStudio(session, 'builder'); }) });
     }
     const preset = (family: string) => library.find((m) => m.origin === 'builtin' && m.doc.family === family);

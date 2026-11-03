@@ -15,6 +15,7 @@ import { countColors, countIcons, PLATFORM_LABEL, type Platform, type PreviewThe
 import { KIT_PRESETS, type ImportOutcome, type StartKind } from '../projects';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
+import { isDiagnosticId } from './catalog-ui';
 import { Ic, Segmented, StateChip, Stepper, copyText } from './ui';
 
 const tick = () => new Promise<void>((r) => setTimeout(r, 0));
@@ -226,7 +227,7 @@ function Wizard({ session }: { session: LabSession }) {
               <span className="muted small">I preset del laboratorio e una navbar di esempio.</span>
               {start === 'kit' && (
                 <span className="chip-set" role="group" aria-label="Preset da includere">
-                  {BUILTIN_MATERIALS.filter((b) => b.doc.id !== 'navbar').map((b) => (
+                  {BUILTIN_MATERIALS.filter((b) => b.doc.id !== 'navbar' && !isDiagnosticId(b.doc.id)).map((b) => (
                     <button key={b.doc.id} type="button" className="chip-toggle" aria-pressed={presets.includes(b.doc.id)} onClick={() => setPresets(presets.includes(b.doc.id) ? presets.filter((x) => x !== b.doc.id) : [...presets, b.doc.id])}>
                       {presets.includes(b.doc.id) && <Ic name="check" size={14} />}
                       {b.doc.name}

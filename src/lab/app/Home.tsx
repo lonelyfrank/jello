@@ -1,12 +1,14 @@
 import { useState, type ReactNode } from 'react';
 import { COMPONENTS } from '../../components';
-import { familyLabel } from '../../model/catalog';
+import { catalogEntry, entryMeta, familyLabel } from '../../model/catalog';
 import { RuntimeThumbnail } from './RuntimeThumbnail';
 import { GlobalSearch } from './Search';
 import { openStudio } from './StudioNav';
 import type { ProjectDoc } from '../../project/types';
 import type { LabSession } from '../session';
+import { useStudioPreferences } from '../studio-preferences';
 import { useLab } from '../store';
+import { isDiagnosticId } from './catalog-ui';
 import { MaterialThumbnail } from './Library';
 import { Ic, type IcName } from './ui';
 
@@ -97,7 +99,10 @@ interface Category {
   bg: string;
   /** Needs an active project. */
   project: boolean;
-  soon?: boolean;
+  /** Short tag drawn on the icon (e.g. «β» for the experimental family). */
+  badge?: string;
+  /** Replaces the default hover text. */
+  hint?: string;
   id?: string;
   run(): void;
 }
@@ -119,7 +124,7 @@ function useCategories(session: LabSession): Category[] {
     { key: 'btn', label: 'Button', icon: 'box', bg: 'linear-gradient(135deg, #ff9bb8, #f0457e)', project: true, run: template('button') },
     { key: 'glass', label: 'Glass', icon: 'drop', bg: 'radial-gradient(circle at 34% 28%, #fff 0 10%, #9aa6e8 45%, #3a3a9a 100%)', project: true, run: material('glass') },
     { key: 'solid', label: 'Solid', icon: 'box', bg: 'linear-gradient(135deg, #b79bff, #5a3aa0)', project: true, run: material('solid') },
-    { key: 'jelly', label: 'Jello', icon: 'drop', bg: 'radial-gradient(circle at 34% 28%, #ffd0f6 0 8%, #f04fd8 40%, #8a22c8 100%)', project: true, soon: true, run: () => undefined },
+    { key: 'jelly', label: 'Jello β', icon: 'drop', bg: 'radial-gradient(circle at 34% 28%, #ffd0f6 0 8%, #f04fd8 40%, #8a22c8 100%)', project: true, badge: 'β', hint: 'Sperimentale: materiale in prova nel Jello Lab, con pacchetto web separato', run: () => openStudio(session, 'jelly') },
     { key: 'asset', label: 'Asset', icon: 'palette', bg: 'conic-gradient(from 200deg, #ff4fd8, #6a5cff, #2ec5ff, #8cffc8, #ffb04f, #ff4fd8)', project: true, run: () => session.setPage('assets') },
     { key: 'test', label: 'Preview & Test', icon: 'eye', bg: 'linear-gradient(135deg, #8b5cf6, #4c1d95)', project: true, run: () => openStudio(session, 'preview') },
     { key: 'export', label: 'Export', icon: 'upload', bg: 'linear-gradient(135deg, #f472b6, #9d174d)', project: true, run: () => openStudio(session, 'export') },
@@ -133,13 +138,14 @@ export function HomeCategories({ session }: { session: LabSession }) {
   const cats = useCategories(session);
   return (
     <section className="home-cats" aria-label="Crea qualcosa">
+      {!hasProject && <p className="muted small home-needs" id="homeNeedsProject">Le scorciatoie grigie si attivano dopo aver creato o importato un progetto.</p>}
       {cats.map((c) => {
-        const off = c.soon || (c.project && !hasProject);
+        const off = c.project && !hasProject;
         return (
-          <button key={c.key} type="button" className="cat" id={c.id} aria-disabled={off || undefined} title={c.soon ? 'In sviluppo: non ancora disponibile' : c.project && !hasProject ? 'Serve un progetto' : undefined} onClick={() => !off && c.run()} style={off ? { opacity: c.soon ? 0.6 : 0.5 } : undefined}>
+          <button key={c.key} type="button" className="cat" id={c.id} aria-disabled={off || undefined} aria-describedby={off ? 'homeNeedsProject' : undefined} title={off ? 'Serve un progetto' : c.hint} onClick={() => !off && c.run()} style={off ? { opacity: 0.5 } : undefined}>
             <span className="cat-ic" style={{ background: c.bg }}>
               <Ic name={c.icon} size={24} />
-              {c.soon && <span className="cat-soon">presto</span>}
+              {c.badge && <span className="cat-soon" aria-hidden="true">{c.badge}</span>}
             </span>
             {c.label}
           </button>
@@ -205,6 +211,7 @@ export function Home({ session }: { session: LabSession }) {
   const components = useLab((s) => s.components);
   const [mode, setMode] = useState<Mode>('home');
   const [filter, setFilter] = useState<Filter>('all');
+  const showDiagnostics = useStudioPreferences().diagnostics;
   const active = projects.find((p) => p.id === projectId) ?? null;
 
   if (!active) return <HomeEmpty session={session} />;
@@ -226,7 +233,7 @@ export function Home({ session }: { session: LabSession }) {
     heading = 'Template e preset inclusi';
     cards = [
       ...components.filter((c) => c.origin === 'template').map((c) => componentCard(c, `Template ufficiale · ${COMPONENTS.get(c.doc.type)?.name ?? c.doc.type}`)),
-      ...library.filter((m) => m.origin === 'builtin').map((m) => materialCard(m, 'Preset incluso')),
+      ...library.filter((m) => m.origin === 'builtin' && (showDiagnostics || !isDiagnosticId(m.id))).map((m) => materialCard(m, 'Preset incluso')),
     ];
   } else {
     const mineC = components.filter((c) => c.origin === 'user').sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
@@ -294,7 +301,7 @@ export function HomeEmpty({ session }: { session: LabSession }) {
       <main className="home-main empty-main" aria-label="Primo avvio">
         <HomeHero session={session} />
         <HomeCategories session={session} />
-        <h1>Crea la tua prima componente</h1>
+        <h2 className="empty-title">Crea la tua prima componente</h2>
         <button type="button" className="button primary" id="homeComponentWizard" onClick={() => session.openFlow('component')}>Crea componente guidata</button>
         <p className="muted lead">Il tuo Workspace è vuoto. Crea un progetto o esplora il kit Jello: nessun progetto dimostrativo viene aggiunto senza la tua scelta.</p>
         <div className="start-grid">
@@ -360,5 +367,29 @@ function DemoGallery({ session }: { session: LabSession }) {
     session.openMaterial(id);
     openStudio(session, 'material');
   };
-  return <section className="home-section demo-gallery"><div className="section-head"><h2>Material Gallery</h2><span className="state-chip" data-kind="accent">Demo Jello · runtime CSS</span></div><p className="muted small">Preset inclusi. Selezionane uno per iniziare un progetto con il kit Jello. Jelly è un’ispirazione visiva del brand, il suo renderer è in sviluppo.</p><div className="tile-grid">{materials.filter((m) => m.origin === 'builtin').slice(0, 6).map((m) => <button key={m.id} type="button" className="card mat-tile" onClick={() => void create(m.id)}><MaterialThumbnail runtime doc={m.doc} /><span className="mat-tile-meta"><strong>{m.name}</strong><span className="muted small">{m.doc.family} · preset Jello</span></span></button>)}</div></section>;
+  // Designer-facing presets of the stable families, labelled by the catalog («Glass · Frosted»); never a diagnostic configuration.
+  const presets = materials.filter((m) => m.origin === 'builtin' && !isDiagnosticId(m.id));
+  return (
+    <section className="home-section demo-gallery">
+      <div className="section-head">
+        <h2>Material Gallery</h2>
+        <span className="state-chip" data-kind="accent">Glass e Solid · runtime CSS</span>
+      </div>
+      <p className="muted small">Preset inclusi. Selezionane uno per iniziare un progetto con il kit Jello. Jello (β) è una famiglia sperimentale: la provi nel Jello Lab dopo aver creato un progetto.</p>
+      <div className="tile-grid">
+        {presets.map((m) => {
+          const entry = catalogEntry(m.id);
+          return (
+            <button key={m.id} type="button" className="card mat-tile" onClick={() => void create(m.id)}>
+              <MaterialThumbnail runtime doc={m.doc} />
+              <span className="mat-tile-meta">
+                <strong>{m.name}</strong>
+                <span className="muted small">{entry ? entryMeta(entry) : familyLabel(m.doc.family)}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
 }

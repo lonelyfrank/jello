@@ -51,7 +51,7 @@ export function FieldControl({ f, value, onChange, id = fieldId(f.path), disable
             <option value="capsule">Capsula (metà dell’altezza)</option>
             <option value="px">Raggio in px</option>
           </select>
-          {!capsule && <NumberControl id={`${id}-px`} label={<label htmlFor={`${id}-px`}>Raggio</label>} min={f.min} max={f.max} step={1} unit="px" value={value as number} description="" disabled={disabled} onChange={onChange} />}
+          {!capsule && <NumberControl id={`${id}-px`} label={<label htmlFor={`${id}-px`} id={`${id}-px-label`}>Raggio</label>} min={f.min} max={f.max} step={1} unit="px" value={value as number} description="" disabled={disabled} onChange={onChange} />}
           <p className="param-desc" id={desc}>
             {f.description}
           </p>
@@ -136,11 +136,9 @@ function NumberControl(props: { id: string; label: React.ReactNode; min: number;
       <p className="param-desc" id={`${id}-desc`}>
         {description} {`${min} – ${max}${unit ? ` ${unit}` : ''}`.replace(/-(?=\d)/g, '−')}
       </p>
-      {invalid && (
-        <p className="param-error" role="status">
-          Valore non valido: non applicato.
-        </p>
-      )}
+      <p className="param-error" aria-live="polite" hidden={!invalid}>
+        {invalid ? `Valore non valido: serve un numero da ${min} a ${max}${unit ? ` ${unit}` : ''}. Non applicato.`.replace(/-(?=\d)/g, '−') : ''}
+      </p>
     </div>
   );
 }

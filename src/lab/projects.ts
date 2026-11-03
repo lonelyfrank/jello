@@ -57,7 +57,12 @@ export interface ImportOutcome {
   unlinked: string[];
 }
 
-export const KIT_PRESETS = ['jello', 'satin', 'deep', 'optics'] as const;
+/**
+ * Built-in presets copied into a project started from the kit. Designer-facing materials only: a diagnostic
+ * configuration («Refraction Test», id `optics`) is never created for the user (M6.4.2). Projects created before
+ * this change keep the copy they already have.
+ */
+export const KIT_PRESETS = ['jello', 'satin', 'deep'] as const;
 
 export class ProjectActions {
   private readonly dirty = new Set<string>();

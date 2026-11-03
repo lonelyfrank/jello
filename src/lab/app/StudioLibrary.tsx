@@ -25,7 +25,7 @@ export function StudioLibrary({ session }: { session: LabSession }) {
   const materials = useLab((s) => s.library);
   const components = useLab((s) => s.components);
   const project = useLab((s) => s.projects.find((p) => p.id === s.projectId));
-  const [category, setCategory] = useState<Category>('all');
+  const [chosen, setCategory] = useState<Category>('all');
   const [query, setQuery] = useState('');
   const [family, setFamily] = useState('all');
   const [pickedKey, setPickedKey] = useState<string | null>(null);
@@ -41,12 +41,17 @@ export function StudioLibrary({ session }: { session: LabSession }) {
     if (entry.kind === 'experimental') return id === 'all' || id === 'materials';
     return id === 'all' || (id === 'materials' && entry.kind === 'material') || (id === 'button' && entry.kind === 'component' && entry.item.doc.type === 'button') || (id === 'navigation' && entry.kind === 'component' && entry.item.doc.type.includes('navbar')) || (id === 'mine' && entry.item.origin === 'user') || (id === 'favorites' && project?.favorites.includes(entry.item.id));
   };
-  const categories: { id: Category; label: string; icon: IcName }[] = [
+  // The Jello family holds experimental catalog entries only: they are materials, never components, personal copies or favourites.
+  const all: { id: Category; label: string; icon: IcName }[] = [
     { id: 'all', label: 'Tutti gli elementi', icon: 'grid' }, { id: 'button', label: 'Buttons', icon: 'box' },
     { id: 'navigation', label: 'Navigation', icon: 'layers' }, { id: 'materials', label: 'Materiali', icon: 'drop' },
     { id: 'mine', label: 'Le mie creazioni', icon: 'user' }, { id: 'favorites', label: 'Preferiti', icon: 'heart' },
     ...(showDiagnostics && family !== 'jelly' ? [{ id: 'diagnostic' as const, label: 'Diagnostica', icon: 'eye' as IcName }] : []),
   ];
+  const categories = family === 'jelly' ? all.filter((c) => c.id === 'all' || c.id === 'materials') : all;
+  // A category that no longer exists (Jello chosen while «Buttons» was open) falls back to «Tutti».
+  const category: Category = categories.some((c) => c.id === chosen) ? chosen : 'all';
+  const countOf = (id: Category) => (id === 'diagnostic' ? diagnostics.length : entries.filter((e) => matchCategory(e, id)).length);
   const visibleEntries = category === 'diagnostic' ? diagnostics : entries;
   const shown = visibleEntries.filter((entry) => matchCategory(entry, category) && (family === 'all' || familyOf(entry) === family) && `${nameOf(entry)} ${familyLabel(familyOf(entry))} ${entry.kind === 'component' ? entry.item.doc.type : entry.kind === 'experimental' ? entryMeta(entry.entry) : presentItem(entry.item).meta}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   const keyOf = (entry: Entry) => `${entry.kind}-${idOf(entry)}`;
@@ -99,7 +104,7 @@ export function StudioLibrary({ session }: { session: LabSession }) {
       <label className="lib-search"><Ic name="search" size={22} /><span className="visually-hidden">Cerca nella Library</span><input type="search" id="catalogSearch" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cerca nella Library…" /></label>
     </section>
     <section className="home-cats lib-cats" aria-label="Categorie della libreria">
-      {categories.map((c) => <button key={c.id} type="button" className="cat" aria-pressed={category === c.id} onClick={() => setCategory(c.id)}><span className="cat-ic" style={{ background: catColors[c.id] }}><Ic name={c.icon} size={22} /></span><span>{c.label} <span className="muted count-badge">{entries.filter((e) => matchCategory(e, c.id)).length}</span></span></button>)}
+      {categories.map((c) => <button key={c.id} type="button" className="cat" aria-pressed={category === c.id} onClick={() => setCategory(c.id)}><span className="cat-ic" style={{ background: catColors[c.id] }}><Ic name={c.icon} size={22} /></span><span>{c.label} <span className="muted count-badge">{countOf(c.id)}</span></span></button>)}
     </section>
     <div className="lib-cols">
     <main className="catalog-main" aria-label="Elementi">

@@ -39,7 +39,7 @@ export interface FamilyInfo {
   /** Latest version of the family's own sections. */
   version: number;
   description: string;
-  /** The material lab can edit documents of this family. Runtime-only families are rendered but not editable yet. */
+  /** The material lab can edit documents of this family. Informative: Jello is edited in its own lab, not in the stable Material Lab. */
   editor: boolean;
   /** Features a planned family intends to provide; informative, never rendered. */
   planned?: readonly MaterialFeature[];
@@ -60,7 +60,7 @@ export const FAMILIES: readonly FamilyInfo[] = [
     status: 'available',
     version: 1,
     description: 'Superficie piena: colore, bordo, ombra ed elevazione, con stati e transizioni leggere. Nessun filtro SVG.',
-    editor: false,
+    editor: true,
   },
   {
     // `id` is the technical id persisted in documents and stays `jelly`; the family is shown as «Jello».

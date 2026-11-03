@@ -37,7 +37,7 @@ export function JellyDiagnostics() {
     return () => clearInterval(timer);
   }, [bridge]);
 
-  if (!status) return <p className="hint" id="jl-diag-empty">Nessuna superficie Jelly montata (confronto aperto o documento non valido).</p>;
+  if (!status) return <p className="hint" id="jl-diag-empty">Nessuna superficie Jello montata (confronto aperto o documento non valido).</p>;
   const rows: [string, string][] = [
     ['Backend richiesto', status.requestedBackend],
     ['Backend effettivo', `${status.backend}${status.opaque ? ' (opaco)' : ''}`],

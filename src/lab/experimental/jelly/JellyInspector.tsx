@@ -16,7 +16,7 @@ import { JellyDiagnostics } from './JellyDiagnostics';
 import { JELLY_BASE_KEYS, JELLY_INSPECTOR, changedJellyKeys } from './inspector-model';
 import { PREVIEW_STATE_LABEL, type PreviewEnv } from './preview-model';
 import { setJellyView, useJellyView, useWorkbench } from './studio';
-import type { JellyWorkbench } from './workbench';
+import { presetLabel, type JellyWorkbench } from './workbench';
 
 const idKey = (k: string) => `jelly-${k}`;
 
@@ -184,7 +184,7 @@ export function JellyInspector({ wb }: { wb: JellyWorkbench }) {
         </label>
         <Rejection id="reject-name" message={nameError} />
         <p className="hint jl-base" id="jl-base-note">
-          Base: <strong>{base.doc.name}</strong> · {changed.size === 0 ? 'nessuna modifica' : `${changed.size} parametr${changed.size === 1 ? 'o modificato' : 'i modificati'}`}
+          Base: <strong>{presetLabel(base.doc)}</strong> · {changed.size === 0 ? 'nessuna modifica' : `${changed.size} parametr${changed.size === 1 ? 'o modificato' : 'i modificati'}`}
         </p>
         <div className="inspector-level" role="group" aria-label="Livello dei controlli">
           <button type="button" className="button small" id="jl-level-base" aria-pressed={!advanced} onClick={() => setJellyView({ level: 'base' })}>Base</button>
@@ -192,8 +192,8 @@ export function JellyInspector({ wb }: { wb: JellyWorkbench }) {
           <p className="hint">{advanced ? 'Tutti i parametri, gli stati, la diagnostica e il documento.' : 'Colore, trasparenza, morbidezza, bolle, elasticità e intensità. Avanzato mostra il resto senza cambiare il documento.'}</p>
         </div>
         <div className="library-actions" role="group" aria-label="Ripristino">
-          <button type="button" className="button small" id="jl-reset-all" disabled={changed.size === 0 && Object.keys(doc.states).every((s) => JSON.stringify(doc.states[s as JellyOverrideState]) === JSON.stringify(base.doc.states[s as JellyOverrideState]))} onClick={() => wb.resetAll()}>Ripristina «{base.doc.name}»</button>
-          <button type="button" className="button small" id="jl-reset-factory" onClick={() => wb.resetFactory()} title="Valori predefiniti dei descrittori Jelly, non di un preset">Valori Jelly di base</button>
+          <button type="button" className="button small" id="jl-reset-all" disabled={changed.size === 0 && Object.keys(doc.states).every((s) => JSON.stringify(doc.states[s as JellyOverrideState]) === JSON.stringify(base.doc.states[s as JellyOverrideState]))} onClick={() => wb.resetAll()}>Ripristina «{presetLabel(base.doc)}»</button>
+          <button type="button" className="button small" id="jl-reset-factory" onClick={() => wb.resetFactory()} title="Valori predefiniti dei descrittori Jello, non di un preset">Valori Jello di base</button>
         </div>
       </div>
       <div className="panel-body">
