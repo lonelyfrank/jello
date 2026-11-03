@@ -102,18 +102,19 @@ for (const [tag, vp] of [['desktop', [1280, 860]], ['mobile', [390, 844]]]) {
   await ctx.close();
 }
 
-// ---------------------------------------------------------------- Glass and Solid presets on light and dark scenes
-{
-  const { ctx, page } = await open(browser, [1280, 860], { reducedMotion: 'reduce' });
+// ---------------------------------------------------------------- Glass and Solid presets, light and dark colour scheme
+// `scene=text` (large type behind the surface: the refraction and the blur have something to bend). The light/dark axis is the
+// browser colour scheme the Studio and its Stage follow; the scenes called jello-light/jello-dark do NOT change the DOM stage's
+// background (verified: identical rasters), so they are not used for this axis.
+for (const scheme of ['light', 'dark']) {
+  const { ctx, page } = await open(browser, [1280, 860], { reducedMotion: 'reduce', colorScheme: scheme });
   for (const [family, ids] of [['glass', ['jello', 'satin', 'deep', 'navbar']], ['solid', ['solid-neutral', 'solid-dark', 'solid-accent', 'solid-outline']]]) {
     for (const id of ids) {
-      for (const scene of ['jello-light', 'jello-dark']) {
-        await page.goto(`${BASE}?${family === 'glass' ? 'preset' : 'material'}=${id}&scene=${scene}&animate=0`);
-        await ready(page);
-        await page.addStyleTag({ content: '.stage-label{visibility:hidden!important}' });
-        await settle(page, 700);
-        await shot(page.locator('#stageMain'), `material-${family}-${id}-${scene === 'jello-light' ? 'light' : 'dark'}`, `${family} preset ${id} on the ${scene} scene (Stage raster)`, 'stage');
-      }
+      await page.goto(`${BASE}?${family === 'glass' ? 'preset' : 'material'}=${id}&scene=text&animate=0`);
+      await ready(page);
+      await page.addStyleTag({ content: '.stage-label{visibility:hidden!important}' });
+      await settle(page, 700);
+      await shot(page.locator('#stageMain'), `material-${family}-${id}-${scheme}`, `${family} preset ${id}, ${scheme} colour scheme, text scene (Stage raster)`, 'stage');
     }
   }
   await ctx.close();

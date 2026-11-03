@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-03T12:14:46.127Z",
+  "generated": "2026-11-03T12:28:42.778Z",
   "base": "http://127.0.0.1:4173/",
   "engine": "chromium",
   "count": 86,
@@ -14,7 +14,7 @@
       "file": "studio-desktop-02-material-lab.png",
       "what": "Material Lab right after the kit project (Glass Default)",
       "viewport": "1280x860",
-      "pixels": "c77fd40648a04b9f"
+      "pixels": "146dc14fb0c8ad82"
     },
     {
       "file": "studio-desktop-03-home-project.png",
@@ -38,37 +38,37 @@
       "file": "studio-desktop-06-builder-button.png",
       "what": "Component Builder · button",
       "viewport": "1280x860",
-      "pixels": "ad1978cddda29c7e"
+      "pixels": "247cab29ce2310e1"
     },
     {
       "file": "studio-desktop-06-builder-mobile-navbar.png",
       "what": "Component Builder · mobile-navbar",
       "viewport": "1280x860",
-      "pixels": "ceee4f0626a0013a"
+      "pixels": "79fbe8e0e4ec025a"
     },
     {
       "file": "studio-desktop-06-builder-desktop-navbar.png",
       "what": "Component Builder · desktop-navbar",
       "viewport": "1280x860",
-      "pixels": "b0da1e2419b9a292"
+      "pixels": "b6dc8bab7f2d7fd9"
     },
     {
       "file": "studio-desktop-07-preview-test.png",
       "what": "Preview & Test",
       "viewport": "1280x860",
-      "pixels": "6d79248928e4cdee"
+      "pixels": "d2fd146beaa8ca0c"
     },
     {
       "file": "studio-desktop-08-export.png",
       "what": "Export flow",
       "viewport": "1280x860",
-      "pixels": "ee94fdbc96c834e9"
+      "pixels": "72d8347dbfbe3607"
     },
     {
       "file": "studio-desktop-09-jello-lab.png",
       "what": "Jello β lab (experimental)",
       "viewport": "1280x860",
-      "pixels": "b0f9345b5761584f"
+      "pixels": "2cd46a33f52d5eae"
     },
     {
       "file": "studio-mobile-01-home-first-launch.png",
@@ -80,7 +80,7 @@
       "file": "studio-mobile-02-material-lab.png",
       "what": "Material Lab right after the kit project (Glass Default)",
       "viewport": "390x844",
-      "pixels": "8172c012dda1e85b"
+      "pixels": "79604fdf859cb291"
     },
     {
       "file": "studio-mobile-03-home-project.png",
@@ -104,19 +104,19 @@
       "file": "studio-mobile-06-builder-button.png",
       "what": "Component Builder · button",
       "viewport": "390x844",
-      "pixels": "3166e2868602219f"
+      "pixels": "ef7c34a0841fddce"
     },
     {
       "file": "studio-mobile-06-builder-mobile-navbar.png",
       "what": "Component Builder · mobile-navbar",
       "viewport": "390x844",
-      "pixels": "1ed8518cc9baab75"
+      "pixels": "d2e230aaf9aa3b51"
     },
     {
       "file": "studio-mobile-06-builder-desktop-navbar.png",
       "what": "Component Builder · desktop-navbar",
       "viewport": "390x844",
-      "pixels": "645ebad638251b14"
+      "pixels": "18333e987ae4144d"
     },
     {
       "file": "studio-mobile-07-preview-test.png",
@@ -140,7 +140,7 @@
       "file": "studio-desktop-10-inspector-base.png",
       "what": "Builder inspector · base",
       "viewport": "1280x860",
-      "pixels": "b55bb443845861c7"
+      "pixels": "9de742b4ba451dd7"
     },
     {
       "file": "studio-desktop-11-assets.png",
@@ -156,99 +156,99 @@
     },
     {
       "file": "material-glass-jello-light.png",
-      "what": "glass preset jello on the jello-light scene (Stage raster)",
+      "what": "glass preset jello, light colour scheme, text scene (Stage raster)",
       "viewport": "stage",
-      "pixels": "c634146bac6e892e"
-    },
-    {
-      "file": "material-glass-jello-dark.png",
-      "what": "glass preset jello on the jello-dark scene (Stage raster)",
-      "viewport": "stage",
-      "pixels": "c634146bac6e892e"
+      "pixels": "d1ded2840b11cbb3"
     },
     {
       "file": "material-glass-satin-light.png",
-      "what": "glass preset satin on the jello-light scene (Stage raster)",
+      "what": "glass preset satin, light colour scheme, text scene (Stage raster)",
       "viewport": "stage",
-      "pixels": "cb7f0e610e5825e3"
-    },
-    {
-      "file": "material-glass-satin-dark.png",
-      "what": "glass preset satin on the jello-dark scene (Stage raster)",
-      "viewport": "stage",
-      "pixels": "cb7f0e610e5825e3"
+      "pixels": "cc3dd1e91ff4d82c"
     },
     {
       "file": "material-glass-deep-light.png",
-      "what": "glass preset deep on the jello-light scene (Stage raster)",
+      "what": "glass preset deep, light colour scheme, text scene (Stage raster)",
       "viewport": "stage",
-      "pixels": "5bfaf4fef3c48534"
-    },
-    {
-      "file": "material-glass-deep-dark.png",
-      "what": "glass preset deep on the jello-dark scene (Stage raster)",
-      "viewport": "stage",
-      "pixels": "5bfaf4fef3c48534"
+      "pixels": "591ff4c2b23b9e28"
     },
     {
       "file": "material-glass-navbar-light.png",
-      "what": "glass preset navbar on the jello-light scene (Stage raster)",
+      "what": "glass preset navbar, light colour scheme, text scene (Stage raster)",
       "viewport": "stage",
-      "pixels": "9469c4f9b6b3e4e7"
-    },
-    {
-      "file": "material-glass-navbar-dark.png",
-      "what": "glass preset navbar on the jello-dark scene (Stage raster)",
-      "viewport": "stage",
-      "pixels": "9469c4f9b6b3e4e7"
+      "pixels": "c1eebc886c81aa5a"
     },
     {
       "file": "material-solid-solid-neutral-light.png",
-      "what": "solid preset solid-neutral on the jello-light scene (Stage raster)",
+      "what": "solid preset solid-neutral, light colour scheme, text scene (Stage raster)",
       "viewport": "stage",
-      "pixels": "0175db502a065d43"
-    },
-    {
-      "file": "material-solid-solid-neutral-dark.png",
-      "what": "solid preset solid-neutral on the jello-dark scene (Stage raster)",
-      "viewport": "stage",
-      "pixels": "0175db502a065d43"
+      "pixels": "9fc3a1da40b4a0a7"
     },
     {
       "file": "material-solid-solid-dark-light.png",
-      "what": "solid preset solid-dark on the jello-light scene (Stage raster)",
+      "what": "solid preset solid-dark, light colour scheme, text scene (Stage raster)",
       "viewport": "stage",
-      "pixels": "2be9174043b0e5d9"
-    },
-    {
-      "file": "material-solid-solid-dark-dark.png",
-      "what": "solid preset solid-dark on the jello-dark scene (Stage raster)",
-      "viewport": "stage",
-      "pixels": "2be9174043b0e5d9"
+      "pixels": "c188c7cc8a2e5625"
     },
     {
       "file": "material-solid-solid-accent-light.png",
-      "what": "solid preset solid-accent on the jello-light scene (Stage raster)",
+      "what": "solid preset solid-accent, light colour scheme, text scene (Stage raster)",
       "viewport": "stage",
-      "pixels": "7fd3bf164b1163cc"
-    },
-    {
-      "file": "material-solid-solid-accent-dark.png",
-      "what": "solid preset solid-accent on the jello-dark scene (Stage raster)",
-      "viewport": "stage",
-      "pixels": "7fd3bf164b1163cc"
+      "pixels": "be0326eab5dae91f"
     },
     {
       "file": "material-solid-solid-outline-light.png",
-      "what": "solid preset solid-outline on the jello-light scene (Stage raster)",
+      "what": "solid preset solid-outline, light colour scheme, text scene (Stage raster)",
       "viewport": "stage",
-      "pixels": "4830035bd8ac9adc"
+      "pixels": "5eee077b0e4fbfe7"
+    },
+    {
+      "file": "material-glass-jello-dark.png",
+      "what": "glass preset jello, dark colour scheme, text scene (Stage raster)",
+      "viewport": "stage",
+      "pixels": "bf8d1fb2c7a13be0"
+    },
+    {
+      "file": "material-glass-satin-dark.png",
+      "what": "glass preset satin, dark colour scheme, text scene (Stage raster)",
+      "viewport": "stage",
+      "pixels": "9889f19ea325b6cd"
+    },
+    {
+      "file": "material-glass-deep-dark.png",
+      "what": "glass preset deep, dark colour scheme, text scene (Stage raster)",
+      "viewport": "stage",
+      "pixels": "7fe5e3ab8794cc99"
+    },
+    {
+      "file": "material-glass-navbar-dark.png",
+      "what": "glass preset navbar, dark colour scheme, text scene (Stage raster)",
+      "viewport": "stage",
+      "pixels": "933482a91eb915eb"
+    },
+    {
+      "file": "material-solid-solid-neutral-dark.png",
+      "what": "solid preset solid-neutral, dark colour scheme, text scene (Stage raster)",
+      "viewport": "stage",
+      "pixels": "d800ee573041b2fb"
+    },
+    {
+      "file": "material-solid-solid-dark-dark.png",
+      "what": "solid preset solid-dark, dark colour scheme, text scene (Stage raster)",
+      "viewport": "stage",
+      "pixels": "369359f3871ddb08"
+    },
+    {
+      "file": "material-solid-solid-accent-dark.png",
+      "what": "solid preset solid-accent, dark colour scheme, text scene (Stage raster)",
+      "viewport": "stage",
+      "pixels": "843a7ecf71b4b52c"
     },
     {
       "file": "material-solid-solid-outline-dark.png",
-      "what": "solid preset solid-outline on the jello-dark scene (Stage raster)",
+      "what": "solid preset solid-outline, dark colour scheme, text scene (Stage raster)",
       "viewport": "stage",
-      "pixels": "4830035bd8ac9adc"
+      "pixels": "766471be1981e9fd"
     },
     {
       "file": "component-button-glass-default.png",
@@ -386,7 +386,7 @@
       "file": "jello-motion-jelly-soft-2-press.png",
       "what": "jelly-soft · 2-press",
       "viewport": "clip",
-      "pixels": "b0198817bbcfb859"
+      "pixels": "3abda451e08a3a1a"
     },
     {
       "file": "jello-motion-jelly-soft-3-hold.png",
@@ -398,13 +398,13 @@
       "file": "jello-motion-jelly-soft-4-release.png",
       "what": "jelly-soft · 4-release",
       "viewport": "clip",
-      "pixels": "e46faa47bf627476"
+      "pixels": "c3b7aa137d3e3787"
     },
     {
       "file": "jello-motion-jelly-soft-5-rebound.png",
       "what": "jelly-soft · 5-rebound",
       "viewport": "clip",
-      "pixels": "c427595b45766a14"
+      "pixels": "d9039c3dc4d18070"
     },
     {
       "file": "jello-motion-jelly-soft-6-rest.png",
@@ -422,7 +422,7 @@
       "file": "jello-motion-jelly-clear-2-press.png",
       "what": "jelly-clear · 2-press",
       "viewport": "clip",
-      "pixels": "d1fb87cbfc8e3347"
+      "pixels": "545517c03fa20c94"
     },
     {
       "file": "jello-motion-jelly-clear-3-hold.png",
@@ -434,13 +434,13 @@
       "file": "jello-motion-jelly-clear-4-release.png",
       "what": "jelly-clear · 4-release",
       "viewport": "clip",
-      "pixels": "005b0ad42f5dd0df"
+      "pixels": "cd4a363bd43f93ae"
     },
     {
       "file": "jello-motion-jelly-clear-5-rebound.png",
       "what": "jelly-clear · 5-rebound",
       "viewport": "clip",
-      "pixels": "e934cdfd57bbdc63"
+      "pixels": "6fd315cafb1e3216"
     },
     {
       "file": "jello-motion-jelly-clear-6-rest.png",
@@ -458,7 +458,7 @@
       "file": "jello-motion-jelly-candy-2-press.png",
       "what": "jelly-candy · 2-press",
       "viewport": "clip",
-      "pixels": "435b929f49fb2d45"
+      "pixels": "9997d8252e36e27f"
     },
     {
       "file": "jello-motion-jelly-candy-3-hold.png",
@@ -470,13 +470,13 @@
       "file": "jello-motion-jelly-candy-4-release.png",
       "what": "jelly-candy · 4-release",
       "viewport": "clip",
-      "pixels": "658ef5b3b8e3c545"
+      "pixels": "9b4ba98c941927be"
     },
     {
       "file": "jello-motion-jelly-candy-5-rebound.png",
       "what": "jelly-candy · 5-rebound",
       "viewport": "clip",
-      "pixels": "0daed4558041282c"
+      "pixels": "9d20c7bac951b620"
     },
     {
       "file": "jello-motion-jelly-candy-6-rest.png",
@@ -494,7 +494,7 @@
       "file": "jello-motion-jelly-dense-2-press.png",
       "what": "jelly-dense · 2-press",
       "viewport": "clip",
-      "pixels": "a0616f8cbd7fa10d"
+      "pixels": "cb5c6c162797d3ac"
     },
     {
       "file": "jello-motion-jelly-dense-3-hold.png",
@@ -506,7 +506,7 @@
       "file": "jello-motion-jelly-dense-4-release.png",
       "what": "jelly-dense · 4-release",
       "viewport": "clip",
-      "pixels": "74229cded1201de5"
+      "pixels": "165623560345a12d"
     },
     {
       "file": "jello-motion-jelly-dense-5-rebound.png",
