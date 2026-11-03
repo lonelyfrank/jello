@@ -61,9 +61,9 @@ test.describe('Jelly Studio (M6.4)', () => {
     expect(jelly.length).toBeGreaterThan(0);
     await expect(page.locator('#jellyHeroSub')).toContainText('non ufficiale');
     await expect(page.locator('#jl-experimental-note')).toContainText('Sperimentale');
-    // Never promoted: the stable catalogue still lists Jelly as in development.
+    // Never promoted: the stable catalogue still lists Jello as in development.
     await page.locator('#ws-material').click();
-    await expect(page.locator('.soon-card', { hasText: 'Jelly' })).toBeAttached();
+    await expect(page.locator('.soon-card', { hasText: 'Jello' })).toBeAttached();
   });
 
   test('uses the real renderer: Soft selected, SVG backend, every descriptor reachable in Advanced', async ({ page }) => {

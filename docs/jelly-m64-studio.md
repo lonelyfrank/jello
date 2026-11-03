@@ -1,5 +1,8 @@
 # Jelly nello Studio (M6.4) — architettura, persistenza, export, limiti
 
+> **Aggiornamento M6.4.1.** L'area si chiama ora «Jello β» (nome visualizzato della famiglia; id tecnico `jelly`). Il database sperimentale è alla versione 2 (revisioni + quarantena), `purgeOrphans` è stato rimosso e sostituito da verifica/quarantena esplicite, il salvataggio è protetto da compare-and-swap tra schede: vedi [jelly-m641-integrity.md](jelly-m641-integrity.md) e [material-catalog.md](material-catalog.md). Il testo che segue descrive M6.4.
+
+
 Funzione **sperimentale**. Jelly resta `planned` in `FAMILIES`, versione pubblica 0, `editor:false`:
 non è un materiale ufficiale, non è selezionabile dai componenti, non è nel runtime produttivo.
 

@@ -22,25 +22,19 @@ export const PRESET_DISPLAY_NAMES = {
   'solid-dark': 'Solid · Dark',
   'solid-accent': 'Solid · Accent Blue',
   'solid-outline': 'Solid · Outlined',
-  // Jello (technical family id `jelly`), experimental candidates
-  'jelly-soft': 'Jello · Soft',
-  'jelly-clear': 'Jello · Clear',
-  'jelly-candy': 'Jello · Candy',
-  'jelly-dense': 'Jello · Dense',
 } as const;
 
-export type CatalogPresetId = keyof typeof PRESET_DISPLAY_NAMES;
+export type StablePresetId = keyof typeof PRESET_DISPLAY_NAMES;
 
-export const isCatalogPresetId = (id: string): id is CatalogPresetId => Object.hasOwn(PRESET_DISPLAY_NAMES, id);
+export const isStablePresetId = (id: string): id is StablePresetId => Object.hasOwn(PRESET_DISPLAY_NAMES, id);
 
-/** Display name of a built-in preset; throws for an id the catalog does not know (a typo must not ship). */
-export function presetName(id: CatalogPresetId): string {
+/**
+ * Display name of a stable (Glass or Solid) built-in preset. The names of the experimental Jello presets are NOT here:
+ * this module ships in the exportable runtime, which must not carry the experimental family's vocabulary
+ * (see ./experimental-names.ts, reached only through the catalog).
+ */
+export function presetName(id: StablePresetId): string {
   return PRESET_DISPLAY_NAMES[id];
-}
-
-/** Display name when the id may be anything (a stored reference); undefined when it is not a catalog preset. */
-export function presetDisplayName(id: string | null | undefined): string | undefined {
-  return id && isCatalogPresetId(id) ? PRESET_DISPLAY_NAMES[id] : undefined;
 }
 
 /**
@@ -63,5 +57,5 @@ export const LEGACY_PRESET_NAMES: Readonly<Record<string, string>> = {
 
 /** The name to hash for `materialRevision`: the pre-M6.4.1 name for a built-in preset carrying its current display name. */
 export function revisionName(id: string, name: string): string {
-  return isCatalogPresetId(id) && name === PRESET_DISPLAY_NAMES[id] && Object.hasOwn(LEGACY_PRESET_NAMES, id) ? LEGACY_PRESET_NAMES[id]! : name;
+  return isStablePresetId(id) && name === PRESET_DISPLAY_NAMES[id] && Object.hasOwn(LEGACY_PRESET_NAMES, id) ? LEGACY_PRESET_NAMES[id]! : name;
 }

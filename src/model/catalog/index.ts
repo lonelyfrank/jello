@@ -23,9 +23,18 @@ import { familyInfo, FAMILIES, type FamilyId, type FamilyInfo, type MaterialFeat
 import { MATERIALS } from '../registry';
 import { glassParams } from '../document';
 import { solidParams } from '../solid';
-import { isCatalogPresetId, presetName, type CatalogPresetId } from './names';
+import { JELLO_PRESET_NAMES } from './experimental-names';
+import { PRESET_DISPLAY_NAMES as STABLE_NAMES } from './names';
 
-export { PRESET_DISPLAY_NAMES, presetDisplayName, presetName, type CatalogPresetId } from './names';
+/** Every preset the catalog names: stable (./names.ts) and experimental (./experimental-names.ts). One entry per id. */
+export const PRESET_DISPLAY_NAMES = { ...STABLE_NAMES, ...JELLO_PRESET_NAMES } as const;
+export type CatalogPresetId = keyof typeof PRESET_DISPLAY_NAMES;
+export const isCatalogPresetId = (id: string): id is CatalogPresetId => Object.hasOwn(PRESET_DISPLAY_NAMES, id);
+export const presetName = (id: CatalogPresetId): string => PRESET_DISPLAY_NAMES[id];
+/** Display name when the id may be anything (a stored reference); undefined when it is not a catalog preset. */
+export function presetDisplayName(id: string | null | undefined): string | undefined {
+  return id && isCatalogPresetId(id) ? PRESET_DISPLAY_NAMES[id] : undefined;
+}
 
 /** `diagnostic` entries exist for verification and compatibility; they are not designer-facing materials. */
 export type CatalogEntryKind = 'material-preset' | 'diagnostic';

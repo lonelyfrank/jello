@@ -289,6 +289,12 @@ describe('material catalog boundary (M6.4.1)', () => {
     }
   });
 
+  it('the exportable runtime never carries the experimental Jello vocabulary', () => {
+    for (const entry of ['src/runtime/index.ts', 'src/export/adapters.ts', 'src/export/package.ts']) {
+      expect(graph(entry).files.filter((f) => f.endsWith('experimental-names.ts')), entry).toEqual([]);
+    }
+  });
+
   it('the names module is dependency-free', () => {
     const g = graph('src/model/catalog/names.ts');
     expect(g.files).toEqual(['src/model/catalog/names.ts']);

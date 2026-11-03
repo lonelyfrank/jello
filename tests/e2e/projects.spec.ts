@@ -116,7 +116,7 @@ test.describe('projects', () => {
     await page.locator('#libTab-favorites').click();
     await expect(page.getByText('Nessun preferito')).toBeVisible();
     await page.locator('#libTab-mine').click();
-    await page.getByRole('button', { name: /Aggiungi «Satinato» ai preferiti/ }).click();
+    await page.getByRole('button', { name: /Aggiungi «Glass · Frosted» ai preferiti/ }).click();
     await expect(page.locator('#libTab-favorites .count-badge')).toHaveText('1');
     await saved(page);
     await page.locator('#libTab-favorites').click();
@@ -266,9 +266,9 @@ test.describe('export and import', () => {
     ['skip', 'Salta', 14, 4],
     ['both', 'Mantieni entrambi', 14, 5],
   ] as const) {
-    test(`a pasted material with an existing name: «${label}» leaves ${count} materials and Satinato at blur ${blur}`, async ({ page }) => {
+    test(`a pasted material with an existing name: «${label}» leaves ${count} materials and Glass · Frosted at blur ${blur}`, async ({ page }) => {
       await startKit(page);
-      const base = createGlassDocument({ id: 'imp-satinato', name: 'Satinato' });
+      const base = createGlassDocument({ id: 'imp-satinato', name: 'Glass · Frosted' });
       const text = serializeMaterial(withGlassParams(base, { ...glassParams(base), blur: 33 }));
       await page.locator('#brandHome').click();
       await page.locator('#headerImport').click();
@@ -285,7 +285,7 @@ test.describe('export and import', () => {
       await showPanel(page);
       await expect(page.locator('#libTab-mine .count-badge')).toHaveText(String(count));
       await page.locator('#libTab-mine').click();
-      await page.locator('[data-origin=user]').filter({ hasText: /^Satinato$/ }).first().click();
+      await page.locator('[data-origin=user]').filter({ hasText: /^Glass · Frosted$/ }).first().click();
       const got = await page.evaluate(() => (window as unknown as { __jello: { params: { blur: number } } }).__jello.params.blur);
       expect(got).toBe(blur);
       void choice;
@@ -312,9 +312,9 @@ test.describe('shell', () => {
   test('global search finds a material and opens it; Settings shows where the data lives', async ({ page }) => {
     await startKit(page);
     await page.locator('#brandHome').click();
-    await page.getByRole('combobox', { name: 'Cerca', exact: true }).fill('lente');
-    await page.getByRole('option', { name: 'Lente marcata Materiale', exact: true }).click();
-    await expect(page.locator('#crumbPreset')).toHaveText('Lente marcata');
+    await page.getByRole('combobox', { name: 'Cerca', exact: true }).fill('refractive');
+    await page.getByRole('option', { name: 'Glass · Refractive Materiale', exact: true }).click();
+    await expect(page.locator('#crumbPreset')).toHaveText('Glass · Refractive');
     await page.locator('#brandHome').click();
     await page.locator('#studioSettings').click();
     await expect(page.locator('#settingsPage')).toContainText('salvati in questo browser');
