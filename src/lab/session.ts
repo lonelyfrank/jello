@@ -116,6 +116,7 @@ import type { ProjectDoc } from '../project/types';
 import { ProjectActions, projectDocId } from './projects';
 import { remapMaterialReference, unlinkMaterial } from '../project/references';
 import { followingComponents } from './material-links';
+import { baseMaterial } from './material-base';
 
 const now = () => new Date().toISOString();
 const PAGES: readonly Page[] = ['home', 'lab', 'assets', 'settings'];
@@ -465,6 +466,16 @@ export class LabSession {
   setParams(patch: Partial<GlassParams>): void {
     if (this.state.doc.family !== 'glass') return;
     this.applyDoc(withGlassParams(this.state.doc, { ...glassParams(this.state.doc), ...patch }));
+  }
+
+  /** Back to the base preset (built-in, or the preset a personal material was copied from): all parameters, name and metadata kept. */
+  resetToBase(): boolean {
+    const { doc, origin, materialId } = this.state;
+    const base = baseMaterial(doc, origin, materialId);
+    if (!base || base.family !== doc.family) return false;
+    if (doc.family === 'glass' && base.family === 'glass') this.applyDoc(withGlassParams(doc, glassParams(base)));
+    else this.applyDoc({ ...base, id: doc.id, name: doc.name, meta: doc.meta });
+    return true;
   }
 
   resetParams(): void {

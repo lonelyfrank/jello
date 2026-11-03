@@ -187,3 +187,61 @@ test.describe('Builder fields (M642-12, 13)', () => {
     await expect(page.locator('.param-error:not([hidden])')).toHaveCount(0);
   });
 });
+
+test.describe('reset goes back to the base, not to a generic default (M642-17, §4.2)', () => {
+  const params = (page: Page) => page.evaluate(() => (window as unknown as { __jello: { params: Record<string, unknown> } }).__jello.params);
+  async function openLab(page: Page, query: string) {
+    await page.goto(`./?${query}&scene=grid&animate=0`);
+    await ready(page);
+    await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+  }
+
+  test('built-in Glass · Frosted: the field ↺ returns to 14, «Ripristina «Glass · Frosted»» to the whole preset, «Valori di base» to the family defaults', async ({ page }) => {
+    await openLab(page, 'preset=satin');
+    const start = await params(page);
+    expect(start.blur).toBe(14);
+    const reset = page.locator('[data-param-field="blur"] .control-reset');
+    await expect(reset).toBeDisabled(); // already at its starting value
+    await page.locator('#num-blur').fill('30');
+    await page.locator('#num-saturation').fill('50');
+    await expect(reset).toBeEnabled();
+    await expect(reset).toHaveAttribute('title', 'Valore di partenza: 14 px');
+    await reset.click();
+    expect((await params(page)).blur).toBe(14); // not 2, the descriptor default
+    expect((await params(page)).saturation).toBe(50); // other fields untouched
+    await expect(page.locator('#resetToBase')).toHaveText('Ripristina «Glass · Frosted»');
+    await page.locator('#resetToBase').click();
+    expect(await params(page)).toEqual(start);
+    await expect(page.locator('#resetToBase')).toBeDisabled(); // nothing left to restore
+    await page.locator('#resetParams').click();
+    expect((await params(page)).blur).toBe(2); // the family default is still one explicit click away, and says so
+    await expect(page.locator('#resetParams')).toHaveText('Valori di base Glass');
+  });
+
+  test('built-in Solid · Dark: the field ↺ returns to the preset value', async ({ page }) => {
+    await openLab(page, 'material=solid-dark');
+    const field = page.locator('#num-borderWidth');
+    const start = await field.inputValue();
+    await field.fill('6');
+    await page.locator('[data-param-field="borderWidth"] .control-reset').click();
+    await expect(field).toHaveValue(start);
+    await page.locator('#num-elevation').fill('5');
+    await page.locator('#resetToBase').click();
+    await expect(page.locator('#num-elevation')).not.toHaveValue('5');
+  });
+
+  test('a personal copy goes back to the preset it was copied from', async ({ page }) => {
+    await startKit(page);
+    await page.locator('#ws-material').click();
+    const toggle = page.locator('#panelToggle');
+    if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+    await page.locator('#libTab-mine').click();
+    await page.locator('[data-origin=user]').filter({ hasText: /^Glass · Frosted$/ }).first().click();
+    await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+    expect((await params(page)).blur).toBe(14);
+    await page.locator('#num-blur').fill('33');
+    await page.locator('[data-param-field="blur"] .control-reset').click();
+    expect((await params(page)).blur).toBe(14);
+    await expect(page.locator('#resetToBase')).toHaveText('Ripristina «Glass · Frosted»');
+  });
+});
