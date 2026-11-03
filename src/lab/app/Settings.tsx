@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { PLATFORM_LABEL, type DefaultPath, type Platform, type PreviewTheme } from '../../project/types';
 import type { LabSession } from '../session';
+import { resetLayoutPreferences } from '../studio-preferences';
 import { useLab } from '../store';
 import { Ic, Segmented, StateChip, Switch, type ChipKind } from './ui';
 
@@ -67,6 +68,16 @@ export function SettingsPage({ session }: { session: LabSession }) {
           ) : (
             <p className="muted">Nessun progetto attivo.</p>
           )}
+        </section>
+
+        <section className="card pad-card" aria-labelledby="s-layout">
+          <h2 id="s-layout">Layout dello Studio</h2>
+          <p className="muted small">Larghezza dei pannelli, pannelli chiusi, scheda dell’Inspector e zoom sono preferenze di questo browser: non entrano nei progetti né nei backup.</p>
+          <div className="row-actions">
+            <button type="button" className="button" id="resetLayout" onClick={() => resetLayoutPreferences()}>
+              Ripristina il layout
+            </button>
+          </div>
         </section>
 
         <section className="card pad-card" aria-labelledby="s-storage">

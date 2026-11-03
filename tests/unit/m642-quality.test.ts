@@ -28,3 +28,12 @@ describe('M642-10 · family metadata says what the Studio does', () => {
     for (const f of FAMILIES) expect(f.editor, f.id).toBe(f.status === 'available');
   });
 });
+
+describe('§4.1 · layout reset', () => {
+  it('restores widths, closed panels, panes and zoom, and keeps the area and the diagnostics choice', async () => {
+    const prefs = await import('../../src/lab/studio-preferences');
+    prefs.setStudioPreferences({ leftWidth: 360, rightWidth: 440, left: false, right: false, builderPane: 'assets', inspectorTab: 'advanced', zoom: 1.5, diagnostics: true, area: 'library' });
+    prefs.resetLayoutPreferences();
+    expect(prefs.studioPreferences()).toEqual({ area: 'library', diagnostics: true, zoom: 1, leftWidth: 256, rightWidth: 336, left: true, right: true, builderPane: 'all', inspectorTab: 'all' });
+  });
+});

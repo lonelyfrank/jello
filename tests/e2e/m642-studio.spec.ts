@@ -289,3 +289,19 @@ test.describe('test backgrounds really are what their name says (M642-20)', () =
     }
   });
 });
+
+test.describe('layout (§4.1)', () => {
+  test('Impostazioni restores the default layout; the layout survives a reload until then', async ({ page }) => {
+    await startKit(page);
+    const KEY = 'jello-studio-preferences-v1';
+    const stored = () => page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? 'null') as Record<string, unknown> | null, KEY);
+    await page.evaluate((k) => localStorage.setItem(k, JSON.stringify({ area: 'editor', zoom: 1.25, leftWidth: 340, rightWidth: 420, left: false, right: false, builderPane: 'assets', inspectorTab: 'advanced', diagnostics: true })), KEY);
+    await page.reload();
+    await ready(page);
+    expect(await stored()).toMatchObject({ leftWidth: 340, left: false, builderPane: 'assets' }); // persisted, not silently reset
+    await page.locator('#studioSettings').click();
+    await expect(page.getByRole('heading', { name: 'Layout dello Studio' })).toBeVisible();
+    await page.locator('#resetLayout').click();
+    expect(await stored()).toEqual({ area: 'editor', zoom: 1, leftWidth: 256, rightWidth: 336, left: true, right: true, builderPane: 'all', inspectorTab: 'all', diagnostics: true }); // the diagnostics choice is not layout
+  });
+});

@@ -120,3 +120,44 @@ test('keyboard: every tab stop of the Home and of the Library shows a focus indi
   }
   expect(lacking).toEqual([]);
 });
+
+/** WCAG relative luminance contrast of two sRGB colours given as `rgb(r, g, b)` / `rgba(...)` strings. */
+function contrast(a: string, b: string): number {
+  const lum = (css: string) => {
+    const [r, g, bl] = (css.match(/[\d.]+/g) ?? ['0', '0', '0']).slice(0, 3).map(Number).map((v) => { const c = v / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; });
+    return 0.2126 * r! + 0.7152 * g! + 0.0722 * bl!;
+  };
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+}
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`${theme} theme: every area is clean and text keeps ≥ 4.5:1 against its surface (§10.2, §10.6)`, async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 860 });
+    await page.goto('./');
+    await page.waitForSelector('html[data-ready=true]');
+    await page.locator('#startKit').click();
+    await expect(page.locator('#lab')).toBeVisible();
+    // The theme of the interface (Impostazioni → «Tema dell'interfaccia di prova»), set through the same option the control writes.
+    await page.evaluate((t) => (window as unknown as { __jello: { setOption(k: string, v: unknown): void } }).__jello.setOption('theme', t), theme);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    const found: string[] = [];
+    const ratios: Record<string, number> = {};
+    for (const [id, label] of AREAS) {
+      await page.locator(`#${id}`).click();
+      await page.waitForTimeout(label === 'Jello β' ? 1500 : 500);
+      for (const p of await audit(page)) found.push(`${label}: ${p}`);
+      // The tokens the Studio's own text uses, against the surfaces it is drawn on.
+      const t = await page.evaluate(() => {
+        const s = getComputedStyle(document.querySelector('#app')!);
+        const colour = (token: string) => { const probe = document.createElement('span'); probe.style.color = `var(${token})`; document.querySelector('#app')!.append(probe); const c = getComputedStyle(probe).color; probe.remove(); return c; };
+        return Object.fromEntries(['--text', '--muted', '--surface', '--surface-raised'].map((k) => [k, s.getPropertyValue(k) ? colour(k) : '']));
+      });
+      for (const fg of ['--text', '--muted']) for (const bg of ['--surface', '--surface-raised']) if (t[fg] && t[bg]) ratios[`${label} ${fg} on ${bg}`] = Math.round(contrast(t[fg]!, t[bg]!) * 100) / 100;
+    }
+    expect(found).toEqual([]);
+    const low = Object.entries(ratios).filter(([, r]) => r < 4.5);
+    expect(low, `contrast under 4.5:1 (${Object.keys(ratios).length} pairs measured)`).toEqual([]);
+    expect(Object.keys(ratios).length).toBeGreaterThan(0);
+  });
+}
