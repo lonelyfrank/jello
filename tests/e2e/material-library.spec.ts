@@ -125,6 +125,8 @@ test.describe('Two tabs of the Jello lab (M6.4.1)', () => {
     expect(stored).toBe(9);
 
     // choose: keep both
+    await drawer(b, true);
+    await b.locator('#jl-conflict').scrollIntoViewIfNeeded();
     await b.locator('#jl-conflict-copy').click();
     await expect(b.locator('#jl-conflict')).toHaveCount(0);
     await expect(b.locator('.jl-record')).toHaveCount(2);
