@@ -3,7 +3,7 @@ import { parseExperimentalJelly, resolveExperimentalJelly, type JellyExperimenta
 import { bubbleCandidates, bubbleCount, jellyGeometry, jellyOptics, opticalQuality, projectBubble, type BubbleCandidate, type OpticalQuality } from '../../model/experimental/jelly-visual';
 import { initJellyMotion, evolveJellyMotion, pressJellyMotion, resetJellyMotion, configureJellyMotion, jellyMotionSettled, type JellyMotion } from '../../model/experimental/jelly-motion';
 import { createJellyCoordinator, type JellyCoordinator } from './jelly-scheduler';
-import { jellyContact, surfacePoint, type JellyContact, type JellyOptics } from '../../model/experimental/jelly-visual';
+import { jellyContact, surfacePoint, type JellyContact, type JellyOptics, type JellyTreatment } from '../../model/experimental/jelly-visual';
 import type { JellyMaterial } from '../../model/experimental/jelly';
 import type { MaterialSurface } from '../material-types';
 import './jelly.css';
@@ -16,7 +16,12 @@ export interface JellyRenderOptions {
   /** Deterministic fallback test / environment capability policy, not a visual-quality probe. */
   svgAvailable?: boolean;
   diagnosticPose?: number;
+  /** Render treatment under evaluation (M6.4.3). Never persisted; omitted = the historical 'm642' rendering. */
+  treatment?: JellyTreatment;
+  /** Diagnostic only, honoured by the 'm643' treatment: which inclusion layers to draw (default all three). */
+  diagnosticBubbleParts?: readonly BubblePart[];
 }
+export type BubblePart = 'gradient' | 'rim' | 'crescent';
 export interface JellyRenderStatus {
   requestedBackend: 'auto' | 'svg' | 'css'; backend: 'svg' | 'css';
   requestedProfile: JellyExperimentalDocument['quality']['profile']; opticalProfile: OpticalQuality;
@@ -42,6 +47,7 @@ function validated(input: JellyExperimentalDocument): JellyExperimentalDocument 
 function validateOptions(o: JellyRenderOptions): void {
   if (o.radius !== undefined && (!Number.isFinite(o.radius) || o.radius < 0)) throw new Error('Raggio host non valido');
   if (o.diagnosticPose !== undefined && !Number.isFinite(o.diagnosticPose)) throw new Error('Posa non valida');
+  if (o.treatment !== undefined && o.treatment !== 'm642' && o.treatment !== 'm643') throw new Error('Trattamento non valido');
 }
 
 export class ExperimentalJellySurface implements MaterialSurface {
@@ -75,6 +81,7 @@ export class ExperimentalJellySurface implements MaterialSurface {
   private image: SVGSVGElement | null = null;
   private parts: Record<string, SVGElement> = {};
   private bubbleNodes: SVGGElement[] = [];
+  private bubbleKind = '';
   private candidates: BubbleCandidate[] = [];
   private seed: number | null = null;
   private width = 0;
@@ -257,6 +264,7 @@ export class ExperimentalJellySurface implements MaterialSurface {
     gradient('light', [[0, '#fff', 0.8], [60, '#fff', 0.28], [100, '#fff', 0]], true);
     gradient('gloss', [[0, '#fff', 0.95], [50, '#fff', 0.38], [100, '#fff', 0.02]]);
     gradient('bubble', [[0, '#142238', 0.15], [62, '#fff', 0.03], [88, '#fff', 0.5], [100, '#122036', 0.85]], true);
+    gradient('bubble3', [[0, '#fff', 0.2], [58, '#fff', 0.06], [84, '#fff', 0.6], [100, '#fff', 0.92]], true);
     gradient('core', [[0, '#fff', 0.5], [58, '#fff', 0.14], [100, '#fff', 0]], true);
     attributes(this.parts.core!, { cx: '45%', cy: '43%', r: '68%' });
     const clip = svg('clipPath', { id: `${this.id}-clip`, clipPathUnits: 'userSpaceOnUse' });
@@ -364,18 +372,43 @@ export class ExperimentalJellySurface implements MaterialSurface {
       attributes(this.parts.gleam!, { 'stroke-width': 1+o.highlight, opacity: o.highlight*0.8, filter: `url(#${this.id}-soften)` });
       attributes(this.parts.caustic!, { 'stroke-width': 1+m.thickness*2, opacity: 0.1+m.transmission*m.thickness*0.45 });
     } else if (this.image) this.image.style.display = 'none';
+    const treatment = this.options.treatment ?? 'm642';
+    const parts = new Set<BubblePart>(treatment === 'm643' ? this.options.diagnosticBubbleParts ?? ['gradient', 'rim', 'crescent'] : []);
+    const kind = treatment === 'm643' ? `m643:${[...parts].sort().join(',')}` : 'm642';
+    if (kind !== this.bubbleKind) { for (const node of this.bubbleNodes) node.remove(); this.bubbleNodes = []; this.bubbleKind = kind; }
+    if (backend === 'svg' && treatment === 'm643') {
+      const stops = this.parts.bubble3!.children;
+      attributes(stops[0]!, { 'stop-color': o.deepTint });
+      attributes(stops[1]!, { 'stop-color': o.lightTint });
+      attributes(stops[2]!, { 'stop-color': parts.has('gradient') ? o.lightTint : '#fff' });
+      attributes(stops[3]!, { 'stop-color': o.deepTint });
+    }
     while (this.bubbleNodes.length > count) this.bubbleNodes.pop()!.remove();
     while (this.bubbleNodes.length < count) {
       const node = svg('g');
-      node.append(svg('circle', { fill: `url(#${this.id}-bubble)`, stroke: o.deepTint, 'stroke-width': 0.45 }), svg('ellipse', { fill: '#fff' }));
+      if (treatment === 'm643') {
+        node.append(svg('circle', { fill: `url(#${this.id}-${parts.has('gradient') ? 'bubble3' : 'bubble'})`, stroke: o.deepTint, 'stroke-width': 0.8 }));
+        if (parts.has('rim')) node.append(svg('path', { fill: 'none', 'stroke-linecap': 'round' }));
+        if (parts.has('crescent')) node.append(svg('path', { fill: 'none', stroke: '#fff', 'stroke-linecap': 'round' }));
+      } else node.append(svg('circle', { fill: `url(#${this.id}-bubble)`, stroke: o.deepTint, 'stroke-width': 0.45 }), svg('ellipse', { fill: '#fff' }));
       this.bubbleNodes.push(node);
       this.parts.bubbles!.append(node);
     }
+    const arc = (r: number, from: number, to: number) => {
+      const a = (deg: number) => `${(r * Math.cos(deg * Math.PI / 180)).toFixed(3)} ${(r * Math.sin(deg * Math.PI / 180)).toFixed(3)}`;
+      return `M${a(from)} A${r.toFixed(3)} ${r.toFixed(3)} 0 0 1 ${a(to)}`;
+    };
     this.bubbleNodes.forEach((node, i) => {
-      const b = projectBubble(this.candidates[i]!, this.doc.bubbles, g, m);
+      const b = projectBubble(this.candidates[i]!, this.doc.bubbles, g, m, treatment);
       attributes(node, { 'data-bubble-index': b.index, transform: `translate(${b.x} ${b.y})`, opacity: b.opacity });
       attributes(node.children[0]!, { r: b.radius, stroke: o.deepTint });
-      attributes(node.children[1]!, { cx: -b.radius*0.28, cy: -b.radius*0.4, rx: b.radius*0.38, ry: b.radius*0.16, opacity: 0.6 });
+      if (treatment === 'm643') {
+        // Light that crosses the inclusion gathers on the far (lower-right) side; the specular crescent sits on the near
+        // (upper-left) side and is crisper for shallow inclusions. Both scale with the radius and the stored depth.
+        let k = 1;
+        if (parts.has('rim')) attributes(node.children[k++]!, { d: arc(b.radius * 0.74, 15, 105), stroke: o.lightTint, 'stroke-width': Math.max(0.6, b.radius * 0.2), opacity: 0.9 });
+        if (parts.has('crescent')) attributes(node.children[k]!, { d: arc(b.radius * 0.58, 200, 285), 'stroke-width': Math.max(0.6, b.radius * 0.2), opacity: 0.5 + 0.45 * (1 - b.depth) });
+      } else attributes(node.children[1]!, { cx: -b.radius*0.28, cy: -b.radius*0.4, rx: b.radius*0.38, ry: b.radius*0.16, opacity: 0.6 });
     });
     this.currentStatus = {
       requestedBackend: this.doc.target.backend, backend, requestedProfile: this.doc.quality.profile, opticalProfile: quality,
@@ -407,7 +440,7 @@ export class ExperimentalJellySurface implements MaterialSurface {
     attributes(this.parts.gleam!, { d: `M${p(Math.max(5,g.radius*0.5),h*0.25)} Q${p(Math.max(7,g.radius*0.5),5)} ${p(g.radius+8,5)} Q${p(w*0.3,3)} ${p(w*0.6,6)}` });
     attributes(this.parts.caustic!, { d: `M${p(g.radius+5,h-6)} Q${p(w*0.58,h-2)} ${p(w-g.radius-5,h-8)}` });
     this.bubbleNodes.forEach((node, i) => {
-      const b = projectBubble(this.candidates[i]!, this.doc.bubbles, g, this.material);
+      const b = projectBubble(this.candidates[i]!, this.doc.bubbles, g, this.material, this.options.treatment ?? 'm642');
       attributes(node, { transform: `translate(${b.x} ${b.y})` });
     });
     this.motionUpdates++;

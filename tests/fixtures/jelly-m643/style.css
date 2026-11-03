@@ -1,0 +1,17 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #888; font: 12px/1.4 system-ui, sans-serif; }
+#stage { display: grid; gap: 0; width: max-content; }
+.cell { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.cell > .label { position: absolute; left: 4px; top: 2px; font: 9px/1 monospace; opacity: .7; pointer-events: none; }
+.bg-light { background: #fafafa; color: #3a3446; }
+.bg-dark { background: #101828; color: #c9d1e0; }
+.bg-gradient { background: linear-gradient(120deg, #c6adf6, #8ee8ef); color: #2a2440; }
+.bg-text { background: #f4f1ea; color: #4c4638; }
+.bg-text .copy { position: absolute; inset: 0; padding: 4px 6px; font: 11px/13px Georgia, serif; overflow: hidden; word-break: break-all; opacity: .85; pointer-events: none; user-select: none; }
+.bg-structured { background:
+  repeating-linear-gradient(45deg, #1b2a4a 0 5px, #e9b44c 5px 10px),
+  #1b2a4a; color: #fff; }
+.cell button.jb { flex: none; border: 0; padding: 0; background: transparent; font: 600 14px/1 system-ui, sans-serif; cursor: default; }
+.cell button.jb:disabled { cursor: default; }
+.cell .content { display: inline-flex; align-items: center; gap: 6px; pointer-events: none; }
+.cell.hide-content .content { visibility: hidden; }

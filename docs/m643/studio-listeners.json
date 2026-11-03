@@ -1,0 +1,44 @@
+{
+  "build": "dist (vite preview)",
+  "phases": {
+    "hold": {
+      "before": {
+        "nodes": 3007,
+        "listeners": 505
+      },
+      "after": {
+        "nodes": 3007,
+        "listeners": 505
+      },
+      "delta": 0,
+      "added": {},
+      "removed": {}
+    },
+    "release": {
+      "before": {
+        "nodes": 3007,
+        "listeners": 505
+      },
+      "after": {
+        "nodes": 3007,
+        "listeners": 505
+      },
+      "delta": 0,
+      "added": {},
+      "removed": {}
+    },
+    "second-cycle": {
+      "before": {
+        "nodes": 3007,
+        "listeners": 505
+      },
+      "after": {
+        "nodes": 3007,
+        "listeners": 505
+      },
+      "delta": 0,
+      "added": {},
+      "removed": {}
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "engine": "chromium",
+  "note": "File names encode variant_size_background_dpr; see docs/m643/tools",
+  "files": [
+    {
+      "file": "X0_160x44_light_dpr2.png",
+      "bytes": 120884,
+      "sha256": "2fbfa344b34a381c"
+    },
+    {
+      "file": "X0_320x96_light_dpr2.png",
+      "bytes": 356779,
+      "sha256": "c442c2c9258eb7dc"
+    },
+    {
+      "file": "X1_160x44_light_dpr2.png",
+      "bytes": 121747,
+      "sha256": "ae4c36665ef1a271"
+    },
+    {
+      "file": "X1_320x96_light_dpr2.png",
+      "bytes": 359504,
+      "sha256": "f17ec4088b8a42b6"
+    },
+    {
+      "file": "X2_160x44_light_dpr2.png",
+      "bytes": 120894,
+      "sha256": "4a67576051692cc8"
+    },
+    {
+      "file": "X2_320x96_light_dpr2.png",
+      "bytes": 356587,
+      "sha256": "bfa76150e0c8a52c"
+    },
+    {
+      "file": "X3_160x44_light_dpr2.png",
+      "bytes": 121550,
+      "sha256": "2a353a2ce9d7f10c"
+    },
+    {
+      "file": "X3_320x96_light_dpr2.png",
+      "bytes": 358148,
+      "sha256": "ac54198aeb5fdfa2"
+    },
+    {
+      "file": "X4_160x44_light_dpr2.png",
+      "bytes": 121786,
+      "sha256": "c719ea08925c2d59"
+    },
+    {
+      "file": "X4_320x96_light_dpr2.png",
+      "bytes": 359435,
+      "sha256": "5d97370cb1c8138c"
+    },
+    {
+      "file": "X5_160x44_light_dpr2.png",
+      "bytes": 121344,
+      "sha256": "4e17e9b0fd30d034"
+    },
+    {
+      "file": "X5_320x96_light_dpr2.png",
+      "bytes": 358353,
+      "sha256": "af5040e3f5631b5f"
+    }
+  ]
+}

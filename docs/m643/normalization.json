@@ -1,0 +1,1782 @@
+{
+ "summary": {
+  "N soft/clear": {
+   "idleMean": 6.14,
+   "idleMin": 2.08
+  },
+  "N soft/candy": {
+   "idleMean": 13.21,
+   "idleMin": 5.73
+  },
+  "N soft/dense": {
+   "idleMean": 17.07,
+   "idleMin": 5.01
+  },
+  "N clear/candy": {
+   "idleMean": 18.53,
+   "idleMin": 6.28
+  },
+  "N clear/dense": {
+   "idleMean": 22.53,
+   "idleMin": 5.86
+  },
+  "N candy/dense": {
+   "idleMean": 6.72,
+   "idleMin": 3.4
+  },
+  "NB3 soft/clear": {
+   "idleMean": 9.18,
+   "idleMin": 3.43
+  },
+  "NB3 soft/candy": {
+   "idleMean": 12.04,
+   "idleMin": 5.82
+  },
+  "NB3 soft/dense": {
+   "idleMean": 15.54,
+   "idleMin": 6.41
+  },
+  "NB3 clear/candy": {
+   "idleMean": 20.05,
+   "idleMin": 7.57
+  },
+  "NB3 clear/dense": {
+   "idleMean": 23.93,
+   "idleMin": 8.5
+  },
+  "NB3 candy/dense": {
+   "idleMean": 5.88,
+   "idleMin": 3.79
+  }
+ },
+ "rows": [
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 2.83
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 6.99
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 6.59
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 9.24
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 8.85
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 3.4
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 10.95
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 10.62
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 9.31
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 20.46
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 20.18
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 9.56
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 11.79
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 24
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 35.75
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 35.51
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 47.27
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 11.78
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 21.28
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 17
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 19.91
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 35.53
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 41.13
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 12.86
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 2.08
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 5.73
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 5.01
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 6.28
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 5.86
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 3.66
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 5.01
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 6.92
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 4.59
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 11.07
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 9.1
+  },
+  {
+   "variant": "N",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 7.57
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 3.08
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 7.28
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 6.83
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 9.74
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 9.39
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 3.44
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 12.05
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 10.98
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 10.83
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 21.6
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 22.7
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 10.41
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 13.3
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 26.64
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 39.43
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 39.56
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 52.35
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 12.8
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 23.48
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 18.1
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 23.4
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 38.21
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 46.83
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 14.56
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 2.42
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 6.18
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 5.71
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 7.15
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 7
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 3.89
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 5.66
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 7.19
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 5.46
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 11.76
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 10.51
+  },
+  {
+   "variant": "N",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 8.07
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 3.12
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 7.58
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 6.8
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 10.07
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 9.43
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 3.67
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 12.48
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 12.03
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 11.12
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 23.35
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 23.41
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 11.3
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 14.09
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 27.77
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 41.33
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 41.47
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 55.04
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 13.59
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 24.81
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 19.73
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 24.13
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 41.4
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 48.91
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 15.01
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 2.54
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 6.71
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 6.22
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 7.75
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 7.6
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 4.25
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 5.84
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 8.08
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 5.73
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 12.89
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 10.93
+  },
+  {
+   "variant": "N",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 8.95
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 3.53
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 7.46
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 10.63
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 9.33
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 13.21
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 4.9
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 11.2
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 9.29
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 9.46
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 19.9
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 19.72
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 7.34
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 18.24
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 20.2
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 27.1
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 38.36
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 45.26
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 8.28
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 21.35
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 13.72
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 16.23
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 33.1
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 36.47
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 11.53
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 3.43
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 5.82
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 6.41
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 7.57
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 8.5
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 3.9
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 5.58
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 6.31
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 5.47
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 11.08
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 10.06
+  },
+  {
+   "variant": "NB3",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 5.66
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 3.79
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 7.86
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 10.52
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 9.93
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 13.35
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 4.61
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 12.63
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 9.45
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 10.69
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 20.85
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 21.77
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 7.78
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 20.28
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 22.24
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 30.05
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 42.27
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 50.08
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 9.37
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 24.11
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 14.49
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 18.68
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 35.49
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 40.86
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 12.63
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 3.96
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 6.42
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 6.62
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 8.63
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 9.23
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 3.8
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 6.38
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 6.49
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 6.37
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 11.67
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 11.18
+  },
+  {
+   "variant": "NB3",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 5.97
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 3.87
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 8.2
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 10.38
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 10.51
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 13.53
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 4.49
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 13.22
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 10.34
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 10.61
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 22.39
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 22.19
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "light",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 7.9
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 21.36
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 23.23
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 31.33
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 44.42
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 52.52
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 9.78
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 25.79
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 15.56
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 19.33
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 38.59
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 42.74
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "dark",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 12.83
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/clear",
+   "meanDelta": 4.18
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/candy",
+   "meanDelta": 6.94
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "soft/dense",
+   "meanDelta": 6.8
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/candy",
+   "meanDelta": 9.4
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "clear/dense",
+   "meanDelta": 9.71
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "idle",
+   "pair": "candy/dense",
+   "meanDelta": 3.79
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/clear",
+   "meanDelta": 6.62
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/candy",
+   "meanDelta": 7.23
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "soft/dense",
+   "meanDelta": 6.37
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/candy",
+   "meanDelta": 12.7
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "clear/dense",
+   "meanDelta": 11.35
+  },
+  {
+   "variant": "NB3",
+   "size": "320x96",
+   "bg": "gradient",
+   "state": "hold",
+   "pair": "candy/dense",
+   "meanDelta": 6.22
+  }
+ ]
+}

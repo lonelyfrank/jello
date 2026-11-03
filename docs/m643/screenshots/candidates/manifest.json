@@ -1,0 +1,156 @@
+{
+  "engine": "chromium",
+  "note": "File names encode variant_size_background_dpr; see docs/m643/tools",
+  "files": [
+    {
+      "file": "B1_160x44_dark_dpr1.png",
+      "bytes": 234315,
+      "sha256": "1caa7205f4b4df95"
+    },
+    {
+      "file": "B1_160x44_gradient_dpr1.png",
+      "bytes": 366312,
+      "sha256": "6103ab2a5e00f138"
+    },
+    {
+      "file": "B1_160x44_light_dpr1.png",
+      "bytes": 240223,
+      "sha256": "04b9bcc3e581c789"
+    },
+    {
+      "file": "B1_160x44_structured_dpr1.png",
+      "bytes": 304729,
+      "sha256": "74711e51c0bda601"
+    },
+    {
+      "file": "B1_160x44_text_dpr1.png",
+      "bytes": 407205,
+      "sha256": "3ebe336633c24d43"
+    },
+    {
+      "file": "B1_320x96_dark_dpr1.png",
+      "bytes": 735050,
+      "sha256": "e46a7dc38ef0c0e0"
+    },
+    {
+      "file": "B1_320x96_gradient_dpr1.png",
+      "bytes": 979879,
+      "sha256": "ca4fa0347af012e5"
+    },
+    {
+      "file": "B1_320x96_light_dpr1.png",
+      "bytes": 744014,
+      "sha256": "68c28e15932e1c7a"
+    },
+    {
+      "file": "B1_80x32_dark_dpr1.png",
+      "bytes": 120663,
+      "sha256": "e4e8bfa0722ea654"
+    },
+    {
+      "file": "B1_80x32_gradient_dpr1.png",
+      "bytes": 217820,
+      "sha256": "2b07d34adcf75445"
+    },
+    {
+      "file": "B1_80x32_light_dpr1.png",
+      "bytes": 124637,
+      "sha256": "f751ce53940ee39b"
+    },
+    {
+      "file": "B2_160x44_dark_dpr1.png",
+      "bytes": 234389,
+      "sha256": "e55f28c7617b3679"
+    },
+    {
+      "file": "B2_160x44_light_dpr1.png",
+      "bytes": 239412,
+      "sha256": "3353f4c61c0e381a"
+    },
+    {
+      "file": "B3_160x44_dark_dpr1.png",
+      "bytes": 235244,
+      "sha256": "5bfaee71e7df221d"
+    },
+    {
+      "file": "B3_160x44_gradient_dpr1.png",
+      "bytes": 369969,
+      "sha256": "e00f172aec25f8e5"
+    },
+    {
+      "file": "B3_160x44_light_dpr1.png",
+      "bytes": 241878,
+      "sha256": "72ebf6ef62b1e39e"
+    },
+    {
+      "file": "B3_160x44_structured_dpr1.png",
+      "bytes": 307427,
+      "sha256": "76bdf7243604d856"
+    },
+    {
+      "file": "B3_160x44_text_dpr1.png",
+      "bytes": 411043,
+      "sha256": "67c582c7e8f651cc"
+    },
+    {
+      "file": "B3_320x96_dark_dpr1.png",
+      "bytes": 735431,
+      "sha256": "f3ac070b6bdd38d3"
+    },
+    {
+      "file": "B3_320x96_gradient_dpr1.png",
+      "bytes": 982318,
+      "sha256": "f608b0f28df87a79"
+    },
+    {
+      "file": "B3_320x96_light_dpr1.png",
+      "bytes": 744705,
+      "sha256": "2a34260ed88e793b"
+    },
+    {
+      "file": "B3_80x32_dark_dpr1.png",
+      "bytes": 121223,
+      "sha256": "78106e0a542f84fd"
+    },
+    {
+      "file": "B3_80x32_gradient_dpr1.png",
+      "bytes": 219408,
+      "sha256": "655d034c51607ced"
+    },
+    {
+      "file": "B3_80x32_light_dpr1.png",
+      "bytes": 125671,
+      "sha256": "6c83951122da74ca"
+    },
+    {
+      "file": "dpr2/B3_160x44_dark_dpr2.png",
+      "bytes": 766638,
+      "sha256": "63225f5a400074c1"
+    },
+    {
+      "file": "dpr2/B3_160x44_gradient_dpr2.png",
+      "bytes": 1241018,
+      "sha256": "3d1c413220fe5fe0"
+    },
+    {
+      "file": "dpr2/B3_160x44_light_dpr2.png",
+      "bytes": 784493,
+      "sha256": "0acdc2be40ac48a9"
+    },
+    {
+      "file": "dpr2/B3_80x32_dark_dpr2.png",
+      "bytes": 369498,
+      "sha256": "5b41388f956fbf60"
+    },
+    {
+      "file": "dpr2/B3_80x32_gradient_dpr2.png",
+      "bytes": 676723,
+      "sha256": "fb9928cdd2187d5b"
+    },
+    {
+      "file": "dpr2/B3_80x32_light_dpr2.png",
+      "bytes": 378519,
+      "sha256": "cd0161394a5aad2f"
+    }
+  ]
+}
