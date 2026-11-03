@@ -17,6 +17,8 @@ const TARGETS: { id: ExportTarget; label: string; hint: string }[] = [
   { id: 'configuration', label: 'Configurazione JSON', hint: 'Il documento che il laboratorio salva: si riapre senza perdite, lo leggono strumenti e agenti.' },
 ];
 
+const STEPS = ['Elemento', 'Formato', 'Dipendenze', 'Contenuto', 'Export'] as const;
+
 export function ExportDialog({ session }: { session: LabSession }) {
   const open = useLab((s) => s.exportOpen);
   const workspace = useLab((s) => s.workspace);
@@ -28,6 +30,8 @@ export function ExportDialog({ session }: { session: LabSession }) {
   const [target, setTarget] = useState<ExportTarget>(workspace === 'builder' ? 'component' : 'material');
   const [adapterId, setAdapterId] = useState<string>('');
   const [step, setStep] = useState<number | null>(null);
+  /** A section of step `i` is shown in the summary and on its own step. */
+  const shows = (i: number) => step === null || step === i;
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; messages: string[] } | null>(null);
 
@@ -50,18 +54,26 @@ export function ExportDialog({ session }: { session: LabSession }) {
   return (
     <dialog className="export-dialog" id="exportDialog" ref={ref} aria-labelledby="exportTitle" onClose={() => session.setExportOpen(false)}>
       <form method="dialog" className="export-inner" onSubmit={(e) => e.preventDefault()}>
+        <div className="hero export-hero">
         <header className="export-head">
-          <h2 id="exportTitle">Esporta</h2>
+          <div className="hero-title">
+            <p className="hero-eyebrow">PORTA FUORI IL TUO LAVORO</p>
+            <h2 id="exportTitle" className="hero-h1">Esporta</h2>
+          </div>
           <button type="button" className="tb-icon-button" id="exportClose" aria-label="Chiudi" onClick={() => session.setExportOpen(false)}>
             ×
           </button>
         </header>
-        <ol className="export-steps" aria-label="Passi dell’esportazione">{['Elemento', 'Formato', 'Dipendenze', 'Contenuto', 'Export'].map((label, i) => <li key={label}><button type="button" aria-current={step === i ? 'step' : undefined} onClick={() => setStep(i)}><span className="export-step-number">{i + 1}</span>{label}</button></li>)}</ol>
+        <ol className="export-steps" aria-label="Passi dell’esportazione">{STEPS.map((label, i) => <li key={label}><button type="button" aria-current={step === i ? 'step' : undefined} onClick={() => setStep(i)}><span className="export-step-number">{i + 1}</span>{label}</button></li>)}</ol>
+        </div>
         {step !== null && <p className="export-handoff" role="status">Passo {step + 1} di 5 · <button type="button" className="link export-overview" onClick={() => setStep(null)}>Mostra riepilogo completo</button></p>}
-        <div className="export-cols">
-          <section className="export-col" aria-label="Contenuto">
-            <h3 className="export-col-title">{step === null ? 'Contenuto' : ['Elemento', 'Formato', 'Dipendenze', 'Contenuto', 'Export'][step]}</h3>
-            <fieldset className="export-targets" hidden={step !== null && step !== 0}>
+        {/* Summary (step null): every section. Guided: only what the step is about. Hidden sections stay
+            mounted, so choices survive switching between the two. Nothing refers to a column's position:
+            the columns stack on narrow screens. */}
+        <div className="export-cols" data-step={step ?? undefined}>
+          <section className="export-col" aria-label="Contenuto" hidden={step === 1}>
+            <h3 className="export-col-title">{step === null ? 'Contenuto' : STEPS[step]}</h3>
+            <fieldset className="export-targets" hidden={!shows(0)}>
               <legend className="field-legend">Cosa esportare</legend>
               {TARGETS.map((t) => {
                 const disabled = t.id === 'component' && !component;
@@ -87,26 +99,25 @@ export function ExportDialog({ session }: { session: LabSession }) {
                 );
               })}
             </fieldset>
-            {step === 1 && <p className="hint">Il formato si sceglie nella colonna a destra.</p>}
             {!adapter && (
               <p className="hint" id="exportNone">
                 Nessun formato disponibile per questa selezione.
               </p>
             )}
             {plan && adapter && (
-              <section className="export-plan" id="exportPlan" aria-label="Contenuto dell’export" hidden={step !== null && step < 2}>
+              <section className="export-plan" id="exportPlan" aria-label="Contenuto dell’export" hidden={step === 0}>
                 <p>
                   <strong>{adapter.label}</strong> → <code id="exportName">{plan.name}</code>
                 </p>
-                <h3 className="panel-sub" hidden={step === 2}>Verrà esportato</h3>
-                <ul className="export-files" hidden={step === 2}>
+                <h3 className="panel-sub" hidden={!shows(3)}>Verrà esportato</h3>
+                <ul className="export-files" hidden={!shows(3)}>
                   {plan.files.map((f) => (
                     <li key={f.path}>
                       <code>{f.path}</code> — {f.description}
                     </li>
                   ))}
                 </ul>
-                <div hidden={step === 3}><h3 className="panel-sub">Dipendenze</h3>
+                <div hidden={!shows(2)}><h3 className="panel-sub">Dipendenze</h3>
                 {plan.dependencies.length ? (
                   <ul className="export-files" id="exportDeps">
                     {plan.dependencies.map((d) => (
@@ -139,7 +150,7 @@ export function ExportDialog({ session }: { session: LabSession }) {
               </ul>
             )}
           </section>
-          <section className="export-col" aria-label="Anteprima pacchetto">
+          <section className="export-col" aria-label="Anteprima pacchetto" hidden={!shows(4)}>
             <h3 className="export-col-title">Anteprima pacchetto</h3>
             <div className="export-package">
               <strong>{component && target !== 'material' ? component.name : material.name}</strong>
@@ -153,7 +164,7 @@ export function ExportDialog({ session }: { session: LabSession }) {
               <div><dt>File inclusi</dt><dd>{plan ? plan.files.length : 0}</dd></div>
             </dl>
           </section>
-          <section className="export-col" aria-label="Formato">
+          <section className="export-col" aria-label="Formato" hidden={!shows(1)}>
             <h3 className="export-col-title">Formato</h3>
             {adapters.length > 1 && (
               <fieldset className="export-formats">

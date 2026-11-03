@@ -52,7 +52,8 @@ import {
   type NavbarAction,
   type NavbarIconPosition,
 } from '../../components';
-import { BUILTIN_ICONS, BUILTIN_ICON_NAMES, iconTree, type IconRef, type SvgNode } from '../../components/icons';
+import { BUILTIN_ICONS, BUILTIN_ICON_NAMES, iconTree, type IconRef } from '../../components/icons';
+import { SvgNodes } from './SvgIcon';
 import { FAMILIES, MATERIALS, glassParams, inspectorModel, supportReport, type Backend, type InspectorControl } from '../../model';
 import { applicability } from '../applicability';
 import type { LabSession } from '../session';
@@ -297,22 +298,6 @@ function TemplateGlyph({ type }: { type: string }) {
     <svg className="icon bl-glyph" viewBox="0 0 24 24" aria-hidden="true">
       {type === 'button' ? <path d="M4 8.5h16a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 14v-4A1.5 1.5 0 0 1 4 8.5zM8.5 12h7" /> : <path d="M3 15h18v5H3zM6 17.5h2M11 17.5h2M16 17.5h2" />}
     </svg>
-  );
-}
-
-function SvgNodes({ nodes }: { nodes: readonly SvgNode[] }) {
-  return (
-    <>
-      {nodes.map((n, i) => {
-        const Tag = n.tag as 'path';
-        const attrs = Object.fromEntries(n.attrs.map(([k, v]) => [k.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()), v]));
-        return (
-          <Tag key={i} {...attrs}>
-            {n.children.length ? <SvgNodes nodes={n.children} /> : null}
-          </Tag>
-        );
-      })}
-    </>
   );
 }
 

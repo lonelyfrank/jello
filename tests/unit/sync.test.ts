@@ -120,5 +120,119 @@ describe('development relay', () => {
     expect(other.status).toBe(404);
     const notImage = await fetch(`${base}/assets/${hash}?token=${token}`, { method: 'PUT', headers: { 'content-type': 'text/html' }, body: data });
     expect(notImage.status).toBe(415);
+    // SVG would be a document on the relay's origin: refused like any non-raster type.
+    const svg = await fetch(`${base}/assets/${hash}?token=${token}`, { method: 'PUT', headers: { 'content-type': 'image/svg+xml' }, body: data });
+    expect(svg.status).toBe(415);
+    expect(get.headers.get('x-content-type-options')).toBe('nosniff');
+  });
+
+  it('a refused upload never evicts a stored asset, even with the session full', async () => {
+    const t = newToken();
+    const put = (bytes: Uint8Array, type = 'image/png', hash = createHash('sha256').update(bytes).digest('hex')) =>
+      fetch(`${base}/assets/${hash}?token=${t}`, { method: 'PUT', headers: { 'content-type': type }, body: new Blob([bytes as BlobPart]) });
+    const first = new Uint8Array([1]);
+    const firstHash = createHash('sha256').update(first).digest('hex');
+    for (let i = 1; i <= 16; i++) expect((await put(new Uint8Array([i]))).status).toBe(200);
+    // Full (16). Wrong type, wrong hash, too large: none of them may push the oldest asset out.
+    expect((await put(new Uint8Array([99]), 'text/plain')).status).toBe(415);
+    expect((await put(new Uint8Array([99]), 'image/png', '0'.repeat(64))).status).toBe(400);
+    expect((await put(new Uint8Array(13 * 1024 * 1024))).status).toBe(413);
+    expect((await fetch(`${base}/assets/${firstHash}?token=${t}`)).status).toBe(200);
+    // A valid new asset does evict the oldest one.
+    expect((await put(new Uint8Array([200]))).status).toBe(200);
+    expect((await fetch(`${base}/assets/${firstHash}?token=${t}`)).status).toBe(404);
+  });
+});
+
+describe('relay shutdown', () => {
+  it('closes with a preview still connected over SSE, and the preview sees the stream end', async () => {
+    const relay = createRelay();
+    await new Promise<void>((r) => relay.server.listen(0, '127.0.0.1', () => r()));
+    const url = `http://127.0.0.1:${(relay.server.address() as AddressInfo).port}/events?token=${newToken()}`;
+    const res = await fetch(url);
+    const reader = res.body!.getReader();
+    await reader.read(); // "retry:" line: the stream is open
+    const t0 = Date.now();
+    const closed = await Promise.race([relay.close().then(() => 'closed'), new Promise((r) => setTimeout(() => r('timeout'), 3000))]);
+    expect(closed).toBe('closed');
+    expect(Date.now() - t0).toBeLessThan(3000);
+    // The client gets the end of the stream, not a hang.
+    let done = false;
+    for (let i = 0; i < 5 && !done; i++) done = (await reader.read()).done;
+    expect(done).toBe(true);
+    expect(relay.sessions.size).toBe(0);
+  });
+});
+
+describe('development relay: preview capacity', () => {
+  it('a ninth preview is refused with 429 and the connected ones keep receiving states', async () => {
+    const relay = createRelay();
+    await new Promise<void>((r) => relay.server.listen(0, '127.0.0.1', () => r()));
+    const base = `http://127.0.0.1:${(relay.server.address() as AddressInfo).port}`;
+    const token = newToken();
+    const ctrl = new AbortController();
+    try {
+      const readers: ReadableStreamDefaultReader<Uint8Array>[] = [];
+      for (let i = 0; i < 8; i++) {
+        const res = await fetch(`${base}/events?token=${token}`, { signal: ctrl.signal });
+        expect(res.status).toBe(200);
+        const reader = res.body!.getReader();
+        await reader.read();
+        readers.push(reader);
+      }
+      expect((await fetch(`${base}/events?token=${token}`, { signal: ctrl.signal })).status).toBe(429);
+      const post = await fetch(`${base}/state?token=${token}`, { method: 'POST', body: JSON.stringify({ type: 'state', protocol: 1, seq: 1 }) });
+      expect((await post.json()).previews).toBe(8);
+      const got = new TextDecoder().decode((await readers[0]!.read()).value);
+      expect(got).toContain('event: state');
+    } finally {
+      ctrl.abort();
+      await relay.close();
+    }
+  });
+});
+
+describe('development relay: global asset budget', () => {
+  const png = (n: number, size = 400) => Buffer.alloc(size, n);
+  const sha = (b: Buffer) => createHash('sha256').update(b).digest('hex');
+  const tokenA = `a${'x'.repeat(31)}`;
+  const tokenB = `b${'x'.repeat(31)}`;
+
+  async function withRelay(fn: (put: (t: string, b: Buffer) => Promise<number>, has: (t: string, b: Buffer) => Promise<boolean>) => Promise<void>) {
+    const relay = createRelay({ maxTotalAssetBytes: 1000 });
+    await new Promise<void>((r) => relay.server.listen(0, '127.0.0.1', () => r()));
+    const base = `http://127.0.0.1:${(relay.server.address() as AddressInfo).port}`;
+    const put = async (t: string, b: Buffer) => (await fetch(`${base}/assets/${sha(b)}?token=${t}`, { method: 'PUT', body: new Uint8Array(b), headers: { 'content-type': 'image/png' } })).status;
+    const has = async (t: string, b: Buffer) => (await fetch(`${base}/assets/${sha(b)}?token=${t}`)).status === 200;
+    try {
+      await fn(put, has);
+    } finally {
+      await relay.close();
+    }
+  }
+
+  it('a session over the budget replaces its own oldest assets', async () => {
+    await withRelay(async (put, has) => {
+      const [a, b, c] = [png(1), png(2), png(3)];
+      expect(await put(tokenA, a)).toBe(200);
+      expect(await put(tokenA, b)).toBe(200);
+      expect(await put(tokenA, c)).toBe(200);
+      expect(await has(tokenA, a)).toBe(false);
+      expect(await has(tokenA, b)).toBe(true);
+      expect(await has(tokenA, c)).toBe(true);
+    });
+  });
+
+  it('another session cannot grow the total, and a refused upload evicts nothing', async () => {
+    await withRelay(async (put, has) => {
+      const [a, b, other] = [png(1), png(2), png(3)];
+      await put(tokenA, a);
+      await put(tokenA, b);
+      expect(await put(tokenB, other)).toBe(507);
+      expect(await put(tokenA, png(4, 1200))).toBe(507);
+      expect(await has(tokenA, a)).toBe(true);
+      expect(await has(tokenA, b)).toBe(true);
+      expect(await has(tokenB, other)).toBe(false);
+    });
   });
 });

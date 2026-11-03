@@ -28,6 +28,21 @@ describe('IndexedDB repository', () => {
     expect((await again.listMaterials()).items).toEqual([]);
   });
 
+  it('commits a batch over several stores as one transaction: all of it or nothing', async () => {
+    const factory = new IDBFactory();
+    const repo = await openRepository(factory, 'jello-batch');
+    const project = { id: 'p1' } as never;
+    await repo.commit({ materials: { put: [{ id: doc.id, doc, projectId: 'p1', createdAt: iso, updatedAt: iso }] } });
+    // The second put has no key: the whole transaction aborts, the material delete included.
+    const bad = repo.commit({ materials: { delete: [doc.id] }, components: { put: [{ doc: componentTemplate('mobile-navbar')!.create() } as never] }, projectDocs: { put: [project] } });
+    await expect(bad).rejects.toBeInstanceOf(StorageError);
+    expect((await repo.listMaterials()).items).toHaveLength(1);
+    expect((await repo.listComponents()).items).toHaveLength(0);
+    await repo.commit({ materials: { delete: [doc.id] }, project: { id: 'last', materialId: 'jello', draft: null, options, savedAt: iso } });
+    expect((await repo.listMaterials()).items).toHaveLength(0);
+    expect((await repo.getProject())?.materialId).toBe('jello');
+  });
+
   it('keeps the draft of an edited built-in and validates it on read', async () => {
     const factory = new IDBFactory();
     const repo = await openRepository(factory, 'jello-draft');
@@ -137,6 +152,34 @@ describe('autosave', () => {
     }, () => {}, 1);
     await Promise.all([a.flush(), a.flush(), a.flush()]);
     expect(max).toBe(1);
+  });
+
+  it('an exclusive operation never overlaps a write, and edits made during it are saved after it', async () => {
+    const log: string[] = [];
+    const a = new Autosaver(async () => {
+      log.push('write');
+      await new Promise((r) => setTimeout(r, 5));
+    }, () => {}, 1);
+    a.schedule();
+    const r = await a.exclusive(async () => {
+      log.push('op:start');
+      a.schedule();
+      await new Promise((r) => setTimeout(r, 20));
+      log.push('op:end');
+      return 7;
+    });
+    expect(r).toBe(7);
+    await new Promise((r) => setTimeout(r, 30));
+    // The pending write ran first; the edit made during the operation was saved only after it.
+    expect(log).toEqual(['write', 'op:start', 'op:end', 'write']);
+  });
+
+  it('an exclusive operation that fails rejects and releases the saver', async () => {
+    let writes = 0;
+    const a = new Autosaver(async () => void writes++, () => {}, 1);
+    await expect(a.exclusive(async () => Promise.reject(new Error('no')))).rejects.toThrow('no');
+    await a.flush();
+    expect(writes).toBe(2);
   });
 
   it('StorageError keeps its kind', () => {

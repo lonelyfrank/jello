@@ -148,6 +148,9 @@ function Wizard({ session }: { session: LabSession }) {
       session.openFlow(null);
       session.setPage('lab', 'material');
       session.notify(`Progetto «${finalName}» creato. Il progetto viene salvato in questo browser: esportalo per spostarlo su un altro dispositivo.`);
+    } catch (e) {
+      // Nothing was stored (one transaction): the flow stays open to try again.
+      session.notify(`Progetto non creato: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -375,6 +378,8 @@ function ImportFlow({ session }: { session: LabSession }) {
       const r = await session.projects.applyImport(accepted, resolved);
       setOutcome(r);
       setStage('done');
+    } catch (e) {
+      session.notify(`Importazione non riuscita, nessuna modifica applicata: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -631,6 +636,7 @@ function ImportFlow({ session }: { session: LabSession }) {
               ['Font', outcome.fonts],
               ['Saltati', outcome.skipped],
               ['Avvisi', outcome.warnings],
+              ['Scollegate', outcome.unlinked.length],
             ]
               .filter(([, n]) => (n as number) > 0)
               .map(([k, n]) => (
@@ -640,6 +646,11 @@ function ImportFlow({ session }: { session: LabSession }) {
                 </div>
               ))}
           </dl>
+          {outcome.unlinked.length > 0 && (
+            <p className="muted small" id="importUnlinked">
+              Materiale non incluso per {outcome.unlinked.map((n) => `«${n}»`).join(', ')}: le componenti mantengono il loro aspetto ma non seguono più un materiale della libreria.
+            </p>
+          )}
         </div>
       )}
     </Frame>

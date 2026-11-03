@@ -36,8 +36,8 @@ parser degli import); se qualcosa non è valido non viene applicato nulla e la p
 protocollo più recente viene rifiutato con un messaggio esplicito.
 
 Asset: l’URL `blob:` di un’immagine locale esiste solo nel browser del desktop. Il laboratorio
-carica i byte sul relay (`PUT /assets/<sha256>`, hash verificato, solo `image/*`) e l’anteprima
-riceve un URL del relay.
+carica i byte sul relay (`PUT /assets/<sha256>`, hash verificato, solo PNG, JPEG, WebP, GIF o AVIF:
+un SVG servito dal relay potrebbe eseguire script) e l’anteprima riceve un URL del relay.
 
 ### Rete, firewall, contesto sicuro
 
@@ -49,6 +49,12 @@ riceve un URL del relay.
   `crypto.subtle`, va usato su `localhost`.
 - Il relay è solo per lo sviluppo: tiene i dati in memoria, non autentica oltre il token, non
   entra nel runtime né nei pacchetti esportati.
+- Limiti del relay: 16 asset (12 MB l’uno) per sessione, 128 MB di asset in totale, 32 sessioni,
+  8 anteprime per sessione. Un caricamento che non ci sta nel totale, dopo aver sostituito gli asset
+  più vecchi della *stessa* sessione, risponde `507` e non elimina nulla. Il token è scelto dal
+  client e il relay non ha un registro dei token: chiunque raggiunga la porta può aprire una
+  sessione (e CORS è aperto), quindi usalo solo su reti fidate. Per usarlo solo sul computer:
+  `JELLO_RELAY_HOST=127.0.0.1 npm run relay`.
 
 ## App di test Capacitor (`apps/android-preview`)
 

@@ -14,9 +14,10 @@ import { collect, mergeAssets, type Choice, type Incoming, type ImportItem } fro
 import { buildProjectPackage, cssVariables, fileSlug, packageBytes, type PackageSelection } from '../project/package';
 import { addFont } from '../project/assets';
 import type { FontFamilyAsset, Platform, PreviewTheme, ProjectAssets, ProjectDoc } from '../project/types';
+import { materialIdMap, remapMaterialReference, type MaterialIdMap } from '../project/references';
 import type { LabSession } from './session';
 import { sha256 } from './sync-sender';
-import type { StoredComponent, StoredMaterial } from './storage/repository';
+import type { StoredAsset, StoredComponent, StoredMaterial } from './storage/repository';
 
 const now = () => new Date().toISOString();
 const matId = () => `user-${newToken().slice(0, 10).toLowerCase()}`;
@@ -52,6 +53,8 @@ export interface ImportOutcome {
   warnings: number;
   /** Id of the first material created, to open it. */
   firstMaterial: string | null;
+  /** Components whose material was not part of the import: kept with their embedded material, no longer linked. */
+  unlinked: string[];
 }
 
 export const KIT_PRESETS = ['jello', 'satin', 'deep', 'optics'] as const;
@@ -86,13 +89,19 @@ export class ProjectActions {
     this.update((p) => ({ ...p, assets: fn(p.assets) }));
   }
 
-  /** Called by the session's write: persists edited project documents. */
-  async flush(): Promise<void> {
-    for (const id of [...this.dirty]) {
-      const p = this.state.projects.find((x) => x.id === id);
-      this.dirty.delete(id);
-      if (p) await this.host.repo.putProjectDoc(p);
-    }
+  /** Project documents edited since they were last committed (the session's write puts them in its batch). */
+  pending(): ProjectDoc[] {
+    return [...this.dirty].flatMap((id) => this.state.projects.find((x) => x.id === id) ?? []);
+  }
+
+  /**
+   * After the batch committed: a document is clean only if it is still the
+   * one that was written (an edit made during the write stays dirty). A
+   * failed write calls nothing, so every edit stays dirty and is retried.
+   */
+  committed(docs: readonly ProjectDoc[]): void {
+    for (const d of docs) if (this.state.projects.find((x) => x.id === d.id) === d) this.dirty.delete(d.id);
+    for (const id of [...this.dirty]) if (!this.state.projects.some((x) => x.id === id)) this.dirty.delete(id);
   }
 
   /** Stores an uploaded .woff2 and adds its family to the project. */
@@ -127,18 +136,8 @@ export class ProjectActions {
 
   // ---------- creating ----------
 
-  private async addMaterial(doc: MaterialDocument, projectId: string): Promise<StoredMaterial> {
-    const rec: StoredMaterial = { id: doc.id, doc, projectId, createdAt: now(), updatedAt: now() };
-    await this.host.repo.putMaterial(rec);
-    this.host.userMaterials.set(rec.id, rec);
-    return rec;
-  }
-
-  private async addComponent(doc: ComponentDefinition, projectId: string): Promise<StoredComponent> {
-    const rec: StoredComponent = { id: doc.id, doc, projectId, createdAt: now(), updatedAt: now() };
-    await this.host.repo.putComponent(rec);
-    this.host.userComponents.set(rec.id, rec);
-    return rec;
+  private record<T extends MaterialDocument | ComponentDefinition>(doc: T, projectId: string, at: string) {
+    return { id: doc.id, doc, projectId, createdAt: at, updatedAt: at };
   }
 
   private copyOfPreset(presetId: string): MaterialDocument | null {
@@ -147,9 +146,18 @@ export class ProjectActions {
     return { ...b.doc, id: matId(), meta: { ...b.doc.meta, basedOn: presetId, createdAt: now(), updatedAt: now() } };
   }
 
-  /** Creates the project, fills it as asked and makes it the active one. Returns its id. */
-  async create(spec: NewProjectSpec): Promise<string> {
+  /**
+   * Creates the project, fills it as asked and makes it the active one.
+   * Everything is prepared in memory and committed in one transaction: a
+   * failure leaves no project, material or component behind (and throws).
+   */
+  create(spec: NewProjectSpec): Promise<string> {
+    return this.host.exclusive(() => this.createNow(spec));
+  }
+
+  private async createNow(spec: NewProjectSpec): Promise<string> {
     const id = projectDocId();
+    const at = now();
     const names = new Set(this.state.projects.map((p) => p.name));
     const name = uniqueName(spec.name.trim() || 'Nuovo progetto', names);
     let assets: ProjectAssets = minimalAssets();
@@ -163,123 +171,151 @@ export class ProjectActions {
       source = this.state.projects.find((p) => p.id === spec.from) ?? null;
       if (source) assets = structuredClone(source.assets);
     }
-    const base = createProject({ id, name, platform: spec.platform, previewTheme: spec.previewTheme, defaultPath: source?.defaultPath ?? 'auto', assets });
-    let doc = base;
+    let doc = createProject({ id, name, platform: spec.platform, previewTheme: spec.previewTheme, defaultPath: source?.defaultPath ?? 'auto', assets, at });
     const fromFile = spec.start === 'file' ? (spec.items ?? []) : [];
     for (const it of fromFile) {
       if (it.kind === 'project') doc = { ...doc, assets: structuredClone(it.pkg.project.assets), favorites: [] };
     }
-    await this.host.repo.putProjectDoc(doc);
-    this.host.store.set({ projects: [...this.state.projects, doc] });
 
-    const favMap = new Map<string, string>();
+    const materials: StoredMaterial[] = [];
+    const components: StoredComponent[] = [];
+    const unlinked: string[] = [];
+    const addMaterial = (m: MaterialDocument) => materials.push(this.record(m, id, at));
+    /** A copied component: new id, its material link rewritten through `ids` (see project/references). */
+    const addCopy = (c: ComponentDefinition, ids: MaterialIdMap) => {
+      const r = remapMaterialReference(c, ids);
+      if (r.unlinked) unlinked.push(c.name);
+      components.push(this.record({ ...r.doc, id: cmpId(), meta: { ...r.doc.meta, createdAt: at, updatedAt: at } }, id, at));
+    };
+
     if (spec.start === 'kit') {
       for (const p of spec.presets ?? KIT_PRESETS) {
         const m = this.copyOfPreset(p);
-        if (m) await this.addMaterial(m, id);
+        if (m) addMaterial(m);
       }
       if (spec.navbar !== false) {
         const t = componentTemplate('mobile-navbar')!.create();
-        await this.addComponent({ ...t, id: cmpId(), name: 'Navbar', meta: { ...t.meta, basedOn: t.id, createdAt: now(), updatedAt: now() } }, id);
+        components.push(this.record({ ...t, id: cmpId(), name: 'Navbar', meta: { ...t.meta, basedOn: t.id, createdAt: at, updatedAt: at } }, id, at));
       }
     } else if (spec.start === 'empty') {
       const m = this.copyOfPreset('jello');
-      if (m) await this.addMaterial({ ...m, name: 'Glass' }, id);
+      if (m) addMaterial({ ...m, name: 'Glass' });
     } else if (spec.start === 'duplicate' && source) {
-      for (const rec of [...this.host.userMaterials.values()].filter((m) => m.projectId === source!.id)) {
-        const copy: MaterialDocument = { ...rec.doc, id: matId(), meta: { ...rec.doc.meta, createdAt: now(), updatedAt: now() } };
-        favMap.set(rec.id, copy.id);
-        await this.addMaterial(copy, id);
-      }
-      for (const rec of [...this.host.userComponents.values()].filter((c) => c.projectId === source!.id)) {
-        await this.addComponent({ ...rec.doc, id: cmpId(), meta: { ...rec.doc.meta, createdAt: now(), updatedAt: now() } }, id);
-      }
-      if (source.favorites.length) {
-        const favorites = source.favorites.map((f) => favMap.get(f)).filter((x): x is string => !!x);
-        doc = { ...doc, favorites };
-        await this.host.repo.putProjectDoc(doc);
-        this.host.store.set({ projects: this.state.projects.map((p) => (p.id === id ? doc : p)) });
-      }
+      // The copy is independent: its components link to the copied materials, never to the source project's.
+      const srcMaterials = [...this.host.userMaterials.values()].filter((m) => m.projectId === source!.id);
+      const ids = materialIdMap(srcMaterials.map((m) => [m.id, matId()]));
+      for (const rec of srcMaterials) addMaterial({ ...rec.doc, id: ids.map.get(rec.id)!, meta: { ...rec.doc.meta, createdAt: at, updatedAt: at } });
+      for (const rec of [...this.host.userComponents.values()].filter((c) => c.projectId === source!.id)) addCopy(rec.doc, ids.map);
+      doc = { ...doc, favorites: source.favorites.map((f) => ids.map.get(f)).filter((x): x is string => !!x) };
     } else if (spec.start === 'file') {
+      const incoming = fromFile.flatMap((it) => (it.kind === 'project' ? it.pkg.materials.map((m) => m.doc) : it.kind === 'material' ? [it.doc] : []));
+      const fresh = incoming.map((m) => ({ ...m, id: matId(), meta: { ...m.meta, createdAt: at, updatedAt: at } }));
+      // Ids are mapped across the whole import, so components link to materials of the same file set.
+      const ids = materialIdMap(incoming.map((m, i) => [m.id, fresh[i]!.id]));
+      fresh.forEach(addMaterial);
       for (const it of fromFile) {
-        if (it.kind === 'project') {
-          for (const m of it.pkg.materials) await this.addMaterial({ ...m.doc, id: matId(), meta: { ...m.doc.meta, createdAt: now(), updatedAt: now() } }, id);
-          for (const c of it.pkg.components) await this.addComponent({ ...c.doc, id: cmpId(), meta: { ...c.doc.meta, createdAt: now(), updatedAt: now() } }, id);
-        } else if (it.kind === 'material') await this.addMaterial({ ...it.doc, id: matId(), meta: { ...it.doc.meta, createdAt: now(), updatedAt: now() } }, id);
-        else if (it.kind === 'component') await this.addComponent({ ...it.doc, id: cmpId(), meta: { ...it.doc.meta, createdAt: now(), updatedAt: now() } }, id);
+        if (it.kind === 'project') for (const c of it.pkg.components) addCopy(c.doc, ids.map);
+        else if (it.kind === 'component') addCopy(it.doc, ids.map);
       }
     }
+
+    await this.host.repo.commit({ projectDocs: { put: [doc] }, materials: { put: materials }, components: { put: components } });
+    // Committed: only now does the lab show the project.
+    for (const m of materials) this.host.userMaterials.set(m.id, m);
+    for (const c of components) this.host.userComponents.set(c.id, c);
+    this.host.store.set({ projects: [...this.state.projects, doc] });
     this.host.switchProject(id);
+    if (unlinked.length) this.host.notify(`Materiale non incluso per ${unlinked.map((n) => `«${n}»`).join(', ')}: la componente mantiene il suo aspetto ma non segue più un materiale della libreria.`, false, 10000);
     return id;
   }
 
-  async duplicate(id: string): Promise<string | null> {
+  duplicate(id: string): Promise<string | null> {
     const src = this.state.projects.find((p) => p.id === id);
-    if (!src) return null;
-    return this.create({ name: `Copia di ${src.name}`.slice(0, 80), platform: src.platform, previewTheme: src.previewTheme, start: 'duplicate', from: id });
+    if (!src) return Promise.resolve(null);
+    return this.create({ name: `Copia di ${src.name}`.slice(0, 80), platform: src.platform, previewTheme: src.previewTheme, start: 'duplicate', from: id }).catch((e: unknown) => {
+      this.host.notify(`Progetto non duplicato: ${(e as Error).message}`);
+      return null;
+    });
   }
 
-  /** Deletes the project with its materials and components. */
-  async remove(id: string): Promise<boolean> {
-    const s = this.state;
-    if (!s.projects.some((p) => p.id === id)) return false;
-    try {
-      for (const rec of [...this.host.userMaterials.values()].filter((m) => m.projectId === id)) {
-        await this.host.repo.deleteMaterial(rec.id);
-        this.host.userMaterials.delete(rec.id);
+  /** Deletes the project with its materials and components, in one transaction. */
+  remove(id: string): Promise<boolean> {
+    return this.host.exclusive(async () => {
+      const s = this.state;
+      if (!s.projects.some((p) => p.id === id)) return false;
+      const materials = [...this.host.userMaterials.values()].filter((m) => m.projectId === id).map((m) => m.id);
+      const components = [...this.host.userComponents.values()].filter((c) => c.projectId === id).map((c) => c.id);
+      try {
+        await this.host.repo.commit({ materials: { delete: materials }, components: { delete: components }, projectDocs: { delete: [id] } });
+      } catch (e) {
+        this.host.notify(`Progetto non eliminato: ${(e as Error).message}`);
+        return false;
       }
-      for (const rec of [...this.host.userComponents.values()].filter((c) => c.projectId === id)) {
-        await this.host.repo.deleteComponent(rec.id);
-        this.host.userComponents.delete(rec.id);
+      for (const m of materials) this.host.userMaterials.delete(m);
+      for (const c of components) this.host.userComponents.delete(c);
+      this.dirty.delete(id);
+      this.host.announce([id]);
+      const rest = this.state.projects.filter((p) => p.id !== id);
+      this.host.store.set({ projects: rest });
+      if (this.state.projectId === id) {
+        if (rest[0]) this.host.switchProject(rest[0].id);
+        else {
+          this.host.store.set({ projectId: null, page: 'home' });
+          this.host.rescope();
+        }
       }
-      await this.host.repo.deleteProjectDoc(id);
-    } catch (e) {
-      this.host.notify((e as Error).message);
-      return false;
-    }
-    this.dirty.delete(id);
-    const rest = s.projects.filter((p) => p.id !== id);
-    this.host.store.set({ projects: rest });
-    if (s.projectId === id) {
-      if (rest[0]) this.host.switchProject(rest[0].id);
-      else {
-        this.host.store.set({ projectId: null, page: 'home' });
-        this.host.rescope();
-      }
-    }
-    return true;
+      return true;
+    });
   }
 
   // ---------- import ----------
 
-  /** Applies verified items to the active project. `choices` answers the conflicts. */
-  async applyImport(items: readonly ImportItem[], choices: Readonly<Record<string, Choice>>): Promise<ImportOutcome> {
+  /**
+   * Applies verified items to the active project. `choices` answers the
+   * conflicts. Materials, components, font files and the project's assets are
+   * committed in one transaction; nothing is shown before it commits.
+   */
+  applyImport(items: readonly ImportItem[], choices: Readonly<Record<string, Choice>>): Promise<ImportOutcome> {
+    return this.host.exclusive(() => this.importNow(items, choices));
+  }
+
+  private async importNow(items: readonly ImportItem[], choices: Readonly<Record<string, Choice>>): Promise<ImportOutcome> {
     const proj = this.active;
     if (!proj) throw new Error('Nessun progetto attivo');
+    const at = now();
     const inc: Incoming = collect(items);
-    const out: ImportOutcome = { materials: 0, components: 0, colors: 0, icons: 0, fonts: 0, skipped: 0, warnings: items.reduce((n, i) => n + ('warnings' in i ? i.warnings.length : 0), 0), firstMaterial: null };
+    const out: ImportOutcome = { materials: 0, components: 0, colors: 0, icons: 0, fonts: 0, skipped: 0, warnings: items.reduce((n, i) => n + ('warnings' in i ? i.warnings.length : 0), 0), firstMaterial: null, unlinked: [] };
+    const materials: StoredMaterial[] = [];
+    const components: StoredComponent[] = [];
+    const assets: StoredAsset[] = [];
     const mine = [...this.host.userMaterials.values()].filter((m) => m.projectId === proj.id);
     const takenNames = new Set(mine.map((m) => m.doc.name));
+    // Where each incoming material ends up: a new material, the one it replaces, or (skipped) the
+    // project's material it conflicted with. Components are relinked through this map only.
+    const target: [string, string][] = [];
     for (const m of inc.materials) {
       const choice = choices[m.key];
+      const existing = mine.find((x) => x.doc.name === m.doc.name);
       if (choice === 'skip') {
+        if (existing) target.push([m.doc.id, existing.id]);
         out.skipped++;
         continue;
       }
-      const existing = mine.find((x) => x.doc.name === m.doc.name);
       if (choice === 'replace' && existing) {
-        const rec: StoredMaterial = { ...existing, doc: { ...m.doc, id: existing.id, meta: { ...m.doc.meta, updatedAt: now() } }, updatedAt: now() };
-        await this.host.repo.putMaterial(rec);
-        this.host.userMaterials.set(rec.id, rec);
-        out.firstMaterial ??= rec.id;
+        materials.push({ ...existing, doc: { ...m.doc, id: existing.id, meta: { ...m.doc.meta, updatedAt: at } }, updatedAt: at });
+        target.push([m.doc.id, existing.id]);
+        out.firstMaterial ??= existing.id;
       } else {
         const name = takenNames.has(m.doc.name) ? uniqueName(m.doc.name, takenNames) : m.doc.name;
         takenNames.add(name);
-        const rec = await this.addMaterial({ ...m.doc, id: matId(), name, meta: { ...m.doc.meta, createdAt: m.doc.meta.createdAt ?? now(), updatedAt: now() } }, proj.id);
+        const rec = this.record({ ...m.doc, id: matId(), name, meta: { ...m.doc.meta, createdAt: m.doc.meta.createdAt ?? at, updatedAt: at } }, proj.id, at);
+        materials.push(rec);
+        target.push([m.doc.id, rec.id]);
         out.firstMaterial ??= rec.id;
       }
       out.materials++;
     }
+    const ids = materialIdMap(target);
     const mineC = [...this.host.userComponents.values()].filter((c) => c.projectId === proj.id);
     const takenC = new Set(mineC.map((c) => c.doc.name));
     for (const c of inc.components) {
@@ -288,33 +324,43 @@ export class ProjectActions {
         out.skipped++;
         continue;
       }
+      const r = remapMaterialReference(c.doc, ids.map);
+      if (r.unlinked) out.unlinked.push(c.doc.name);
+      const linked = r.doc.material.preset ? r.doc.material : bindMaterial(resolveDefinitionMaterial(r.doc), null);
       const existing = mineC.find((x) => x.doc.name === c.doc.name);
       if (choice === 'replace' && existing) {
-        const rec: StoredComponent = { ...existing, doc: { ...c.doc, id: existing.id, meta: { ...c.doc.meta, updatedAt: now() } }, updatedAt: now() };
-        await this.host.repo.putComponent(rec);
-        this.host.userComponents.set(rec.id, rec);
+        components.push({ ...existing, doc: { ...r.doc, id: existing.id, meta: { ...r.doc.meta, updatedAt: at } }, updatedAt: at });
       } else {
         const name = takenC.has(c.doc.name) ? uniqueName(c.doc.name, takenC) : c.doc.name;
         takenC.add(name);
-        await this.addComponent({ ...c.doc, id: cmpId(), name, material: c.doc.material.preset ? c.doc.material : bindMaterial(resolveDefinitionMaterial(c.doc), null), meta: { ...c.doc.meta, updatedAt: now() } }, proj.id);
+        components.push(this.record({ ...r.doc, id: cmpId(), name, material: linked, meta: { ...r.doc.meta, updatedAt: at } }, proj.id, at));
       }
       out.components++;
     }
-    for (const f of inc.fonts) {
+    const fonts = inc.fonts.map((f) => ({ ...f, font: { ...f.font } }));
+    for (const f of fonts) {
       if (f.bytes && choices[f.key] !== 'skip') {
         const hash = await sha256(f.bytes.buffer.slice(f.bytes.byteOffset, f.bytes.byteOffset + f.bytes.byteLength) as ArrayBuffer);
-        await this.host.repo.putAsset({ hash, type: 'font/woff2', blob: new Blob([f.bytes as BlobPart], { type: 'font/woff2' }), name: f.font.name });
+        assets.push({ hash, type: 'font/woff2', blob: new Blob([f.bytes as BlobPart], { type: 'font/woff2' }), name: f.font.name });
         f.font.fileHash = hash;
       }
     }
-    const merged = mergeAssets(proj.assets, inc, choices);
+    const merged = mergeAssets(proj.assets, { ...inc, fonts }, choices);
     out.colors = merged.added.colors;
     out.icons = merged.added.icons;
     out.fonts = merged.added.fonts;
     out.skipped += merged.skipped.colors + merged.skipped.icons + merged.skipped.fonts;
-    this.update((p) => ({ ...p, assets: merged.assets }));
+    // By id: the user may have switched project while the font files were hashed.
+    const current = this.state.projects.find((p) => p.id === proj.id) ?? proj;
+    const next: ProjectDoc = { ...current, assets: merged.assets, updatedAt: at };
+
+    await this.host.repo.commit({ materials: { put: materials }, components: { put: components }, assets: { put: assets }, projectDocs: { put: [next] } });
+    for (const m of materials) this.host.userMaterials.set(m.id, m);
+    for (const c of components) this.host.userComponents.set(c.id, c);
+    this.host.store.set({ projects: this.state.projects.map((p) => (p.id === next.id ? next : p)) });
+    this.committed([next]);
+    this.host.announce([next.id]);
     this.host.rescope();
-    await this.host.saveNow();
     return out;
   }
 

@@ -28,6 +28,60 @@ parametri di scenario apre l'editor, un indirizzo nudo riapre l'ultima pagina us
 - IndexedDB versione 4: nuovo store `projectdocs`. Nessuna migrazione distruttiva.
 - I font `.woff2` caricati stanno nello store `assets` esistente, per SHA-256.
 
+### Riferimenti ai materiali
+
+Una componente segue un materiale della libreria tramite `material.preset`. Invarianti
+(`src/project/references.ts`):
+
+1. Ogni materiale e ogni componente appartiene a un solo progetto (`projectId`).
+2. `material.preset` è `null`, l'id di un preset incluso (nel codice, uguale per tutti i progetti, non
+   modificabile) oppure l'id di un materiale **dello stesso progetto**. Non esistono collegamenti tra
+   progetti.
+3. Gli id dei preset inclusi sono riservati: un riferimento a uno di essi è sempre al preset incluso.
+4. Duplicare o importare dà ai materiali id nuovi; ogni riferimento è riscritto con la mappa
+   «id originale → id nuovo» della stessa operazione, mai per nome o per tentativi.
+5. Un riferimento non risolvibile (materiale mancante nel file, eliminato, o ambiguo perché due
+   materiali copiati avevano lo stesso id) viene scollegato: la componente tiene il suo documento
+   incorporato, quindi l'aspetto non cambia, e smette di seguire. L'operazione lo dice.
+
+La propagazione (`src/lab/material-links.ts`) aggiorna solo le componenti del progetto del materiale,
+collegate e senza valori propri (`outdated`). All'avvio, le componenti che versioni precedenti avevano
+lasciato collegate a un materiale di un altro progetto (duplicazioni e import prima di M6.H) vengono
+scollegate una volta, con un avviso. Un collegamento a un materiale solo mancante resta com'è e appare
+come «incorporato».
+
+### Salvataggio
+
+- Ogni operazione logica è **una transazione IndexedDB** su tutti gli store che tocca
+  (`Repository.commit`): creare, duplicare, importare o eliminare un progetto; eliminare un materiale
+  o una componente; l'autosave. O tutto o niente; un errore (quota, transazione annullata) non lascia
+  record parziali e il laboratorio non mostra il risultato prima del commit.
+- Le modifiche a materiali, componenti e documenti di progetto sono tenute in memoria e marcate
+  «da salvare»; l'autosave le scrive tutte insieme e toglie il segno solo a ciò che non è cambiato
+  durante la scrittura. Un salvataggio fallito non toglie niente: il successivo riprova. Cambiare
+  progetto non perde modifiche in attesa.
+- Le operazioni di progetto sono serializzate con l'autosave (`Autosaver.exclusive`): un autosave
+  partito prima di un'eliminazione non può riscrivere ciò che è stato eliminato.
+- Due schede sullo stesso database non si sincronizzano: l'ultima scrittura vince (limite noto).
+
+### Contenuti non fidati
+
+Tutto ciò che arriva da un file o da IndexedDB è non fidato.
+
+- **Icone SVG**: il markup passa da un'unica allowlist (`validateSvgBody`, `src/components/icons.ts`):
+  solo forme e attributi di presentazione, nessuno script, evento, stile, link, `url()`, entità,
+  `foreignObject` o immagine; `viewBox` di quattro numeri; profondità e numero di nodi limitati. Si
+  salva e si esporta solo la riserializzazione. `parseProject` lo applica a ogni icona del progetto,
+  sia da `.jello` sia da IndexedDB: un'icona rifiutata viene rimossa (quarantena) e segnalata
+  (import: avvisi; avvio: *Impostazioni*), il resto del progetto resta. Il laboratorio disegna le icone
+  come elementi React dall'albero validato (`SafeSvg`), mai come HTML.
+- **Pacchetti `.jello`** (`src/project/unzip.ts`): indice centrale e intestazioni locali verificati
+  prima di decomprimere (firme, metodi, nomi, dimensioni, offset, voci sovrapposte, percorsi duplicati
+  anche dopo normalizzazione, percorsi assoluti o con `..`); decompressione in streaming interrotta appena
+  una voce supera la dimensione dichiarata; CRC verificato; limiti di 2000 voci, 8 MB per voce e 64 MB in
+  totale. ZIP64, archivi multi-volume e voci cifrate sono rifiutati con un messaggio esplicito.
+- La pagina dichiara una Content-Security-Policy `script-src 'self'; object-src 'none'; base-uri 'self'`.
+
 ### Asset
 
 - **Colori**: palette di colori con nome, token CSS (`--jello-…`, unico nel progetto, anche tra colori
@@ -70,7 +124,7 @@ Per ogni conflitto: *Mantieni entrambi* (la copia importata prende un nome o un 
 
 | Formato | Contenuto |
 | --- | --- |
-| `.jello` | ZIP (voci non compresse, deterministico): `progetto.json`, `materiali/*.json`, `componenti/*.json`, `asset/icone/<raccolta>/*.svg`, `asset/token.json`. Si reimporta così com'è. |
+| `.jello` | ZIP (voci non compresse, deterministico; in lettura anche deflate): `progetto.json`, `materiali/*.json`, `componenti/*.json`, `asset/icone/<raccolta>/*.svg`, `asset/token.json`. Si reimporta così com'è. |
 | JSON dei materiali | Un file `jello-material` per materiale (ZIP se più di uno). |
 | Variabili CSS | `:root { … }` con colori, famiglie e scala tipografica; il link Google Fonts è in un commento. |
 | Componenti Vue | In arrivo. |

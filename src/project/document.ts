@@ -4,6 +4,7 @@
  */
 
 import * as z from 'zod/mini';
+import { validateSvgBody } from '../components/icons';
 import { HEX6 } from './color';
 import {
   PROJECT_FORMAT,
@@ -77,8 +78,19 @@ const projectSchema = z.object({
   updatedAt: z.string(),
 });
 
-export type ProjectParse = { ok: true; doc: ProjectDoc } | { ok: false; errors: string[] };
+/**
+ * `quarantined`: icons removed because their markup is not allowlisted SVG
+ * (the rest of the project is kept); `warnings`: those plus icons whose
+ * markup was only normalised.
+ */
+export type ProjectParse = { ok: true; doc: ProjectDoc; warnings: string[]; quarantined: string[] } | { ok: false; errors: string[] };
 
+/**
+ * Validates a project read from outside the running lab (a `.jello` file or
+ * IndexedDB). Icon bodies are untrusted markup: each one goes through the
+ * SVG allowlist and only its re-serialization is kept, so no stored or
+ * imported icon reaches a renderer unchecked.
+ */
 export function parseProject(input: unknown): ProjectParse {
   if (typeof input !== 'object' || input === null) return { ok: false, errors: ['il progetto deve essere un oggetto'] };
   const v = (input as { schemaVersion?: unknown }).schemaVersion;
@@ -86,8 +98,25 @@ export function parseProject(input: unknown): ProjectParse {
     return { ok: false, errors: [`schemaVersion: ${v} è più recente di quella supportata (${PROJECT_SCHEMA_VERSION})`] };
   }
   const r = z.safeParse(projectSchema, input);
-  if (r.success) return { ok: true, doc: r.data as ProjectDoc };
-  return { ok: false, errors: r.error.issues.slice(0, 6).map((i) => `${i.path.join('.') || 'progetto'}: ${i.message}`) };
+  if (!r.success) return { ok: false, errors: r.error.issues.slice(0, 6).map((i) => `${i.path.join('.') || 'progetto'}: ${i.message}`) };
+  const doc = r.data as ProjectDoc;
+  const warnings: string[] = [];
+  const quarantined: string[] = [];
+  const iconSets = doc.assets.iconSets.map((set) => ({
+    ...set,
+    icons: set.icons.flatMap((icon) => {
+      const checked = validateSvgBody(icon.viewBox, icon.body);
+      if (!checked.ok) {
+        const why = `icona «${icon.name}» (${set.name}) rimossa perché non è un SVG ammesso: ${checked.errors[0] ?? 'markup non valido'}`;
+        quarantined.push(why);
+        warnings.push(why);
+        return [];
+      }
+      if (checked.body !== icon.body || checked.viewBox !== icon.viewBox) warnings.push(`icona «${icon.name}» (${set.name}): SVG normalizzato`);
+      return [{ ...icon, viewBox: checked.viewBox, body: checked.body as string }];
+    }),
+  }));
+  return { ok: true, doc: { ...doc, assets: { ...doc.assets, iconSets } }, warnings, quarantined };
 }
 
 export interface CreateProjectOptions {
@@ -163,6 +192,12 @@ export function uniqueName(base: string, taken: ReadonlySet<string>): string {
   const stem = base.replace(/ \d+$/, '');
   for (let i = 2; i < 1000; i++) if (!taken.has(`${stem} ${i}`)) return `${stem} ${i}`;
   return `${stem} ${Date.now()}`;
+}
+
+/** "Nuovo glass 1", "Nuovo glass 2"…: the first number not in `taken` (a count of items repeats names after a delete). */
+export function numberedName(base: string, taken: ReadonlySet<string>): string {
+  for (let i = 1; i < 10000; i++) if (!taken.has(`${base} ${i}`)) return `${base} ${i}`;
+  return `${base} ${Date.now()}`;
 }
 
 export function usedTokens(a: ProjectAssets): Set<string> {

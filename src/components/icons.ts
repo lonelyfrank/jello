@@ -146,7 +146,7 @@ export function parseSvg(text: string): SvgParse {
       for (const [k, v] of attrs) {
         if (/^on/i.test(k)) errors.push(`svg: attributo ${k} non ammesso`);
         else if (!ROOT_KNOWN.has(k)) warnings.push(`svg: attributo ${k} ignorato`);
-        else if (ATTRS[k] && k !== 'width' && k !== 'height') {
+        else if (Object.hasOwn(ATTRS, k) && k !== 'width' && k !== 'height') {
           if (ATTRS[k]!.test(v.trim())) root.attrs.push([k, v.trim()]);
           else errors.push(`svg: valore non ammesso per ${k}`);
         }
@@ -176,7 +176,7 @@ export function parseSvg(text: string): SvgParse {
     }
     const node: SvgNode = { tag: name as SvgTag, attrs: [], children: [] };
     for (const [k, v] of attrs) {
-      const rule = ATTRS[k];
+      const rule = Object.hasOwn(ATTRS, k) ? ATTRS[k] : undefined;
       if (/^on/i.test(k) || /href$/i.test(k) || k === 'style') {
         errors.push(`<${name}>: attributo ${k} non ammesso`);
       } else if (!rule) {
@@ -243,9 +243,47 @@ export function serializeSvgNodes(nodes: readonly SvgNode[]): string {
     .join('');
 }
 
-/** Body markup → tree, for renderers. The body must have been produced by this module. */
+/** Four finite numbers, positive width and height: the only view box a stored icon may carry. */
+const VIEW_BOX = /^\s*[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?([\s,]+[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?){3}\s*$/i;
+
+/**
+ * Body markup → tree, for renderers. The body comes from a document (a
+ * `.jello` file, IndexedDB, a component definition): it is untrusted and
+ * goes through the same allowlist as an uploaded file. The view box is
+ * checked before it is placed in the wrapper, so it cannot add attributes.
+ */
 export function parseSvgBody(viewBox: string, body: string): SvgParse {
+  if (typeof viewBox !== 'string' || typeof body !== 'string') return { ok: false, errors: ['icona non valida'] };
+  if (!VIEW_BOX.test(viewBox)) return { ok: false, errors: ['viewBox mancante o non valido'] };
   return parseSvg(`<svg viewBox="${viewBox}">${body}</svg>`);
+}
+
+declare const safeSvgBrand: unique symbol;
+/**
+ * Icon markup re-serialized by this module from the allowlisted tree. Only
+ * `validateSvgBody` produces one; the brand is a compile-time reminder, the
+ * guarantee is the runtime check that made it.
+ */
+export type SafeSvgBody = string & { readonly [safeSvgBrand]: true };
+
+export type SvgValidationResult =
+  | { ok: true; viewBox: string; body: SafeSvgBody; nodes: SvgNode[]; paint: IconPaint; warnings: string[] }
+  | { ok: false; errors: string[] };
+
+/**
+ * The single gate for stored icon markup: parses `body` with the allowlist
+ * and returns the canonical re-serialization (what renderers and exports may
+ * use) or every reason it was refused. Input that differs from its
+ * canonical form is reported with a warning.
+ */
+export function validateSvgBody(viewBox: unknown, body: unknown): SvgValidationResult {
+  if (typeof viewBox !== 'string' || typeof body !== 'string') return { ok: false, errors: ['icona non valida'] };
+  const r = parseSvgBody(viewBox, body);
+  if (!r.ok) return r;
+  const safe = serializeSvgNodes(r.nodes) as SafeSvgBody;
+  const warnings = [...r.warnings];
+  if (safe !== body) warnings.push('SVG normalizzato');
+  return { ok: true, viewBox: r.viewBox, body: safe, nodes: r.nodes, paint: r.paint, warnings };
 }
 
 export type IconImport = { ok: true; icon: Extract<IconRef, { kind: 'svg' }>; warnings: string[] } | { ok: false; errors: string[] };
@@ -300,7 +338,7 @@ export const BUILTIN_ICON_NAMES = Object.keys(BUILTIN_ICONS);
 export function iconTree(icon: IconRef): { viewBox: string; nodes: SvgNode[]; paint: IconPaint } | null {
   if (icon.kind === 'none') return null;
   if (icon.kind === 'builtin') {
-    const b = BUILTIN_ICONS[icon.name];
+    const b = Object.hasOwn(BUILTIN_ICONS, icon.name) ? BUILTIN_ICONS[icon.name] : undefined;
     if (!b) return null;
     const r = parseSvgBody('0 0 24 24', b.body);
     return r.ok ? { viewBox: '0 0 24 24', nodes: r.nodes, paint: 'stroke' } : null;
@@ -316,17 +354,16 @@ export function iconTree(icon: IconRef): { viewBox: string; nodes: SvgNode[]; pa
  * and only what this runtime would have written is kept.
  */
 export function checkIconRef(icon: IconRef, at: string, errors: string[], warnings: string[]): IconRef {
-  if (icon.kind === 'builtin' && !BUILTIN_ICONS[icon.name]) {
+  if (icon.kind === 'builtin' && !Object.hasOwn(BUILTIN_ICONS, icon.name)) {
     warnings.push(`${at}: icona "${icon.name}" sconosciuta a questo runtime, uso «star»`);
     return { kind: 'builtin', name: 'star' };
   }
   if (icon.kind !== 'svg') return icon;
-  const r = parseSvgBody(icon.viewBox, icon.body);
+  const r = validateSvgBody(icon.viewBox, icon.body);
   if (!r.ok) {
     errors.push(...r.errors.map((e) => `${at}: SVG ${e}`));
     return icon;
   }
-  const body = serializeSvgNodes(r.nodes);
-  if (body !== icon.body) warnings.push(`${at}: SVG normalizzato`);
-  return { ...icon, viewBox: r.viewBox, body };
+  if (r.body !== icon.body) warnings.push(`${at}: SVG normalizzato`);
+  return { ...icon, viewBox: r.viewBox, body: r.body };
 }

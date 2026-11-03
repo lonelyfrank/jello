@@ -106,6 +106,15 @@ export function installHook(session: LabSession): void {
     setBackend: (b: Parameters<LabSession['setBackend']>[0]) => session.setBackend(b),
     setQuality: (q: Parameters<LabSession['setQuality']>[0]) => session.setQuality(q),
     scenarioUrl: () => session.scenarioUrl(),
+    // ---- projects ----
+    projects: {
+      list: () => session.state.projects.map((p) => ({ id: p.id, name: p.name })),
+      active: () => session.state.projectId,
+      duplicate: (id: string) => session.projects.duplicate(id),
+      switch: (id: string) => session.switchProject(id),
+      rename: (id: string, name: string) => session.projects.rename(id, name),
+      notice: () => session.state.notice,
+    },
     // ---- component builder ----
     workspace: () => session.state.workspace,
     setWorkspace: (w: 'material' | 'builder') => session.setWorkspace(w),

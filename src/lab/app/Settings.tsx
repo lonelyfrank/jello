@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { PLATFORM_LABEL, type DefaultPath, type Platform, type PreviewTheme } from '../../project/types';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
-import { SideNav } from './Home';
 import { Ic, Segmented, StateChip, Switch, type ChipKind } from './ui';
 
 const PATHS: { id: DefaultPath; label: string }[] = [
@@ -27,9 +26,7 @@ export function SettingsPage({ session }: { session: LabSession }) {
 
   return (
     <div className="home settings-page" id="settingsPage">
-      <SideNav session={session} current="settings" />
       <main className="home-main settings" aria-label="Impostazioni">
-        <h1>Impostazioni</h1>
         <section className="card pad-card" aria-labelledby="s-project">
           <h2 id="s-project">Progetto</h2>
           {project ? (
@@ -57,6 +54,10 @@ export function SettingsPage({ session }: { session: LabSession }) {
                 <Segmented<PreviewTheme> label="Tema" value={options.theme} onChange={(t) => session.setOption('theme', t)} options={[{ id: 'system', label: 'Sistema' }, { id: 'light', label: 'Chiaro' }, { id: 'dark', label: 'Scuro' }]} />
               </div>
               <div className="row-actions">
+                <button type="button" className="button" onClick={() => { session.setPanelTab('rendering'); session.setPage('lab', 'material'); }}>
+                  <Ic name="shield" />
+                  Compatibilità del rendering
+                </button>
                 <button type="button" className="button danger" onClick={() => session.openConfirm({ kind: 'delete-project', id: project.id })}>
                   <Ic name="trash" size={14} />
                   Elimina il progetto…

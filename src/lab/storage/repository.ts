@@ -86,6 +86,25 @@ export interface ReadReport<T> {
   skipped: string[];
 }
 
+/**
+ * Writes that form one logical operation (create, duplicate, import or delete
+ * a project, an autosave): applied in one IndexedDB transaction over every
+ * store they touch, so either all of them are stored or none is.
+ */
+export interface WriteBatch {
+  materials?: { put?: StoredMaterial[]; delete?: string[] };
+  components?: { put?: StoredComponent[]; delete?: string[] };
+  projectDocs?: { put?: ProjectDoc[]; delete?: string[] };
+  assets?: { put?: StoredAsset[] };
+  project?: ProjectRecord;
+}
+
+const BATCH_STORES = { materials: 'materials', components: 'components', projectDocs: 'projectdocs', assets: 'assets', project: 'projects' } as const;
+
+export function batchStores(b: WriteBatch): string[] {
+  return (Object.keys(BATCH_STORES) as (keyof typeof BATCH_STORES)[]).filter((k) => b[k] !== undefined).map((k) => BATCH_STORES[k]);
+}
+
 export interface Repository {
   /** False for the in-memory fallback: nothing survives a reload. */
   readonly persistent: boolean;
@@ -103,6 +122,8 @@ export interface Repository {
   listProjectDocs(): Promise<ReadReport<ProjectDoc>>;
   putProjectDoc(p: ProjectDoc): Promise<void>;
   deleteProjectDoc(id: string): Promise<void>;
+  /** All of the batch, or nothing: resolves only after the transaction committed. */
+  commit(batch: WriteBatch): Promise<void>;
   close(): void;
 }
 
@@ -226,8 +247,11 @@ class IdbRepository implements Repository {
     const skipped: string[] = [];
     for (const r of raw as { id?: string }[]) {
       const parsed = parseProject(r);
-      if (parsed.ok) items.push(parsed.doc);
-      else skipped.push(`${r.id ?? 'progetto'}: ${parsed.errors[0] ?? 'non leggibile'}`);
+      if (parsed.ok) {
+        items.push(parsed.doc);
+        // Kept, but reported: an icon in quarantine is gone from the project, the user must know.
+        skipped.push(...parsed.quarantined.map((w) => `${parsed.doc.name}: ${w}`));
+      } else skipped.push(`${r.id ?? 'progetto'}: ${parsed.errors[0] ?? 'non leggibile'}`);
     }
     items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     return { items, skipped };
@@ -248,6 +272,37 @@ class IdbRepository implements Repository {
   async getAsset(hash: string): Promise<StoredAsset | null> {
     const tx = this.db.transaction('assets', 'readonly');
     return ((await req(tx.objectStore('assets').get(hash))) as StoredAsset | undefined) ?? null;
+  }
+
+  async commit(batch: WriteBatch): Promise<void> {
+    const stores = batchStores(batch);
+    if (!stores.length) return;
+    try {
+      const tx = this.db.transaction(stores, 'readwrite');
+      const committed = done(tx);
+      const apply = <T>(name: string, ops: { put?: T[]; delete?: string[] } | undefined) => {
+        if (!ops) return;
+        const st = tx.objectStore(name);
+        for (const id of ops.delete ?? []) st.delete(id);
+        for (const v of ops.put ?? []) st.put(v);
+      };
+      try {
+        apply('materials', batch.materials);
+        apply('components', batch.components);
+        apply('projectdocs', batch.projectDocs);
+        apply('assets', batch.assets);
+        if (batch.project) tx.objectStore('projects').put(batch.project);
+      } catch (e) {
+        // A request that throws (invalid key, uncloneable value) does not abort by itself: the
+        // requests already queued would commit. Abort, so the batch is all or nothing.
+        committed.catch(() => undefined);
+        tx.abort();
+        throw e;
+      }
+      await committed;
+    } catch (e) {
+      throw toStorageError(e);
+    }
   }
 
   close(): void {
@@ -313,6 +368,18 @@ export class MemoryRepository implements Repository {
   }
   async deleteProjectDoc(id: string) {
     this.projectDocs.delete(id);
+  }
+  async commit(batch: WriteBatch) {
+    // Cloned first (the only step that can throw), then applied: nothing fails half-way.
+    const b = structuredClone({ ...batch, assets: undefined });
+    for (const id of b.materials?.delete ?? []) this.materials.delete(id);
+    for (const m of b.materials?.put ?? []) this.materials.set(m.id, m);
+    for (const id of b.components?.delete ?? []) this.components.delete(id);
+    for (const c of b.components?.put ?? []) this.components.set(c.id, c);
+    for (const id of b.projectDocs?.delete ?? []) this.projectDocs.delete(id);
+    for (const p of b.projectDocs?.put ?? []) this.projectDocs.set(p.id, p);
+    for (const a of batch.assets?.put ?? []) this.assets.set(a.hash, a);
+    if (b.project) this.project = b.project;
   }
   close() {}
 }

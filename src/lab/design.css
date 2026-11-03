@@ -986,35 +986,9 @@ input[aria-invalid='true'] {
   font-size: 26px;
   font-weight: 600;
 }
-.compat {
-  display: grid;
-  gap: 10px;
-  padding: 16px;
-}
-.compat h2,
 .quick h2 {
   margin: 0;
   font-size: 15px;
-}
-.compat p {
-  margin: 0;
-}
-.kv-list {
-  display: grid;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.kv-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--line);
-}
-.kv-list li:last-child {
-  border-bottom: 0;
 }
 .quick {
   display: grid;

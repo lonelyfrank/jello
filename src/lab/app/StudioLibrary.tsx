@@ -33,24 +33,57 @@ export function StudioLibrary({ session }: { session: LabSession }) {
     if (entry.kind === 'material') { session.openMaterial(entry.item.id); openStudio(session, 'material'); }
     else { session.openComponent(entry.item.id); openStudio(session, 'builder'); }
   };
-  return <div className="studio-library-layout" id="studioLibrary">
-    <aside className="catalog-sidebar" aria-label="Categorie della libreria">
-      <p className="eyebrow">La tua collezione</p>
-      {categories.map((c) => <button key={c.id} type="button" className="nav-i" aria-pressed={category === c.id} onClick={() => setCategory(c.id)}><Ic name={c.icon} />{c.label}<span className="count-badge">{entries.filter((e) => matchCategory(e, c.id)).length}</span></button>)}
-      <div className="catalog-note"><Ic name="info" /><p>I template Jello sono separati dalle tue creazioni. Le anteprime usano il runtime CSS reale.</p></div>
-    </aside>
-    <main className="catalog-main">
-      <div className="studio-page-heading"><div><p className="eyebrow">LIBRARY / {project?.name}</p><h1>Una forma per ogni idea.</h1><p className="muted">Materiali e componenti, pronti per il tuo prossimo progetto.</p></div><button type="button" className="button primary" onClick={() => session.openFlow('component')}><Ic name="plus" />Crea componente</button></div>
-      <div className="catalog-toolbar"><label className="search"><Ic name="search" /><span className="visually-hidden">Cerca nella Library</span><input type="search" id="catalogSearch" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cerca materiali e componenti…" /></label><label className="catalog-family"><span>Materiale</span><select value={family} onChange={(e) => setFamily(e.target.value)}><option value="all">Tutti</option><option value="glass">Glass</option><option value="solid">Solid</option></select></label><span className="muted small" role="status">{shown.length} elementi</span></div>
+  /** The copy appears in the Library and becomes the selection; the page does not change. */
+  const duplicate = async (entry: Entry) => {
+    if (entry.kind === 'material') {
+      session.openMaterial(entry.item.id);
+      await session.duplicate();
+      setPickedKey(`material-${session.state.materialId}`);
+    } else {
+      session.openComponent(entry.item.id);
+      await session.duplicateComponent();
+      setPickedKey(`component-${session.state.builder.componentId}`);
+    }
+  };
+  const projects = useLab((s) => s.projects);
+  const projectId = useLab((s) => s.projectId);
+  const catColors: Record<Category, string> = {
+    all: 'linear-gradient(135deg, #3a2e5e, #261c44)', button: 'linear-gradient(135deg, #ff9bb8, #f0457e)', navigation: 'linear-gradient(135deg, #7aa2ff, #3b5bf5)',
+    materials: 'radial-gradient(circle at 34% 28%, #fff 0 10%, #9aa6e8 45%, #3a3a9a 100%)', mine: 'linear-gradient(135deg, #a78bfa, #6d2bf0)', favorites: 'linear-gradient(135deg, #f472b6, #9d174d)',
+  };
+  const families: { id: string; label: string; dot: string }[] = [
+    { id: 'all', label: 'Tutti', dot: 'conic-gradient(#9aa6e8, #b79bff, #9aa6e8)' }, { id: 'glass', label: 'Glass', dot: 'radial-gradient(circle at 34% 28%, #fff 0 12%, #9aa6e8 50%, #3a3a9a)' }, { id: 'solid', label: 'Solid', dot: 'linear-gradient(135deg, #b79bff, #5a3aa0)' },
+  ];
+  return <div className="studio-library" id="studioLibrary">
+    <section className="home-hero lib-hero" aria-label="Cerca nella Library">
+      <span className="hero-bubble hb1" aria-hidden="true" />
+      <p className="hero-eyebrow home-eyebrow">LA TUA COLLEZIONE</p>
+      <h1 className="home-title lib-title">Una forma per ogni idea.</h1>
+      <div className="home-modes">
+        <div role="group" aria-label="Materiale" className="home-tabs">
+          {families.map((f) => <button key={f.id} type="button" className="pill" aria-pressed={family === f.id} onClick={() => setFamily(f.id)}><span className="pill-dot" style={{ background: f.dot }} aria-hidden="true" />{f.label}</button>)}
+        </div>
+        {projects.length > 0 && <label className="project-switch pill"><span className="visually-hidden">Progetto attivo</span><Ic name="folder" size={16} /><select id="projectSwitch" value={projectId ?? ''} onChange={(e) => session.switchProject(e.target.value)}>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}
+      </div>
+      <label className="lib-search"><Ic name="search" size={22} /><span className="visually-hidden">Cerca nella Library</span><input type="search" id="catalogSearch" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cerca nella Library…" /></label>
+    </section>
+    <section className="home-cats lib-cats" aria-label="Categorie della libreria">
+      {categories.map((c) => <button key={c.id} type="button" className="cat" aria-pressed={category === c.id} onClick={() => setCategory(c.id)}><span className="cat-ic" style={{ background: catColors[c.id] }}><Ic name={c.icon} size={22} /></span><span>{c.label} <span className="muted count-badge">{entries.filter((e) => matchCategory(e, c.id)).length}</span></span></button>)}
+    </section>
+    <div className="lib-cols">
+    <main className="catalog-main" aria-label="Elementi">
+      <div className="section-head"><h2>{categories.find((c) => c.id === category)?.label}</h2><div className="section-tools"><span className="muted small" role="status">{shown.length} elementi</span><button type="button" className="button small" onClick={() => session.openFlow('component')}><Ic name="plus" size={16} />Crea componente</button></div></div>
       <div className="catalog-grid">{shown.map((entry) => {
         const item = entry.item;
         const favorite = project?.favorites.includes(item.id) ?? false;
         const materialFamily = entry.kind === 'material' ? entry.item.doc.family : entry.item.doc.material.family;
-        return <article key={keyOf(entry)} className="card catalog-card" data-catalog-kind={entry.kind} data-selected={selected ? keyOf(entry) === keyOf(selected) : undefined} onClick={() => setPickedKey(keyOf(entry))}>
+        // Selection is the name button (stretched over the card by CSS); the card itself has no handler,
+        // so the favourite, «Apri» and «Duplica» buttons never also select or act twice.
+        return <article key={keyOf(entry)} className="card catalog-card" data-catalog-kind={entry.kind} data-selected={selected ? keyOf(entry) === keyOf(selected) : undefined}>
           {entry.kind === 'component' ? <RuntimeThumbnail doc={entry.item.doc} /> : <div className="catalog-material"><MaterialThumbnail runtime doc={entry.item.doc} /></div>}
           <button type="button" className="icon-btn catalog-favorite" aria-label={`${favorite ? 'Rimuovi' : 'Aggiungi'} ${item.name} ${favorite ? 'dai' : 'ai'} preferiti`} aria-pressed={favorite} onClick={() => session.projects.toggleFavorite(item.id)}><Ic name="heart" /></button>
           <div className="catalog-card-info"><h2><button type="button" className="catalog-pick" aria-pressed={selected ? keyOf(entry) === keyOf(selected) : false} onClick={() => setPickedKey(keyOf(entry))}>{item.name}</button></h2><p className="muted small">{entry.kind === 'component' ? COMPONENTS.get(entry.item.doc.type)?.name : 'Materiale'} · {materialFamily === 'glass' ? 'Glass' : 'Solid'} · {item.origin === 'user' ? 'Personale' : 'Jello'}</p><p className="catalog-compat small">{entry.kind === 'component' && entry.item.doc.type === 'desktop-navbar' ? 'Builder · React / Vanilla / JSON' : 'Runtime CSS · anteprima'}</p>
-          <div className="button-row"><button type="button" className="button small" onClick={() => open(entry)}>Apri<Ic name="arrowRight" size={14} /></button><button type="button" className="icon-btn" aria-label={`Duplica ${item.name}`} onClick={async () => { open(entry); if (entry.kind === 'material') await session.duplicate(); else await session.duplicateComponent(); }}><Ic name="copy" size={16} /></button></div></div>
+          <div className="button-row"><button type="button" className="button small" onClick={() => open(entry)}>Apri<Ic name="arrowRight" size={14} /></button><button type="button" className="icon-btn" aria-label={`Duplica ${item.name}`} onClick={() => void duplicate(entry)}><Ic name="copy" size={16} /></button></div></div>
         </article>;
       })}</div>
       {!shown.length && <EmptyState icon="search" title="Nessun elemento trovato">Cambia categoria, materiale o termine di ricerca.</EmptyState>}
@@ -66,5 +99,6 @@ export function StudioLibrary({ session }: { session: LabSession }) {
         </div>
       </> : <p className="muted small">Seleziona un elemento per vederne l’anteprima.</p>}
     </aside>
+    </div>
   </div>;
 }

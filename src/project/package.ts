@@ -10,6 +10,7 @@
  */
 
 import { definitionIcons, serializeDefinition, type ComponentDefinition } from '../components';
+import { validateSvgBody } from '../components/icons';
 import { importComponentText } from '../migration';
 import { serializeMaterial, parseMaterialText, type MaterialDocument } from '../model';
 import { zip, type ZipEntry } from '../export/zip';
@@ -52,12 +53,16 @@ export function usedIconNames(components: readonly ComponentDefinition[]): Set<s
   return names;
 }
 
+/** A standalone .svg of a project icon. The body is validated again: an export never carries markup the allowlist refuses. */
 export function iconSvg(icon: IconAsset): string {
+  const safe = validateSvgBody(icon.viewBox, icon.body);
+  const viewBox = safe.ok ? safe.viewBox : '0 0 24 24';
+  const body = safe.ok ? safe.body : '';
   const paint =
     icon.paint === 'stroke'
       ? 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"'
       : 'fill="currentColor"';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.viewBox}" ${paint}>${icon.body}</svg>\n`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" ${paint}>${body}</svg>\n`;
 }
 
 /** Assets of the project as the selection keeps them. */
@@ -163,61 +168,7 @@ export function formatBytes(n: number): string {
 
 // ---------- reading ----------
 
-const MAX_ENTRIES = 2000;
-const MAX_ENTRY_BYTES = 8 * 1024 * 1024;
-const MAX_TOTAL_BYTES = 64 * 1024 * 1024;
-
-export class ZipError extends Error {}
-
-async function inflateRaw(data: Uint8Array, expected: number): Promise<Uint8Array> {
-  if (typeof DecompressionStream === 'undefined') throw new ZipError('Questo browser non sa leggere file ZIP compressi.');
-  const stream = new Blob([data as BlobPart]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-  const out = new Uint8Array(await new Response(stream).arrayBuffer());
-  if (out.length !== expected) throw new ZipError('Voce ZIP danneggiata (dimensione).');
-  return out;
-}
-
-/** Reads a ZIP by its central directory: stored and deflated entries, with size limits. */
-export async function readZip(bytes: Uint8Array): Promise<ZipEntry[]> {
-  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  let eocd = -1;
-  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 22 - 65535); i--) {
-    if (v.getUint32(i, true) === 0x06054b50) {
-      eocd = i;
-      break;
-    }
-  }
-  if (eocd < 0) throw new ZipError('Non è un pacchetto .jello valido (ZIP non riconosciuto).');
-  const count = v.getUint16(eocd + 10, true);
-  let p = v.getUint32(eocd + 16, true);
-  if (count > MAX_ENTRIES) throw new ZipError(`Il pacchetto ha troppe voci (${count}).`);
-  const out: ZipEntry[] = [];
-  let total = 0;
-  for (let n = 0; n < count; n++) {
-    if (p + 46 > bytes.length || v.getUint32(p, true) !== 0x02014b50) throw new ZipError('Indice del pacchetto danneggiato.');
-    const method = v.getUint16(p + 10, true);
-    const csize = v.getUint32(p + 20, true);
-    const size = v.getUint32(p + 24, true);
-    const nameLen = v.getUint16(p + 28, true);
-    const extraLen = v.getUint16(p + 30, true);
-    const commentLen = v.getUint16(p + 32, true);
-    const local = v.getUint32(p + 42, true);
-    const path = dec.decode(bytes.subarray(p + 46, p + 46 + nameLen));
-    p += 46 + nameLen + extraLen + commentLen;
-    if (path.endsWith('/')) continue;
-    if (path.startsWith('/') || path.includes('..') || path.includes('\\')) throw new ZipError(`Percorso non ammesso nel pacchetto: ${path}`);
-    if (size > MAX_ENTRY_BYTES) throw new ZipError(`«${path}» è troppo grande.`);
-    total += size;
-    if (total > MAX_TOTAL_BYTES) throw new ZipError('Il pacchetto decompresso è troppo grande.');
-    if (local + 30 > bytes.length || v.getUint32(local, true) !== 0x04034b50) throw new ZipError('Voce del pacchetto danneggiata.');
-    const start = local + 30 + v.getUint16(local + 26, true) + v.getUint16(local + 28, true);
-    const raw = bytes.subarray(start, start + csize);
-    if (method === 0) out.push({ path, data: raw.slice() });
-    else if (method === 8) out.push({ path, data: await inflateRaw(raw, size) });
-    else throw new ZipError(`Compressione non supportata in «${path}».`);
-  }
-  return out;
-}
+export { readZip, ZipError, ZIP_LIMITS } from './unzip';
 
 export interface ReadPackage {
   project: ProjectDoc;
@@ -225,6 +176,8 @@ export interface ReadPackage {
   components: { path: string; doc: ComponentDefinition; warnings: string[] }[];
   /** Entries refused as a whole, with the reason. */
   rejected: { path: string; errors: string[] }[];
+  /** What `progetto.json` needed to be safe (icons normalised or put in quarantine). */
+  warnings: string[];
 }
 
 export type PackageRead = { ok: true; value: ReadPackage } | { ok: false; errors: string[] };
@@ -254,7 +207,7 @@ export function readProjectEntries(entries: readonly ZipEntry[]): PackageRead {
       else rejected.push({ path: e.path, errors: r.errors });
     }
   }
-  return { ok: true, value: { project: project.doc, materials, components, rejected } };
+  return { ok: true, value: { project: project.doc, materials, components, rejected, warnings: project.warnings.map((w) => `progetto.json: ${w}`) } };
 }
 
 export { usedTokens };

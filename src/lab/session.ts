@@ -106,14 +106,16 @@ import { PHOTO } from '../stage/scenes';
 import { isNav, type ViewOptions } from '../stage/view';
 import { optionsFromQuery, queryFromOptions } from './state';
 import { Autosaver, type SaveState } from './storage/autosave';
-import { openRepository, type Repository, type StoredAsset, type StoredComponent, type StoredMaterial } from './storage/repository';
+import { openRepository, toStorageError, type Repository, type StoredAsset, type StoredComponent, type StoredMaterial } from './storage/repository';
 import { bindStore, Store, type BuilderState, type ComponentItem, type LabState, type LibraryItem, type Page, type Workspace } from './store';
 import { sha256, SyncSender } from './sync-sender';
 import { newToken } from '../sync/protocol';
-import { createProject } from '../project/document';
+import { createProject, numberedName } from '../project/document';
 import { kitAssets } from '../project/defaults';
 import type { ProjectDoc } from '../project/types';
 import { ProjectActions, projectDocId } from './projects';
+import { remapMaterialReference, unlinkMaterial } from '../project/references';
+import { followingComponents } from './material-links';
 
 const now = () => new Date().toISOString();
 const PAGES: readonly Page[] = ['home', 'lab', 'assets', 'settings'];
@@ -193,6 +195,15 @@ export class LabSession {
   userMaterials = new Map<string, StoredMaterial>();
   /** @internal */
   userComponents = new Map<string, StoredComponent>();
+  /**
+   * Records edited in memory and not yet committed. An edit updates the map
+   * at once (switching project, the library and exports see it) and marks
+   * the id; `write` commits every marked record in one transaction and clears
+   * an id only if the record was not edited again meanwhile. A failed write
+   * clears nothing, so the next one retries.
+   */
+  private readonly dirtyMaterials = new Set<string>();
+  private readonly dirtyComponents = new Set<string>();
   readonly projects: ProjectActions;
   private overlay: ComponentOverlay | null = null;
   private discarded: Pick<LabState, 'doc' | 'materialId' | 'origin' | 'modified'> | null = null;
@@ -201,6 +212,13 @@ export class LabSession {
   private centreOnShow = false;
   private noticeTimer = 0;
   private readonly readyListeners: (() => void)[] = [];
+  /**
+   * Other tabs of the Studio on the same database. Tabs do not merge their
+   * work (the last write wins); when another tab commits the project open
+   * here, this tab says so instead of overwriting it silently.
+   */
+  private readonly tabs = typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel('jello-lab');
+  private readonly tabId = newToken();
 
   private constructor(repo: Repository, state: LabState) {
     this.repo = repo;
@@ -213,6 +231,13 @@ export class LabSession {
       (s) => this.store.set({ sync: s }),
     );
     addEventListener('pagehide', () => void this.autosaver.flush());
+    if (this.tabs) {
+      this.tabs.onmessage = (e: MessageEvent<{ tab?: string; projects?: string[] }>) => {
+        const id = this.state.projectId;
+        if (e.data?.tab === this.tabId || !id || !e.data?.projects?.includes(id)) return;
+        this.notify('Questo progetto è stato modificato in un’altra scheda. Ricarica per vederlo: salvando da qui sovrascrivi le sue modifiche.', false, 30000, { label: 'Ricarica', run: () => location.reload() });
+      };
+    }
   }
 
   static async boot(): Promise<LabSession> {
@@ -235,24 +260,40 @@ export class LabSession {
     // Records written before projects existed belong to the first project (made now if there is none and something to adopt).
     const hasOrphans = lib.items.some((m) => !m.projectId) || comps.items.some((c) => !c.projectId);
     const hasQuery = [...query.keys()].length > 0;
+    let created: ProjectDoc | null = null;
     if (!projects.length && (hasOrphans || hasQuery)) {
-      const first = createProject({ id: projectDocId(), name: 'Il mio progetto', assets: kitAssets() });
-      await repo.putProjectDoc(first).catch(() => undefined);
-      projects.push(first);
+      created = createProject({ id: projectDocId(), name: 'Il mio progetto', assets: kitAssets() });
+      projects.push(created);
     }
     const wantedProject = /^[A-Za-z0-9._-]{1,64}$/.test(query.get('project') ?? '') ? query.get('project') : (project?.projectId ?? null);
     const projectId = projects.find((p) => p.id === wantedProject)?.id ?? projects[0]?.id ?? null;
     const adopt = <T extends { projectId?: string }>(r: T): T => (r.projectId || !projects[0] ? r : { ...r, projectId: projects[0].id });
     const allMaterials = lib.items.map((m) => adopt(m));
-    const allComponents = comps.items.map((c) => adopt(c));
-    await Promise.all([
-      ...allMaterials.filter((m, i) => m.projectId !== lib.items[i]!.projectId).map((m) => repo.putMaterial(m).catch(() => undefined)),
-      ...allComponents.filter((c, i) => c.projectId !== comps.items[i]!.projectId).map((c) => repo.putComponent(c).catch(() => undefined)),
-    ]);
+    // Earlier versions copied components between projects without rewriting their material link: a link
+    // to another project's material is removed (the embedded material stays, nothing changes on screen).
+    // A link to a material that is only missing (deleted, unreadable) is left as it is: it shows as embedded.
+    const projectOf = new Map(allMaterials.map((m) => [m.id, m.projectId]));
+    const allComponents = comps.items.map((c) => {
+      const r = adopt(c);
+      const preset = r.doc.material.preset;
+      return preset && projectOf.has(preset) && projectOf.get(preset) !== r.projectId ? { ...r, doc: unlinkMaterial(r.doc) } : r;
+    });
+    const relinked = allComponents.filter((c, i) => c.doc !== comps.items[i]!.doc).length;
+    const adoptedMaterials = allMaterials.filter((m, i) => m.projectId !== lib.items[i]!.projectId);
+    const adoptedComponents = allComponents.filter((c, i) => c.projectId !== comps.items[i]!.projectId || c.doc !== comps.items[i]!.doc);
+    // The first project and its adopted records are stored together. If that fails they stay adopted
+    // in memory (and are adopted again at the next start), and the notice says the save did not happen.
+    let adoptError: string | null = null;
+    if (created || adoptedMaterials.length || adoptedComponents.length) {
+      await repo
+        .commit({ projectDocs: { put: created ? [created] : [] }, materials: { put: adoptedMaterials }, components: { put: adoptedComponents } })
+        .catch((e: unknown) => (adoptError = toStorageError(e).message));
+    }
     const scopedMaterials = allMaterials.filter((m) => m.projectId === projectId);
     const scopedComponents = allComponents.filter((c) => c.projectId === projectId);
     const userComps = new Map(scopedComponents.map((c) => [c.id, c]));
-    const notes: string[] = [];
+    const notes: string[] = adoptError ? [adoptError] : [];
+    if (relinked) notes.push(`${relinked === 1 ? 'Una componente era collegata' : `${relinked} componenti erano collegate`} a un materiale di un altro progetto: il collegamento è stato rimosso, l’aspetto resta lo stesso.`);
     const wantedComponent = query.get('component') ?? project?.componentId ?? 'mobile-navbar';
     let builder: BuilderState;
     if (userComps.has(wantedComponent)) builder = builderState(userComps.get(wantedComponent)!.doc, wantedComponent, 'user', false);
@@ -477,9 +518,37 @@ export class LabSession {
     const report = this.state.workspace === 'material' ? this.controller?.setMaterial(doc) : undefined;
     const modified = opts.dirty === false ? false : this.state.origin === 'builtin' ? true : this.state.modified;
     this.store.set({ doc, modified, library: this.syncLibrary(doc) });
-    if (this.state.origin === 'user') this.followPreset(this.state.materialId);
+    if (this.state.origin === 'user') {
+      this.stageMaterial(this.state.materialId, doc);
+      this.followPreset(this.state.materialId);
+    }
     this.afterChange();
     return report;
+  }
+
+  /** A personal material's new content, kept in memory until `write` commits it. */
+  private stageMaterial(id: string, doc: MaterialDocument) {
+    const prev = this.userMaterials.get(id);
+    if (!prev || prev.doc === doc) return;
+    this.userMaterials.set(id, { ...prev, doc });
+    this.dirtyMaterials.add(id);
+  }
+
+  private stageComponent(id: string, doc: ComponentDefinition) {
+    const prev = this.userComponents.get(id);
+    if (!prev || prev.doc === doc) return;
+    this.userComponents.set(id, { ...prev, doc });
+    this.dirtyComponents.add(id);
+  }
+
+  /** @internal Tells the other tabs that these projects were just committed. */
+  announce(projects: readonly string[]): void {
+    if (projects.length) this.tabs?.postMessage({ tab: this.tabId, projects: [...new Set(projects)] });
+  }
+
+  /** @internal Serializes an operation that writes by itself with the autosave (see Autosaver.exclusive). */
+  exclusive<T>(fn: () => Promise<T>): Promise<T> {
+    return this.autosaver.exclusive(fn);
   }
 
   /** Personal material edited: the library card shows the new name/params at once. */
@@ -551,8 +620,7 @@ export class LabSession {
   }
 
   async newMaterial(family = this.state.doc.family): Promise<void> {
-    const n = this.state.library.filter((i) => i.origin === 'user').length + 1;
-    const doc = MATERIALS.get(family)!.create(userId(), `Nuovo ${family} ${n}`);
+    const doc = MATERIALS.get(family)!.create(userId(), numberedName(`Nuovo ${family}`, new Set(this.state.library.filter((i) => i.origin === 'user').map((i) => i.name))));
     doc.meta = { ...doc.meta, createdAt: now(), updatedAt: now() };
     await this.addUser(doc, `Creato «${doc.name}».`);
   }
@@ -588,15 +656,25 @@ export class LabSession {
     this.applyDoc({ ...this.state.doc, name: clean });
   }
 
+  /**
+   * Components linked to a deleted material keep their embedded document
+   * and show as «embedded» (bindingState): the link is never moved to
+   * another material.
+   */
   async deleteMaterial(id: string): Promise<void> {
     if (MATERIALS.preset(id)) return;
-    try {
-      await this.repo.deleteMaterial(id);
-    } catch (e) {
-      this.notify((e as Error).message);
-      return;
-    }
-    this.userMaterials.delete(id);
+    const ok = await this.exclusive(async () => {
+      try {
+        await this.repo.commit({ materials: { delete: [id] } });
+      } catch (e) {
+        this.notify((e as Error).message);
+        return false;
+      }
+      this.userMaterials.delete(id);
+      this.dirtyMaterials.delete(id);
+      return true;
+    });
+    if (!ok) return;
     const library = this.state.library.filter((i) => i.id !== id);
     this.store.set({ library });
     if (this.state.materialId === id) {
@@ -610,6 +688,7 @@ export class LabSession {
   private async addUser(doc: MaterialDocument, message: string) {
     const rec: StoredMaterial = { id: doc.id, doc, ...this.owner(), createdAt: now(), updatedAt: now() };
     this.userMaterials.set(doc.id, rec);
+    this.dirtyMaterials.add(doc.id);
     this.store.set({ library: [...this.state.library, userItem(rec)], materialId: doc.id, origin: 'user', modified: false, libraryTab: 'mine' });
     this.applyDoc(doc, { dirty: false });
     await this.autosaver.flush();
@@ -623,50 +702,53 @@ export class LabSession {
     return id ? { projectId: id } : {};
   }
 
-  /** The only place that writes: project + the personal material being edited. */
+  /**
+   * The autosave's write: every edited personal material and component (and
+   * the components that follow an edited material), the edited project
+   * documents and the working state, in one transaction.
+   */
   private async write() {
     const s = this.state;
-    if (s.origin === 'user') {
-      const prev = this.userMaterials.get(s.materialId);
-      const rec: StoredMaterial = {
-        id: s.materialId,
-        doc: { ...s.doc, meta: { ...s.doc.meta, updatedAt: now() } },
-        ...this.owner(prev),
-        createdAt: prev?.createdAt ?? now(),
-        updatedAt: now(),
-      };
-      await this.repo.putMaterial(rec);
-      this.userMaterials.set(rec.id, rec);
-    }
-    if (s.origin === 'user') await this.propagatePreset(s.materialId);
-    const b = this.state.builder;
-    if (b.origin === 'user') {
-      const prev = this.userComponents.get(b.componentId);
+    for (const id of this.dirtyMaterials) this.propagatePreset(id);
+    const at = now();
+    const materials = [...this.dirtyMaterials].flatMap((id) => this.userMaterials.get(id) ?? []);
+    const components = [...this.dirtyComponents].flatMap((id) => this.userComponents.get(id) ?? []);
+    const docs = this.projects.pending();
+    const b = s.builder;
+    await this.repo.commit({
+      materials: { put: materials.map((r) => ({ ...r, doc: { ...r.doc, meta: { ...r.doc.meta, updatedAt: at } }, updatedAt: at })) },
       // The document is stored exactly as edited: reopening it gives the same JSON.
-      const rec: StoredComponent = {
-        id: b.componentId,
-        doc: b.doc,
-        ...this.owner(prev),
-        createdAt: prev?.createdAt ?? now(),
-        updatedAt: now(),
-      };
-      await this.repo.putComponent(rec);
-      this.userComponents.set(rec.id, rec);
-    }
-    await this.projects.flush();
-    await this.repo.putProject({
-      id: 'last',
-      materialId: s.materialId,
-      draft: s.origin === 'builtin' && s.modified ? s.doc : null,
-      options: s.options,
-      savedAt: now(),
-      imageHash: this.image?.hash ?? null,
-      workspace: s.workspace,
-      componentId: b.componentId,
-      componentDraft: b.origin === 'template' && b.modified ? b.doc : null,
-      projectId: s.projectId,
-      page: s.page,
+      components: { put: components.map((r) => ({ ...r, updatedAt: at })) },
+      projectDocs: { put: docs },
+      project: {
+        id: 'last',
+        materialId: s.materialId,
+        draft: s.origin === 'builtin' && s.modified ? s.doc : null,
+        options: s.options,
+        savedAt: at,
+        imageHash: this.image?.hash ?? null,
+        workspace: s.workspace,
+        componentId: b.componentId,
+        componentDraft: b.origin === 'template' && b.modified ? b.doc : null,
+        projectId: s.projectId,
+        page: s.page,
+      },
     });
+    // Committed. A record edited again while the transaction ran stays dirty.
+    for (const r of materials) {
+      if (this.userMaterials.get(r.id) !== r) continue;
+      this.dirtyMaterials.delete(r.id);
+      this.userMaterials.set(r.id, { ...r, updatedAt: at });
+    }
+    for (const r of components) {
+      if (this.userComponents.get(r.id) !== r) continue;
+      this.dirtyComponents.delete(r.id);
+      this.userComponents.set(r.id, { ...r, updatedAt: at });
+    }
+    for (const id of [...this.dirtyMaterials]) if (!this.userMaterials.has(id)) this.dirtyMaterials.delete(id);
+    for (const id of [...this.dirtyComponents]) if (!this.userComponents.has(id)) this.dirtyComponents.delete(id);
+    this.projects.committed(docs);
+    this.announce([...materials, ...components].flatMap((r) => r.projectId ?? []).concat(docs.map((d) => d.id)));
     clearTimeout(this.urlTimer);
     history.replaceState(null, '', this.scenarioUrl());
   }
@@ -953,6 +1035,7 @@ export class LabSession {
     const selection = selectableNode(doc, b.selection) ? b.selection : 'root';
     const components = b.origin === 'user' ? this.state.components.map((i) => (i.id === b.componentId ? { ...i, name: doc.name, doc } : i)) : this.state.components;
     this.store.set({ builder: { ...b, doc, modified, previewTab, selection }, components });
+    if (b.origin === 'user') this.stageComponent(b.componentId, doc);
     this.syncSelection();
     this.autosaver.schedule();
     this.scheduleUrl();
@@ -1406,20 +1489,16 @@ export class LabSession {
     this.applyComponent({ ...b.doc, material: bindMaterial(item.doc, id) });
   }
 
-  /** Saved components that are not open follow the material too (autosave, debounced). */
-  private async propagatePreset(id: string): Promise<void> {
-    const item = this.state.library.find((i) => i.id === id);
-    if (!item) return;
-    let components = this.state.components;
-    for (const rec of this.userComponents.values()) {
-      if (rec.id === this.state.builder.componentId || rec.doc.material.preset !== id) continue;
-      if (bindingState(rec.doc.material, item.doc, hasMaterialOverrides(rec.doc)) !== 'outdated') continue;
-      const next: StoredComponent = { ...rec, doc: { ...rec.doc, material: bindMaterial(item.doc, id) }, updatedAt: now() };
-      await this.repo.putComponent(next);
-      this.userComponents.set(next.id, next);
-      components = components.map((c) => (c.id === next.id ? { ...c, doc: next.doc } : c));
-    }
-    if (components !== this.state.components) this.store.set({ components });
+  /** Saved components that are not open follow the material too, within its project (see material-links). */
+  private propagatePreset(id: string): void {
+    const mat = this.userMaterials.get(id);
+    if (!mat) return;
+    const open = this.state.builder.origin === 'user' ? this.state.builder.componentId : null;
+    const next = followingComponents(mat, this.userComponents.values(), open);
+    if (!next.length) return;
+    for (const rec of next) this.stageComponent(rec.id, rec.doc);
+    const byId = new Map(next.map((r) => [r.id, r.doc]));
+    this.store.set({ components: this.state.components.map((c) => (byId.has(c.id) ? { ...c, doc: byId.get(c.id)! } : c)) });
   }
 
   /** Components (saved, and the one open) whose material comes from library entry `id`. */
@@ -1511,13 +1590,18 @@ export class LabSession {
 
   async deleteComponent(id: string): Promise<void> {
     if (!this.userComponents.has(id)) return;
-    try {
-      await this.repo.deleteComponent(id);
-    } catch (e) {
-      this.notify((e as Error).message);
-      return;
-    }
-    this.userComponents.delete(id);
+    const ok = await this.exclusive(async () => {
+      try {
+        await this.repo.commit({ components: { delete: [id] } });
+      } catch (e) {
+        this.notify((e as Error).message);
+        return false;
+      }
+      this.userComponents.delete(id);
+      this.dirtyComponents.delete(id);
+      return true;
+    });
+    if (!ok) return;
     this.store.set({ components: this.state.components.filter((i) => i.id !== id) });
     if (this.state.builder.componentId === id) this.openComponent('mobile-navbar');
     this.notify('Componente eliminata dalla libreria.');
@@ -1534,8 +1618,17 @@ export class LabSession {
       return false;
     }
     const taken = this.userComponents.has(r.doc.id) || componentTemplate(r.doc.id) !== undefined;
-    const doc: ComponentDefinition = { ...r.doc, id: taken ? componentId() : r.doc.id, meta: { ...r.doc.meta, createdAt: r.doc.meta.createdAt ?? now(), updatedAt: now() } };
-    const messages = [...(r.migratedFrom ? [`Migrato da ${r.migratedFrom}.`] : []), ...r.warnings, ...(taken ? [`id «${r.doc.id}» già in uso: salvata come «${doc.id}».`] : [])];
+    // A link to a material that is not in this project (another project's, or one that never came
+    // along) is not kept: the component keeps its embedded material and stops following.
+    const own = new Set(this.state.library.filter((i) => i.origin === 'user').map((i) => i.id));
+    const ref = remapMaterialReference(r.doc, new Map([...own].map((id) => [id, id])));
+    const doc: ComponentDefinition = { ...ref.doc, id: taken ? componentId() : r.doc.id, meta: { ...r.doc.meta, createdAt: r.doc.meta.createdAt ?? now(), updatedAt: now() } };
+    const messages = [
+      ...(r.migratedFrom ? [`Migrato da ${r.migratedFrom}.`] : []),
+      ...r.warnings,
+      ...(taken ? [`id «${r.doc.id}» già in uso: salvata come «${doc.id}».`] : []),
+      ...(ref.unlinked ? [`Il materiale «${ref.unlinked}» non è in questo progetto: la componente mantiene il suo materiale ma non lo segue più.`] : []),
+    ];
     void this.addUserComponent(doc, `Importata «${doc.name}».`).then(() => this.patchBuilder({ messages: { ok: true, messages } }));
     return true;
   }
@@ -1547,6 +1640,7 @@ export class LabSession {
   private async addUserComponent(doc: ComponentDefinition, message: string) {
     const rec: StoredComponent = { id: doc.id, doc, ...this.owner(), createdAt: now(), updatedAt: now() };
     this.userComponents.set(doc.id, rec);
+    this.dirtyComponents.add(doc.id);
     this.store.set({ components: [...this.state.components, componentItem(rec)], builder: { ...builderState(doc, doc.id, 'user', false), selection: this.state.builder.selection, pick: this.state.builder.pick } });
     if (this.state.workspace === 'builder') this.syncPreview(doc);
     this.syncSelection();

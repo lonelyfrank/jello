@@ -1,59 +1,15 @@
-import { useMemo, useState } from 'react';
-import { JELLO_DEMO } from '../../stage/demo-content';
+import { useState, type ReactNode } from 'react';
+import { COMPONENTS } from '../../components';
 import { RuntimeThumbnail } from './RuntimeThumbnail';
+import { GlobalSearch } from './Search';
 import { openStudio } from './StudioNav';
-import { VERIFICATION } from '../../stage/verification';
-import { countColors, countIcons, PLATFORM_LABEL, type ProjectDoc } from '../../project/types';
+import type { ProjectDoc } from '../../project/types';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
 import { MaterialThumbnail } from './Library';
-import { Ic, StateChip, type IcName } from './ui';
+import { Ic, type IcName } from './ui';
 
 const BASE = import.meta.env.BASE_URL;
-
-type NavTarget = 'home' | 'projects' | 'materials' | 'components' | 'assets' | 'export' | 'compat' | 'settings' | 'library' | 'preview';
-
-/** Left rail of the start pages (Home and Impostazioni). */
-export function SideNav({ session, current }: { session: LabSession; current: NavTarget }) {
-  const hasProject = useLab((s) => s.projectId !== null);
-  const counts = { projects: useLab((s) => s.projects.length), materials: useLab((s) => s.library.length), components: useLab((s) => s.components.length) };
-  const go = (t: NavTarget) => {
-    if (t === 'home' || t === 'projects') openStudio(session, 'workspace');
-    else if (t === 'library' || t === 'preview') openStudio(session, t);
-    else if (t === 'materials') openStudio(session, 'material');
-    else if (t === 'components') openStudio(session, 'builder');
-    else if (t === 'assets') session.setPage('assets');
-    else if (t === 'export') session.openFlow('export');
-    else if (t === 'compat') {
-      session.setPanelTab('rendering');
-      session.setPage('lab', 'material');
-    } else session.setPage('settings');
-  };
-  const item = (t: NavTarget, icon: IcName, label: string, needsProject = false, count?: number) => (
-    <button key={t + label} type="button" className="nav-i" aria-current={current === t && t !== 'export' ? 'page' : undefined} disabled={needsProject && !hasProject} onClick={() => go(t)}>
-      <Ic name={icon} />
-      {label}
-      {count !== undefined && <span className="nav-count" aria-hidden="true">{count}</span>}
-    </button>
-  );
-  return (
-    <aside className="home-left" aria-label="Navigazione">
-      <button type="button" className="button primary workspace-new" onClick={() => session.openFlow('wizard')}><Ic name="plus" />Nuovo progetto</button>
-      <p className="eyebrow nav-group-label">Workspace</p>
-      {item('home', 'folder', 'Tutti i progetti', false, counts.projects)}
-      <p className="eyebrow nav-group-label">Crea ed esplora</p>
-      {item('materials', 'drop', 'Materiali', true, counts.materials)}
-      {item('components', 'box', 'Componenti', true, counts.components)}
-      {item('library', 'grid', 'Library', true)}
-      {item('preview', 'eye', 'Preview & Test', true)}
-      {item('assets', 'palette', 'Asset', true)}
-      {item('export', 'upload', 'Esportazioni', true)}
-      <span className="grow" />
-      {item('compat', 'shield', 'Compatibilità', true)}
-      {item('settings', 'gear', 'Impostazioni')}
-    </aside>
-  );
-}
 
 function gradientOf(p: ProjectDoc, i: number): string {
   const brand = p.assets.palettes[0]?.colors ?? [];
@@ -75,7 +31,7 @@ function ProjectCard({ p, i, session, active }: { p: ProjectDoc; i: number; sess
     <article className="card project-card" data-active={active} aria-label={p.name}>
       <button type="button" className="project-open" onClick={open} aria-label={`Apri ${p.name}`}>
         <span className="project-thumb" style={{ background: gradientOf(p, i) }}>
-          <span className="project-cover-label"><Ic name="palette" size={24} /><span>Palette del progetto</span></span>
+          <span className="project-pills" aria-hidden="true"><span className="pp-glass wide" /><span className="pp-row"><span className="pp-glass" /><span className="pp-solid" /></span></span>
         </span>
         <span className="project-meta">
           <span className="project-name">{p.name}</span>
@@ -118,15 +74,125 @@ function ProjectCard({ p, i, session, active }: { p: ProjectDoc; i: number; sess
   );
 }
 
-function ProjectRow({ p, session, active }: { p: ProjectDoc; session: LabSession; active: boolean }) {
-  const counts = session.projects.counts(p.id);
+type Mode = 'home' | 'tpl' | 'proj';
+type Filter = 'all' | 'comp' | 'mat' | 'proj';
+
+const MODES: { id: Mode; label: string; icon: IcName }[] = [
+  { id: 'home', label: 'Home', icon: 'home' },
+  { id: 'tpl', label: 'Template', icon: 'layers' },
+  { id: 'proj', label: 'Progetti', icon: 'folder' },
+];
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'Tutti' },
+  { id: 'comp', label: 'Componenti' },
+  { id: 'mat', label: 'Materiali' },
+  { id: 'proj', label: 'Progetti' },
+];
+
+interface Category {
+  key: string;
+  label: string;
+  icon: IcName;
+  bg: string;
+  /** Needs an active project. */
+  project: boolean;
+  soon?: boolean;
+  id?: string;
+  run(): void;
+}
+
+/** Shortcuts of the Home, as in the design: each opens something that already exists in the Studio. */
+function useCategories(session: LabSession): Category[] {
+  const library = useLab((s) => s.library);
+  const preset = (family: string) => library.find((m) => m.origin === 'builtin' && m.doc.family === family);
+  const template = (id: string) => () => { session.openComponent(id); openStudio(session, 'builder'); };
+  const material = (family: string) => () => {
+    const m = preset(family);
+    if (m) session.openMaterial(m.id);
+    openStudio(session, 'material');
+  };
+  return [
+    { key: 'new', label: 'Nuovo progetto', icon: 'file', bg: 'linear-gradient(135deg, #a78bfa, #6d2bf0)', project: false, run: () => session.openFlow('wizard') },
+    { key: 'mnav', label: 'Mobile Navbar', icon: 'monitor', bg: 'linear-gradient(135deg, #7aa2ff, #3b5bf5)', project: true, run: template('mobile-navbar') },
+    { key: 'dnav', label: 'Desktop Navbar', icon: 'monitor', bg: 'linear-gradient(135deg, #5ee6d0, #14a38b)', project: true, run: template('desktop-navbar') },
+    { key: 'btn', label: 'Button', icon: 'box', bg: 'linear-gradient(135deg, #ff9bb8, #f0457e)', project: true, run: template('button') },
+    { key: 'glass', label: 'Glass', icon: 'drop', bg: 'radial-gradient(circle at 34% 28%, #fff 0 10%, #9aa6e8 45%, #3a3a9a 100%)', project: true, run: material('glass') },
+    { key: 'solid', label: 'Solid', icon: 'box', bg: 'linear-gradient(135deg, #b79bff, #5a3aa0)', project: true, run: material('solid') },
+    { key: 'jelly', label: 'Jelly', icon: 'drop', bg: 'radial-gradient(circle at 34% 28%, #ffd0f6 0 8%, #f04fd8 40%, #8a22c8 100%)', project: true, soon: true, run: () => undefined },
+    { key: 'asset', label: 'Asset', icon: 'palette', bg: 'conic-gradient(from 200deg, #ff4fd8, #6a5cff, #2ec5ff, #8cffc8, #ffb04f, #ff4fd8)', project: true, run: () => session.setPage('assets') },
+    { key: 'test', label: 'Preview & Test', icon: 'eye', bg: 'linear-gradient(135deg, #8b5cf6, #4c1d95)', project: true, run: () => openStudio(session, 'preview') },
+    { key: 'export', label: 'Export', icon: 'upload', bg: 'linear-gradient(135deg, #f472b6, #9d174d)', project: true, run: () => openStudio(session, 'export') },
+    { key: 'import', label: 'Importa .jello', icon: 'download', bg: 'linear-gradient(135deg, #60a5fa, #1e40af)', project: false, id: 'headerImport', run: () => session.openFlow('import') },
+    { key: 'lib', label: 'Library', icon: 'grid', bg: 'linear-gradient(135deg, #3a2e5e, #261c44)', project: true, run: () => openStudio(session, 'library') },
+  ];
+}
+
+export function HomeCategories({ session }: { session: LabSession }) {
+  const hasProject = useLab((s) => s.projectId !== null);
+  const cats = useCategories(session);
   return (
-    <button type="button" className="card project-row" data-active={active} onClick={() => (session.switchProject(p.id), session.setPage('lab', 'material'))}>
-      <span className="project-name">{p.name}</span>
-      <span className="muted small">{PLATFORM_LABEL[p.platform]}</span>
-      <span className="muted small">
-        {counts.components} componenti · {counts.materials} materiali
-      </span>
+    <section className="home-cats" aria-label="Crea qualcosa">
+      {cats.map((c) => {
+        const off = c.soon || (c.project && !hasProject);
+        return (
+          <button key={c.key} type="button" className="cat" id={c.id} aria-disabled={off || undefined} title={c.soon ? 'In sviluppo: non ancora disponibile' : c.project && !hasProject ? 'Serve un progetto' : undefined} onClick={() => !off && c.run()} style={off ? { opacity: c.soon ? 0.6 : 0.5 } : undefined}>
+            <span className="cat-ic" style={{ background: c.bg }}>
+              <Ic name={c.icon} size={24} />
+              {c.soon && <span className="cat-soon">presto</span>}
+            </span>
+            {c.label}
+          </button>
+        );
+      })}
+    </section>
+  );
+}
+
+/** Big opening banner of the Home: title, view tabs, project switch and the global search. */
+export function HomeHero({ session, mode, setMode }: { session: LabSession; mode?: Mode; setMode?: (m: Mode) => void }) {
+  const projects = useLab((s) => s.projects);
+  const projectId = useLab((s) => s.projectId);
+  return (
+    <section className="home-hero" aria-label="Crea">
+      <span className="hero-bubble hb1" aria-hidden="true" />
+      <span className="hero-bubble hb2" aria-hidden="true" />
+      <img className="home-hero-jelly" src={`${BASE}brand/jello-mark-192.png`} alt="" aria-hidden="true" />
+      <p className="hero-eyebrow home-eyebrow">BENVENUTO NEL TUO SPAZIO CREATIVO</p>
+      <h1 className="home-title" id="homeTitle">Che cosa vuoi creare oggi?</h1>
+      <div className="home-modes">
+        {mode && setMode && (
+          <div role="tablist" aria-label="Vista" className="home-tabs">
+            {MODES.map((m) => (
+              <button key={m.id} type="button" role="tab" className="pill" aria-selected={mode === m.id} onClick={() => setMode(m.id)}>
+                <Ic name={m.icon} size={16} />{m.label}
+              </button>
+            ))}
+          </div>
+        )}
+        {projects.length > 0 && (
+          <label className="project-switch pill">
+            <span className="visually-hidden">Progetto attivo</span>
+            <Ic name="folder" size={16} />
+            <select id="projectSwitch" value={projectId ?? ''} onChange={(e) => session.switchProject(e.target.value)}>
+              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </label>
+        )}
+      </div>
+      <GlobalSearch session={session} />
+    </section>
+  );
+}
+
+const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+
+/** One element of the Home grid: runtime thumbnail, name, family chip, line of context. */
+function ElementCard({ thumb, name, family, meta, onOpen }: { thumb: ReactNode; name: string; family: 'glass' | 'solid'; meta: string; onOpen(): void }) {
+  return (
+    <button type="button" className="home-card" onClick={onOpen} aria-label={`${name}, ${meta}`}>
+      <span className="home-thumb">{thumb}</span>
+      <span className="home-card-name">{name}</span>
+      <span className="home-card-meta"><span className="fam" data-family={family}>{family === 'glass' ? 'Glass' : 'Solid'}</span><span>{meta}</span></span>
     </button>
   );
 }
@@ -136,199 +202,97 @@ export function Home({ session }: { session: LabSession }) {
   const projectId = useLab((s) => s.projectId);
   const library = useLab((s) => s.library);
   const components = useLab((s) => s.components);
-  const [projectFilter, setProjectFilter] = useState<'all' | 'recent'>('all');
-  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [mode, setMode] = useState<Mode>('home');
+  const [filter, setFilter] = useState<Filter>('all');
   const active = projects.find((p) => p.id === projectId) ?? null;
 
   if (!active) return <HomeEmpty session={session} />;
 
-  const mine = library.filter((i) => i.origin === 'user');
-  const tiles = [...mine, ...library.filter((i) => i.origin === 'builtin')].slice(0, 6);
-  const a = active.assets;
-  const swatches = a.palettes.flatMap((p) => p.colors).slice(0, 5);
-  const icons = a.iconSets.flatMap((s) => s.icons).slice(0, 5);
+  const pick = (m: Mode) => { setMode(m); setFilter(m === 'proj' ? 'proj' : 'all'); };
+  const sortedProjects = [...projects].sort((x, y) => y.updatedAt.localeCompare(x.updatedAt));
+  const componentCard = (c: (typeof components)[number], meta: string) => (
+    <ElementCard key={`c-${c.id}`} name={c.name} family={c.doc.material.family === 'solid' ? 'solid' : 'glass'} meta={meta}
+      thumb={<RuntimeThumbnail doc={c.doc} />} onOpen={() => { session.openComponent(c.id); openStudio(session, 'builder'); }} />
+  );
+  const materialCard = (m: (typeof library)[number], meta: string) => (
+    <ElementCard key={`m-${m.id}`} name={m.name} family={m.doc.family === 'solid' ? 'solid' : 'glass'} meta={meta}
+      thumb={<MaterialThumbnail runtime doc={m.doc} />} onOpen={() => { session.openMaterial(m.id); openStudio(session, 'material'); }} />
+  );
+
+  let heading = 'Continua a creare';
+  let cards: ReactNode[] = [];
+  if (mode === 'tpl') {
+    heading = 'Template e preset Jello';
+    cards = [
+      ...components.filter((c) => c.origin === 'template').map((c) => componentCard(c, `Template ufficiale · ${COMPONENTS.get(c.doc.type)?.name ?? c.doc.type}`)),
+      ...library.filter((m) => m.origin === 'builtin').map((m) => materialCard(m, 'Preset Jello')),
+    ];
+  } else {
+    const mineC = components.filter((c) => c.origin === 'user').sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+    const mineM = library.filter((m) => m.origin === 'user').sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+    if (mode === 'proj') heading = 'I tuoi progetti';
+    if (filter === 'all' || filter === 'proj') cards.push(...sortedProjects.map((p, i) => <ProjectCard key={`p-${p.id}`} p={p} i={i} session={session} active={p.id === projectId} />));
+    if (filter === 'all' || filter === 'comp') cards.push(...mineC.map((c) => componentCard(c, `Componente · ${fmtDate(c.updatedAt)}`)));
+    if (filter === 'all' || filter === 'mat') cards.push(...mineM.map((m) => materialCard(m, `Materiale · ${fmtDate(m.updatedAt)}`)));
+  }
 
   return (
-    <div className="home" id="homePage">
-      <SideNav session={session} current="home" />
-      <main className="home-main" aria-label="Progetti">
-        <StudioWelcome name={active.name} />
-        <section className="home-section" aria-labelledby="h-projects">
+    <div className="home studio-home" id="homePage">
+      <main className="home-main" aria-label="Home">
+        <HomeHero session={session} mode={mode} setMode={pick} />
+        <HomeCategories session={session} />
+        <section className="home-section" aria-labelledby="h-recent">
           <div className="section-head">
-            <h1 id="h-projects">I tuoi progetti</h1>
-            <div className="seg" role="group" aria-label="Filtra progetti"><button type="button" className="seg-b" aria-pressed={projectFilter === 'all'} onClick={() => setProjectFilter('all')}>Tutti</button><button type="button" className="seg-b" aria-pressed={projectFilter === 'recent'} onClick={() => setProjectFilter('recent')}>Recenti</button></div>
-            <button type="button" className="button primary" onClick={() => session.openFlow('component')}>Crea componente</button>
-            <div className="seg" role="group" aria-label="Vista">
-              <button type="button" className="seg-b icon" aria-label="Griglia" aria-pressed={view === 'grid'} onClick={() => setView('grid')}>
-                <Ic name="grid" />
-              </button>
-              <button type="button" className="seg-b icon" aria-label="Elenco" aria-pressed={view === 'list'} onClick={() => setView('list')}>
-                <Ic name="list" />
-              </button>
+            <h2 id="h-recent">{heading}</h2>
+            <div className="section-tools">
+              {mode !== 'tpl' && (
+                <div role="group" aria-label="Filtro" className="home-filters">
+                  {FILTERS.map((f) => <button key={f.id} type="button" className="chip-filter" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>{f.label}</button>)}
+                </div>
+              )}
+              <button type="button" className="link" onClick={() => openStudio(session, 'library')}>Mostra tutto</button>
             </div>
           </div>
-          {view === 'grid' ? (
-            <div className="project-grid">
-              {[...projects]
-                .sort((x, y) => y.updatedAt.localeCompare(x.updatedAt))
-                .slice(0, projectFilter === 'recent' ? 6 : projects.length)
-                .map((p, i) => (
-                  <ProjectCard key={p.id} p={p} i={i} session={session} active={p.id === projectId} />
-                ))}
+          <div className="home-grid">
+            {cards}
+            {mode !== 'tpl' && (filter === 'all' || filter === 'proj') && (
               <button type="button" className="project-new" onClick={() => session.openFlow('wizard')}>
-                <span className="plus-disc">
-                  <Ic name="plus" />
-                </span>
+                <span className="plus-disc"><Ic name="plus" /></span>
                 Nuovo progetto
               </button>
-            </div>
-          ) : (
-            <div className="project-list">
-              {[...projects].sort((x, y) => y.updatedAt.localeCompare(x.updatedAt)).slice(0, projectFilter === 'recent' ? 6 : projects.length).map((p) => (
-                <ProjectRow key={p.id} p={p} session={session} active={p.id === projectId} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        <QuickStart session={session} />
-        <section className="home-section" aria-labelledby="h-mat">
-          <div className="section-head">
-            <h2 id="h-mat">Material Gallery <span className="section-meta">· anteprime runtime CSS</span></h2>
-            <button type="button" className="link" onClick={() => openStudio(session, 'library')}>
-              Apri libreria →
-            </button>
+            )}
           </div>
-          <div className="tile-grid">
-            {tiles.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                className="card mat-tile"
-                onClick={() => {
-                  session.openMaterial(m.id);
-                  session.setPage('lab', 'material');
-                }}
-              >
-                <MaterialThumbnail runtime doc={m.doc} />
-                <span className="mat-tile-meta">
-                  <span className="mat-tile-name">{m.name}</span>
-                  <span className="muted small">{m.origin === 'user' ? 'I miei' : 'Jello'}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {components.some((c) => c.origin === 'user') && <section className="home-section"><div className="section-head"><h2>Componenti recenti</h2><span className="muted small">Creazioni salvate nel progetto</span></div><div className="recent-component-grid">{components.filter((c) => c.origin === 'user').sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? '')).slice(0, 3).map((c) => <article key={c.id} className="card recent-component"><RuntimeThumbnail doc={c.doc} /><button type="button" className="link" onClick={() => { session.openComponent(c.id); openStudio(session, 'builder'); }}>{c.name} →</button></article>)}</div></section>}
-        <section className="home-section" aria-labelledby="h-assets">
-          <div className="section-head">
-            <h2 id="h-assets">Asset del progetto</h2>
-            <button type="button" className="link" onClick={() => session.setAssetTab('colors')}>
-              Gestisci asset →
-            </button>
-          </div>
-          <div className="asset-cards">
-            <button type="button" className="card asset-card" onClick={() => session.setAssetTab('colors')}>
-              <span className="asset-card-head">
-                <strong>Colori</strong>
-                <span className="muted">{countColors(a)}</span>
-              </span>
-              <span className="swatch-row" aria-hidden="true">
-                {swatches.map((c) => (
-                  <span key={c.id} style={{ background: c.hex }} />
-                ))}
-              </span>
-            </button>
-            <button type="button" className="card asset-card" onClick={() => session.setAssetTab('icons')}>
-              <span className="asset-card-head">
-                <strong>Icone</strong>
-                <span className="muted">{countIcons(a)}</span>
-              </span>
-              <span className="icon-row" aria-hidden="true">
-                {icons.map((i) => (
-                  <svg key={i.id} viewBox={i.viewBox} width="22" height="22" className="asset-ic" dangerouslySetInnerHTML={{ __html: i.body }} />
-                ))}
-              </span>
-            </button>
-            <button type="button" className="card asset-card" onClick={() => session.setAssetTab('fonts')}>
-              <span className="asset-card-head">
-                <strong>Font</strong>
-                <span className="muted">{a.fonts.length}</span>
-              </span>
-              <span className="font-row" aria-hidden="true">
-                {a.fonts.slice(0, 3).map((f) => (
-                  <span key={f.id} style={{ fontFamily: `"${f.name}", system-ui, sans-serif` }}>
-                    Aa
-                  </span>
-                ))}
-              </span>
-            </button>
-          </div>
+          {cards.length === 0 && <p className="muted home-empty-note">Ancora niente qui. Crea un componente o un materiale dalle scorciatoie.</p>}
         </section>
       </main>
-
-
     </div>
   );
 }
 
-/** The compatibility card: the committed raster records, plus what could not be run (said as such). */
-export function CompatCard({ session }: { session: LabSession }) {
-  const records = useMemo(() => [...VERIFICATION].sort((a, b) => a.engine.localeCompare(b.engine)), []);
-  const date = records.map((r) => r.date).sort().at(-1);
-  const label = (engine: string) => (engine === 'chromium' ? 'Chromium' : engine === 'firefox' ? 'Firefox' : engine === 'webkit' ? 'WebKit' : engine);
-  return (
-    <section className="card compat">
-      <div className="section-head">
-        <h2>Compatibilità</h2>
-        <button
-          type="button"
-          className="link"
-          onClick={() => {
-            session.setPanelTab('rendering');
-            session.setPage('lab', 'material');
-          }}
-        >
-          Dettagli
-        </button>
-      </div>
-      <p className="muted small">Verifiche raster del laboratorio{date ? ` (${new Date(date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })})` : ''}.</p>
-      <ul className="kv-list">
-        {records.map((r) => (
-          <li key={`${r.engine}-${r.mobileEmulated}`}>
-            <span>
-              {r.mobileEmulated ? 'Pixel 7 emulato' : `${label(r.engine)} ${r.major}`}
-            </span>
-            {r.mobileEmulated ? <StateChip kind="neutral">Solo emulato</StateChip> : <StateChip kind="ok">Superata</StateChip>}
-          </li>
-        ))}
-        <li>
-          <span>WebKit</span>
-          <StateChip kind="warn">Non eseguibile</StateChip>
-        </li>
-        <li>
-          <span>Safari macOS / iOS</span>
-          <StateChip kind="neutral">Non verificato</StateChip>
-        </li>
-      </ul>
-    </section>
-  );
+/** A project from the Jello kit; on failure nothing was stored and the notice says why. */
+async function createKit(session: LabSession): Promise<boolean> {
+  try {
+    await session.projects.create({ name: 'Il mio progetto', platform: 'web', previewTheme: 'system', start: 'kit' });
+    return true;
+  } catch (e) {
+    session.notify(`Progetto non creato: ${(e as Error).message}`);
+    return false;
+  }
 }
 
 /** First launch: three ways to start, and the file drop area. */
 export function HomeEmpty({ session }: { session: LabSession }) {
   const [over, setOver] = useState(false);
   const start = async () => {
-    await session.projects.create({ name: 'Il mio progetto', platform: 'web', previewTheme: 'system', start: 'kit' });
+    if (!(await createKit(session))) return;
     session.setOption('scene', 'jelly-macro');
     session.setPage('lab', 'material');
   };
   return (
-    <div className="home" id="homePage" data-empty="true">
-      <SideNav session={session} current="home" />
+    <div className="home studio-home" id="homePage" data-empty="true">
       <main className="home-main empty-main" aria-label="Primo avvio">
-        <StudioWelcome />
+        <HomeHero session={session} />
+        <HomeCategories session={session} />
         <h1>Crea la tua prima componente</h1>
         <button type="button" className="button primary" id="homeComponentWizard" onClick={() => session.openFlow('component')}>Crea componente guidata</button>
         <p className="muted lead">Il tuo Workspace è vuoto. Crea un progetto o esplora il kit Jello: nessun progetto dimostrativo viene aggiunto senza la tua scelta.</p>
@@ -388,31 +352,10 @@ export function HomeEmpty({ session }: { session: LabSession }) {
 }
 
 
-function StudioWelcome({ name }: { name?: string }) {
-  return <section className="studio-welcome" aria-label="Jello Studio">
-    <div className="welcome-copy"><p className="eyebrow">JELLO STUDIO <span> / </span> {name ? 'IL TUO SPAZIO CREATIVO' : 'BENVENUTO NEL TUO SPAZIO CREATIVO'}</p><h2>Shape the <span>Interface.</span></h2><p>{JELLO_DEMO.description}</p><span className="welcome-detail">Materiali da esplorare. Componenti da immaginare.</span></div>
-    <img src={`${BASE}brand/jello-mark-192.png`} srcSet={`${BASE}brand/jello-mark-192.png 1x, ${BASE}assets/backgrounds/jelly-macro.png 3x`} alt="Gelatina viola luminosa, marchio originale Jello" className="welcome-jelly" />
-    <span className="welcome-orbit" aria-hidden="true" />
-    <span className="welcome-bubble" style={{ right: '3%', top: '8%', width: 72, height: 72, filter: 'blur(1.5px)' }} aria-hidden="true" />
-    <span className="welcome-bubble" style={{ right: '27%', top: '-6%', width: 48, height: 48, filter: 'blur(2.5px)', opacity: .8 }} aria-hidden="true" />
-    <span className="welcome-bubble" style={{ right: '1%', bottom: '-10%', width: 110, height: 110 }} aria-hidden="true" />
-  </section>;
-}
-
-function QuickStart({ session }: { session: LabSession }) {
-  const actions: { label: string; hint: string; icon: IcName; run(): void }[] = [
-    { label: 'Nuovo progetto', hint: 'Dai spazio a una nuova idea', icon: 'folder', run: () => session.openFlow('wizard') },
-    { label: 'Crea materiale', hint: 'Scegli Glass o Solid', icon: 'drop', run: () => { void session.newMaterial(); openStudio(session, 'material'); } },
-    { label: 'Crea componente', hint: 'Una forma, il tuo stile', icon: 'layers', run: () => session.openFlow('component') },
-    { label: 'Importa progetto', hint: 'Riprendi da un file .jello', icon: 'download', run: () => session.openFlow('import') },
-  ];
-  return <section className="home-section"><div className="section-head"><h2>Inizia da qui</h2><span className="muted small">Da un’idea alla prima forma</span></div><div className="quick-start-grid">{actions.map((a) => <button key={a.label} type="button" className="card quick-start-card" onClick={a.run}><Ic name={a.icon} size={24} /><strong>{a.label}</strong><span className="muted small">{a.hint}</span><Ic name="arrowRight" size={16} /></button>)}</div></section>;
-}
-
 function DemoGallery({ session }: { session: LabSession }) {
   const materials = useLab((s) => s.library);
   const create = async (id: string) => {
-    await session.projects.create({ name: 'Il mio progetto', platform: 'web', previewTheme: 'system', start: 'kit' });
+    if (!(await createKit(session))) return;
     session.openMaterial(id);
     openStudio(session, 'material');
   };

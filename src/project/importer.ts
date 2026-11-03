@@ -56,7 +56,7 @@ export async function inspectFile(file: string, bytes: Uint8Array): Promise<Impo
       if (size > MAX_PACKAGE_BYTES) return { kind: 'rejected', file, size, errors: ['pacchetto troppo grande'] };
       const r = readProjectEntries(await readZip(bytes));
       if (!r.ok) return { kind: 'rejected', file, size, errors: r.errors };
-      const warnings = [...r.value.materials.flatMap((m) => m.warnings.map((w) => `${m.path}: ${w}`)), ...r.value.rejected.map((x) => `${x.path}: saltato (${x.errors[0] ?? 'non valido'})`)];
+      const warnings = [...r.value.warnings, ...r.value.materials.flatMap((m) => m.warnings.map((w) => `${m.path}: ${w}`)), ...r.value.rejected.map((x) => `${x.path}: saltato (${x.errors[0] ?? 'non valido'})`)];
       return { kind: 'project', file, size, pkg: r.value, warnings };
     }
     if (e === 'svg') {

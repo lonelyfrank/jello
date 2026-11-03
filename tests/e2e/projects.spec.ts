@@ -72,6 +72,7 @@ test.describe('projects', () => {
     await startKit(page);
     await page.locator('#brandHome').click();
     await page.locator('#headerNewProject').click();
+    await page.locator('#createNewProject').click();
     await page.locator('#projectName').fill('Progetto B');
     await page.getByLabel('Android').check();
     await page.getByRole('button', { name: 'Continua' }).click();
@@ -315,7 +316,7 @@ test.describe('shell', () => {
     await page.getByRole('option', { name: 'Lente marcata Materiale', exact: true }).click();
     await expect(page.locator('#crumbPreset')).toHaveText('Lente marcata');
     await page.locator('#brandHome').click();
-    await page.locator('.lab-header').getByRole('button', { name: 'Impostazioni', exact: true }).click();
+    await page.locator('#studioSettings').click();
     await expect(page.locator('#settingsPage')).toContainText('salvati in questo browser');
     await expect(page.getByRole('heading', { name: 'Stati dell’interfaccia' })).toBeVisible();
   });
@@ -326,6 +327,9 @@ test.describe('shell', () => {
     await page.keyboard.press('Enter');
     await expect(page.locator('#homePage')).toBeVisible();
     await page.locator('#headerNewProject').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Inizia a creare' })).toBeVisible();
+    await page.locator('#createNewProject').focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('region', { name: 'Nuovo progetto' })).toBeVisible();
     await page.keyboard.press('Escape');
