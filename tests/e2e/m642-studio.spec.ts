@@ -247,3 +247,45 @@ test.describe('reset goes back to the base, not to a generic default (M642-17, �
     await expect(page.locator('#resetToBase')).toHaveText('Ripristina «Glass · Frosted»');
   });
 });
+
+test.describe('test backgrounds really are what their name says (M642-20)', () => {
+  // «Sfondo di prova» lists these scenes; before M6.4.2 an unrelated base rule overrode their backgrounds and every one drew a blank white page.
+  const luminance = (r: number, g: number, b: number) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  async function raster(page: Page, scene: string) {
+    await page.goto(`./?preset=satin&scene=${scene}&animate=0`);
+    await ready(page);
+    await page.addStyleTag({ content: '.stage-label{visibility:hidden!important}' });
+    await page.waitForTimeout(700);
+    const buf = await page.locator('#stageMain').screenshot();
+    const { PNG } = await import('pngjs');
+    return PNG.sync.read(buf);
+  }
+  const at = (png: { width: number; data: Buffer }, x: number, y: number) => {
+    const i = (y * png.width + x) * 4;
+    return [png.data[i]!, png.data[i + 1]!, png.data[i + 2]!] as const;
+  };
+  const darkShare = (png: { width: number; height: number; data: Buffer }) => {
+    let dark = 0;
+    for (let i = 0; i < png.data.length; i += 4) if (luminance(png.data[i]!, png.data[i + 1]!, png.data[i + 2]!) < 60) dark++;
+    return dark / (png.width * png.height);
+  };
+
+  test('Dark is dark, Light is the light tint (not white), Gradient is a gradient, Checker and Contrast are two-tone patterns', async ({ page }) => {
+    const dark = await raster(page, 'jello-dark');
+    expect(luminance(...at(dark, 12, 12)), 'Jello Dark').toBeLessThan(60);
+    const light = await raster(page, 'jello-light');
+    const [lr, lg, lb] = at(light, 12, 12);
+    expect([lr, lg, lb], 'Jello Light is #f7f0fc, not the default white').toEqual([0xf7, 0xf0, 0xfc]);
+    const gradient = await raster(page, 'gradient');
+    const a = at(gradient, 12, 12);
+    const b = at(gradient, gradient.width - 12, gradient.height - 12);
+    // The stage frames part of a taller scene, so only a slice of the gradient shows: still a clear luminance ramp (measured ≈ 45).
+    expect(Math.abs(luminance(...a) - luminance(...b)), 'Gradient changes across the stage').toBeGreaterThan(25);
+    expect(luminance(...a), 'Gradient starts dark').toBeLessThan(90);
+    for (const scene of ['checkerboard', 'contrast']) {
+      const share = darkShare(await raster(page, scene));
+      expect(share, `${scene} is a black/white pattern`).toBeGreaterThan(0.25);
+      expect(share, `${scene} is a black/white pattern`).toBeLessThan(0.65);
+    }
+  });
+});

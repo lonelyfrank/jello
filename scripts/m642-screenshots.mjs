@@ -102,19 +102,23 @@ for (const [tag, vp] of [['desktop', [1280, 860]], ['mobile', [390, 844]]]) {
   await ctx.close();
 }
 
-// ---------------------------------------------------------------- Glass and Solid presets, light and dark colour scheme
-// `scene=text` (large type behind the surface: the refraction and the blur have something to bend). The light/dark axis is the
-// browser colour scheme the Studio and its Stage follow; the scenes called jello-light/jello-dark do NOT change the DOM stage's
-// background (verified: identical rasters), so they are not used for this axis.
-for (const scheme of ['light', 'dark']) {
-  const { ctx, page } = await open(browser, [1280, 860], { reducedMotion: 'reduce', colorScheme: scheme });
-  for (const [family, ids] of [['glass', ['jello', 'satin', 'deep', 'navbar']], ['solid', ['solid-neutral', 'solid-dark', 'solid-accent', 'solid-outline']]]) {
+// ---------------------------------------------------------------- Glass and Solid presets on the test backgrounds (§5.3)
+// Glass: uniform, gradient, large text, photograph, dark, light. Solid: dark and light (it reads nothing behind it).
+// Before M6.4.2 the dark, light, gradient, checker and contrast scenes all drew a blank white page in the DOM Stage
+// (a base `.scene` rule overrode their backgrounds), so a baseline built from main shows exactly that difference.
+{
+  const { ctx, page } = await open(browser, [1280, 860], { reducedMotion: 'reduce' });
+  const GLASS_SCENES = [['solid', 'uniform'], ['gradient', 'gradient'], ['text', 'text'], ['photo', 'photo'], ['jello-light', 'light'], ['jello-dark', 'dark']];
+  const SOLID_SCENES = [['jello-light', 'light'], ['jello-dark', 'dark']];
+  for (const [family, ids, scenes] of [['glass', ['jello', 'satin', 'deep', 'navbar'], GLASS_SCENES], ['solid', ['solid-neutral', 'solid-dark', 'solid-accent', 'solid-outline'], SOLID_SCENES]]) {
     for (const id of ids) {
-      await page.goto(`${BASE}?${family === 'glass' ? 'preset' : 'material'}=${id}&scene=text&animate=0`);
-      await ready(page);
-      await page.addStyleTag({ content: '.stage-label{visibility:hidden!important}' });
-      await settle(page, 700);
-      await shot(page.locator('#stageMain'), `material-${family}-${id}-${scheme}`, `${family} preset ${id}, ${scheme} colour scheme, text scene (Stage raster)`, 'stage');
+      for (const [scene, label] of scenes) {
+        await page.goto(`${BASE}?${family === 'glass' ? 'preset' : 'material'}=${id}&scene=${scene}&animate=0`);
+        await ready(page);
+        await page.addStyleTag({ content: '.stage-label{visibility:hidden!important}' });
+        await settle(page, scene === 'photo' ? 1200 : 700);
+        await shot(page.locator('#stageMain'), `material-${family}-${id}-${label}`, `${family} preset ${id} on the ${scene} test background (Stage raster)`, 'stage');
+      }
     }
   }
   await ctx.close();
