@@ -40,12 +40,17 @@ export function StudioRail({ session, saveShort, saveFull, saveKind, onCreate, c
     { id: 'jelly', label: 'Jello β', full: 'Jello Lab · sperimentale', icon: 'jelly', domId: 'ws-jelly' },
   ];
   const go = (id: RailId) => (id === 'assets' ? session.setPage('assets') : openStudio(session, id));
-  const item = (it: (typeof items)[number]) => (
-    <button key={it.id} type="button" className="rail-i" id={it.domId} title={it.full} aria-label={it.full} aria-current={active === it.id ? 'page' : undefined} aria-pressed={active === it.id} disabled={it.id !== 'workspace' && !hasProject} onClick={() => go(it.id)}>
-      <span className="rail-ic"><Ic name={it.icon} size={20} /></span>
-      <span className="rail-label">{it.label}</span>
-    </button>
-  );
+  // Without a project every area but the Workspace waits for one. `aria-disabled` (not `disabled`) keeps the button
+  // focusable, so keyboard and screen-reader users reach the reason instead of a dead control.
+  const item = (it: (typeof items)[number]) => {
+    const locked = it.id !== 'workspace' && !hasProject;
+    return (
+      <button key={it.id} type="button" className="rail-i" id={it.domId} title={locked ? `${it.full}: serve un progetto` : it.full} aria-label={it.full} aria-current={active === it.id ? 'page' : undefined} aria-disabled={locked || undefined} aria-describedby={locked ? 'railNeedsProject' : undefined} onClick={() => !locked && go(it.id)}>
+        <span className="rail-ic"><Ic name={it.icon} size={20} /></span>
+        <span className="rail-label">{it.label}</span>
+      </button>
+    );
+  };
   return (
     <nav className="studio-rail" aria-label="Navigazione principale">
       <button type="button" className="rail-brand" id="brandHome" aria-label="Jello: vai alla Home" title="Jello Studio · Home" onClick={() => openStudio(session, 'workspace')}>
@@ -57,6 +62,7 @@ export function StudioRail({ session, saveShort, saveFull, saveKind, onCreate, c
         <span className="rail-label">Crea</span>
       </button>
       <span className="rail-div" aria-hidden="true" />
+      {!hasProject && <span className="visually-hidden" id="railNeedsProject">Serve un progetto: crealo o importalo dalla Home.</span>}
       {items.slice(0, 6).map(item)}
       <span className="rail-div" aria-hidden="true" />
       {item(items[6]!)}

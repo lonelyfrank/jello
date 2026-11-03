@@ -200,7 +200,7 @@ function validateBatch(batch: JellyBatch): void {
   const docs: unknown[] = [...(batch.materials?.put ?? []).map((m) => m.doc), ...(batch.drafts?.put ?? []).map((d) => d.doc), ...(batch.links?.put ?? []).map((l) => l.doc)];
   for (const doc of docs) {
     const r = parseExperimentalJelly(doc);
-    if (!r.ok) throw new JellyStorageError('invalid', `Documento Jelly non valido, nulla è stato scritto: ${r.errors[0]}`);
+    if (!r.ok) throw new JellyStorageError('invalid', `Documento Jello non valido, nulla è stato scritto: ${r.errors[0]}`);
   }
   for (const m of batch.materials?.put ?? []) {
     if (!m.projectId || m.doc.id !== m.id) throw new JellyStorageError('invalid', 'Record Jelly incoerente (progetto o id): nulla è stato scritto.');

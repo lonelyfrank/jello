@@ -1,17 +1,24 @@
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { COMPONENTS } from '../../components';
 import { availabilityLabel, catalogByFamily, entryMeta, familyLabel, type MaterialCatalogEntry } from '../../model/catalog';
 import type { LabSession } from '../session';
 import { setStudioPreferences, useStudioPreferences } from '../studio-preferences';
 import { useLab, type ComponentItem, type LibraryItem } from '../store';
 import { isDiagnosticId, originLabel, presentItem } from './catalog-ui';
+import { ExperimentalBoundary, retryableLazy } from './ExperimentalBoundary';
 import { MaterialThumbnail } from './Library';
 import { RuntimeThumbnail } from './RuntimeThumbnail';
 import { openStudio } from './StudioNav';
 import { EmptyState, Ic, type IcName } from './ui';
 
 /** The experimental Jello preview is a separate chunk: the Library links no Jelly module, it loads one only when asked to show it. */
-const JellyCatalogPreview = lazy(() => import('../experimental/jelly/JellyCatalogPreview'));
+const jellyPreview = retryableLazy(() => import('../experimental/jelly/JellyCatalogPreview'));
+/** A preview that cannot be fetched says so inside its own card; the rest of the Library keeps working. */
+const JellyCatalogPreview = ({ presetId }: { presetId: string }) => (
+  <ExperimentalBoundary what="L’anteprima Jello" onRetry={() => jellyPreview.retry()}>
+    <Suspense fallback={<p className="hint" role="status">Caricamento…</p>}><jellyPreview.Component presetId={presetId} /></Suspense>
+  </ExperimentalBoundary>
+);
 
 type Category = 'all' | 'materials' | 'button' | 'navigation' | 'mine' | 'favorites' | 'diagnostic';
 /** `experimental`: a catalog entry of the Jello family, not a stored material; it is opened in the Jello lab, never in the stable editor. */
@@ -25,7 +32,7 @@ export function StudioLibrary({ session }: { session: LabSession }) {
   const materials = useLab((s) => s.library);
   const components = useLab((s) => s.components);
   const project = useLab((s) => s.projects.find((p) => p.id === s.projectId));
-  const [category, setCategory] = useState<Category>('all');
+  const [chosen, setCategory] = useState<Category>('all');
   const [query, setQuery] = useState('');
   const [family, setFamily] = useState('all');
   const [pickedKey, setPickedKey] = useState<string | null>(null);
@@ -41,12 +48,17 @@ export function StudioLibrary({ session }: { session: LabSession }) {
     if (entry.kind === 'experimental') return id === 'all' || id === 'materials';
     return id === 'all' || (id === 'materials' && entry.kind === 'material') || (id === 'button' && entry.kind === 'component' && entry.item.doc.type === 'button') || (id === 'navigation' && entry.kind === 'component' && entry.item.doc.type.includes('navbar')) || (id === 'mine' && entry.item.origin === 'user') || (id === 'favorites' && project?.favorites.includes(entry.item.id));
   };
-  const categories: { id: Category; label: string; icon: IcName }[] = [
+  // The Jello family holds experimental catalog entries only: they are materials, never components, personal copies or favourites.
+  const all: { id: Category; label: string; icon: IcName }[] = [
     { id: 'all', label: 'Tutti gli elementi', icon: 'grid' }, { id: 'button', label: 'Buttons', icon: 'box' },
     { id: 'navigation', label: 'Navigation', icon: 'layers' }, { id: 'materials', label: 'Materiali', icon: 'drop' },
     { id: 'mine', label: 'Le mie creazioni', icon: 'user' }, { id: 'favorites', label: 'Preferiti', icon: 'heart' },
     ...(showDiagnostics && family !== 'jelly' ? [{ id: 'diagnostic' as const, label: 'Diagnostica', icon: 'eye' as IcName }] : []),
   ];
+  const categories = family === 'jelly' ? all.filter((c) => c.id === 'all' || c.id === 'materials') : all;
+  // A category that no longer exists (Jello chosen while «Buttons» was open) falls back to «Tutti».
+  const category: Category = categories.some((c) => c.id === chosen) ? chosen : 'all';
+  const countOf = (id: Category) => (id === 'diagnostic' ? diagnostics.length : entries.filter((e) => matchCategory(e, id)).length);
   const visibleEntries = category === 'diagnostic' ? diagnostics : entries;
   const shown = visibleEntries.filter((entry) => matchCategory(entry, category) && (family === 'all' || familyOf(entry) === family) && `${nameOf(entry)} ${familyLabel(familyOf(entry))} ${entry.kind === 'component' ? entry.item.doc.type : entry.kind === 'experimental' ? entryMeta(entry.entry) : presentItem(entry.item).meta}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   const keyOf = (entry: Entry) => `${entry.kind}-${idOf(entry)}`;
@@ -99,7 +111,7 @@ export function StudioLibrary({ session }: { session: LabSession }) {
       <label className="lib-search"><Ic name="search" size={22} /><span className="visually-hidden">Cerca nella Library</span><input type="search" id="catalogSearch" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cerca nella Library…" /></label>
     </section>
     <section className="home-cats lib-cats" aria-label="Categorie della libreria">
-      {categories.map((c) => <button key={c.id} type="button" className="cat" aria-pressed={category === c.id} onClick={() => setCategory(c.id)}><span className="cat-ic" style={{ background: catColors[c.id] }}><Ic name={c.icon} size={22} /></span><span>{c.label} <span className="muted count-badge">{entries.filter((e) => matchCategory(e, c.id)).length}</span></span></button>)}
+      {categories.map((c) => <button key={c.id} type="button" className="cat" aria-pressed={category === c.id} onClick={() => setCategory(c.id)}><span className="cat-ic" style={{ background: catColors[c.id] }}><Ic name={c.icon} size={22} /></span><span>{c.label} <span className="muted count-badge">{countOf(c.id)}</span></span></button>)}
     </section>
     <div className="lib-cols">
     <main className="catalog-main" aria-label="Elementi">
@@ -113,7 +125,7 @@ export function StudioLibrary({ session }: { session: LabSession }) {
         const pick = <button type="button" className="catalog-pick" aria-pressed={selected ? keyOf(entry) === keyOf(selected) : false} onClick={() => setPickedKey(keyOf(entry))}>{name}</button>;
         if (entry.kind === 'experimental') {
           return <article key={keyOf(entry)} className="card catalog-card" data-catalog-kind="experimental" data-preset={id} data-selected={selected ? keyOf(entry) === keyOf(selected) : undefined}>
-            <div className="catalog-material"><Suspense fallback={<p className="hint" role="status">Caricamento…</p>}><JellyCatalogPreview presetId={id} /></Suspense></div>
+            <div className="catalog-material"><JellyCatalogPreview presetId={id} /></div>
             <div className="catalog-card-info"><h2>{pick}</h2>
               <p className="muted small">{entryMeta(entry.entry)} <span className="state-chip" data-kind="warn">{availabilityLabel(entry.entry.availability)}</span></p>
               <p className="catalog-compat small">{entry.entry.description}</p>
@@ -137,7 +149,7 @@ export function StudioLibrary({ session }: { session: LabSession }) {
     <aside className="catalog-preview" aria-label="Anteprima dell’elemento" id="catalogPreview">
       <h2>Anteprima</h2>
       {selected ? <>
-        <div className="catalog-preview-stage">{selected.kind === 'experimental' ? <Suspense fallback={<p className="hint" role="status">Caricamento…</p>}><JellyCatalogPreview presetId={selected.entry.presetId} /></Suspense> : selected.kind === 'component' ? <RuntimeThumbnail doc={selected.item.doc} /> : <MaterialThumbnail runtime doc={selected.item.doc} />}</div>
+        <div className="catalog-preview-stage">{selected.kind === 'experimental' ? <JellyCatalogPreview presetId={selected.entry.presetId} /> : selected.kind === 'component' ? <RuntimeThumbnail doc={selected.item.doc} /> : <MaterialThumbnail runtime doc={selected.item.doc} />}</div>
         <div className="catalog-preview-meta"><strong>{nameOf(selected)}</strong><span className="muted small">{metaOf(selected)}</span></div>
         {selected.kind === 'experimental' && <ul className="catalog-limits small muted" aria-label="Limiti">{selected.entry.limitations?.map((l) => <li key={l}>{l}</li>)}</ul>}
         {selected.kind === 'material' && presentItem(selected.item).limitations.length > 0 && <ul className="catalog-limits small muted" aria-label="Limiti">{presentItem(selected.item).limitations.map((l) => <li key={l}>{l}</li>)}</ul>}

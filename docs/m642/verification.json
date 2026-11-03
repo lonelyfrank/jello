@@ -1,0 +1,249 @@
+{
+  "date": "2026-11-03",
+  "milestone": "M6.4.2",
+  "branch": "m642-studio-material-quality-gate",
+  "baseline": {
+    "commit": "7692b4c3c4894707fc6b68e1be5365a446864769",
+    "ref": "origin/main"
+  },
+  "head": "09036f8796e20f1c00c1215dea25809488781dd0",
+  "environment": {
+    "os": "Fedora 44, kernel 7.2.13",
+    "cpu": "Intel Core i7-10510U (8 threads)",
+    "ramGB": 31,
+    "node": "v22.23.1",
+    "playwright": "1.64.1",
+    "chromium": "156",
+    "firefox": "157",
+    "webkit": "NOT RUN (host missing dependencies)"
+  },
+  "typecheck": {
+    "result": "PASS",
+    "seconds": 1.32
+  },
+  "unit": {
+    "result": "PASS",
+    "files": 39,
+    "tests": 776,
+    "seconds": 8.09
+  },
+  "build": {
+    "result": "PASS",
+    "seconds": 4.67,
+    "warnings": [
+      "Vite: chunk dist/assets/lab-*.js larger than 500 kB (see performance.md §3)"
+    ]
+  },
+  "e2e": {
+    "command": "npm run test:e2e:local",
+    "stats": {
+      "startTime": "2026-11-03T13:07:54.108Z",
+      "duration": 970924.849,
+      "expected": 931,
+      "skipped": 131,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "perProject": {
+      "chromium": {
+        "passed": 354,
+        "failed": 0,
+        "skipped": 0,
+        "flaky": 0
+      },
+      "firefox": {
+        "passed": 308,
+        "failed": 0,
+        "skipped": 46,
+        "flaky": 0
+      },
+      "mobile-emulated": {
+        "passed": 269,
+        "failed": 0,
+        "skipped": 85,
+        "flaky": 0
+      }
+    },
+    "seconds": 972,
+    "skippedByReason": [
+      {
+        "file": "fallback.spec.ts",
+        "reason": "Emulation only available through Chromium CDP",
+        "count": 1
+      },
+      {
+        "file": "jelly-studio.spec.ts",
+        "reason": "no hardware keyboard on the emulated phone",
+        "count": 1
+      },
+      {
+        "file": "jelly-studio.spec.ts",
+        "reason": "pointer-leave semantics are exercised with a mouse",
+        "count": 1
+      },
+      {
+        "file": "jelly-studio.spec.ts",
+        "reason": "download and consumer rendering are verified on desktop viewports",
+        "count": 1
+      },
+      {
+        "file": "jelly-studio.spec.ts",
+        "reason": "desktop flow",
+        "count": 1
+      },
+      {
+        "file": "m642-a11y.spec.ts",
+        "reason": "viewport matrix is driven explicitly below, once, on desktop Chromium",
+        "count": 18
+      },
+      {
+        "file": "m642-builder.spec.ts",
+        "reason": "viewport matrix is driven explicitly, once, on desktop Chromium",
+        "count": 16
+      },
+      {
+        "file": "m642-control-effect.spec.ts",
+        "reason": "the Inspector is a drawer on phones; the control → render chain is the same code, checked once on desktop engines",
+        "count": 33
+      },
+      {
+        "file": "projects.spec.ts",
+        "reason": "the project switcher lives in the breadcrumb, which phones hide; Home switches projects there",
+        "count": 1
+      },
+      {
+        "file": "release-gate.spec.ts",
+        "reason": "the project switcher and downloads are driven on desktop engines",
+        "count": 1
+      },
+      {
+        "file": "studio-redesign.spec.ts",
+        "reason": "Resize separators belong to the desktop layout. Mobile reflow is covered by screenshots.",
+        "count": 1
+      },
+      {
+        "file": "studio-responsive.spec.ts",
+        "reason": "layout rules are checked once, on desktop Chromium",
+        "count": 56
+      }
+    ]
+  },
+  "note": "Numbers come from the final run at HEAD (git rev-parse in `head`); every PASS is an executed result. NOT RUN means the step could not be executed here; the command to reproduce it is given.",
+  "baselineRun": {
+    "commit": "7692b4c",
+    "typecheck": "PASS",
+    "unit": {
+      "files": 37,
+      "tests": 766
+    },
+    "build": "PASS",
+    "e2e": {
+      "passed": 791,
+      "skipped": 64,
+      "failed": 0,
+      "flaky": 0,
+      "minutes": 13.7
+    }
+  },
+  "finalRun": {
+    "unit": "39 files / 776 tests PASS",
+    "e2e": "931 passed · 131 skipped · 0 failed · 0 flaky (16.2 min)"
+  },
+  "addedTests": {
+    "unit": 10,
+    "e2e": "m642-studio (16 tests/project), m642-control-effect (33), m642-a11y (9), m642-builder (8), m642-resilience (3)",
+    "inheritedFromLocalCommits": "jelly-integrity: 2 scenarios x 2 repositories"
+  },
+  "notRun": [
+    {
+      "item": "WebKit (project webkit)",
+      "reason": "browserType.launch: Host system is missing dependencies to run browsers",
+      "reproduce": "sudo npx playwright install-deps webkit && npx playwright test --project=webkit"
+    },
+    {
+      "item": "Real phones / Android WebView",
+      "reason": "no device in this environment; mobile-emulated is Chromium viewport/touch emulation only",
+      "reproduce": "docs/device-testing.md"
+    },
+    {
+      "item": "Screen reader, 200%/400% zoom, pixel contrast, touch targets 44px",
+      "reason": "manual checklist, not executed",
+      "reproduce": "docs/m642/accessibility.md §4"
+    },
+    {
+      "item": "GPU / paint cost, mobile performance",
+      "reason": "not observable from JS in headless desktop",
+      "reproduce": "node scripts/m642-perf.mjs on target hardware"
+    }
+  ],
+  "measured": {
+    "performance": "scripts/m642-perf.mjs -> perf-results.json (commit 43ce36b)",
+    "visual": "scripts/m642-screenshots.mjs + m642-compare.mjs -> visual-diff.json: 102 shots, 47 identical, 55 changed (all reviewed in visual-review.md)",
+    "jelloPackages": "scripts/m642-verify-jelly-package.mjs -> package-verification.json: 4 packages x 2 engines x 2 motion preferences = 16 runs, ok:true",
+    "jelloMotion": "scripts/m642-jello-motion-metrics.mjs -> jello-motion-metrics.json (deterministic model)"
+  },
+  "issues": {
+    "p0": 0,
+    "p1": {
+      "found": 12,
+      "fixed": 12
+    },
+    "p2": {
+      "found": 11,
+      "fixed": 8,
+      "partial": 1,
+      "deferred": 2
+    },
+    "register": "docs/m642/issues-and-fixes.md"
+  },
+  "acceptance": {
+    "architecture": {
+      "runtimeBoundariesKept": "PASS",
+      "jelloIsolatedExperimental": "PASS",
+      "noUnmigratedIncompatibleChange": "PASS",
+      "noJustifiedDuplicateRenderer": "PASS"
+    },
+    "materials": {
+      "allPresetsValid": "PASS (validateCatalog empty)",
+      "everyDeclaredEffectSupported": "PASS",
+      "everyOperativeControlChangesResult": "PASS for 28 static params + press/transition params; damping and stretch not individually e2e-verified (PARTIAL)",
+      "diagnosticsSeparated": "PASS",
+      "glassSolidVerifiedInIntendedBackends": "PARTIAL (svg/css/webgl2 by existing suites; WebKit NOT RUN)",
+      "jelloDeterministicLifecycle": "PASS"
+    },
+    "studio": {
+      "allAreasReachable": "PASS (locked-without-project explained)",
+      "libraryUsesCatalog": "PASS",
+      "inspectorConsistent": "PASS",
+      "noFakeControlActive": "PASS (documented O-1/O-2 faint but real)",
+      "viewports": "PASS (6 + landscape)",
+      "saveFeedbackReliable": "PASS",
+      "jelloBetaVisible": "PASS"
+    },
+    "persistence": {
+      "noDataLoss": "PASS in covered cases",
+      "twoTabConflicts": "PASS",
+      "importExportIdentity": "PASS",
+      "quarantineReversible": "PASS",
+      "revisionsNotAlteredByRename": "PASS"
+    },
+    "export": {
+      "reactConsumer": "PASS",
+      "vanillaConsumer": "PASS",
+      "materialExport": "PASS",
+      "jelloExperimentalSeparate": "PASS (16 runs)",
+      "visualParityDeterministic": "PASS (existing: mean diff < 0.5/255, structural signatures); Jello consumer raster parity NOT MEASURED",
+      "manifestsDeclareRealCapabilities": "PASS"
+    },
+    "quality": {
+      "typecheck": "PASS",
+      "unit": "PASS",
+      "build": "PASS",
+      "e2eLocal": "PASS (131 skips, all reasoned)",
+      "noOpenP0": "PASS",
+      "noOpenP1": "PASS",
+      "screenshotsAndReportsPresent": "PASS",
+      "unverifiedLimitsDocumented": "PASS"
+    }
+  }
+}

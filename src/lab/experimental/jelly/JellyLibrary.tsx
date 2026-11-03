@@ -119,7 +119,7 @@ export function JellyLibrary({ wb, session, repo }: { wb: JellyWorkbench; sessio
           <button type="button" className="button small" id="jl-save-copy" disabled={noProject} onClick={() => void wb.saveAsCopy()}><Ic name="copy" size={14} /> Salva copia</button>
         </div>
         <div className="library-actions" role="group" aria-label="Esportazione sperimentale">
-          <button type="button" className="button small" id="jl-export" disabled={exporting} onClick={() => void runExport()} title="Pacchetto web sperimentale: documento, runtime Jelly, stili, manifest, istruzioni ed esempio">
+          <button type="button" className="button small" id="jl-export" disabled={exporting} onClick={() => void runExport()} title="Pacchetto web sperimentale: documento, runtime Jello, stili, manifest, istruzioni ed esempio">
             <Ic name="package" size={14} /> {exporting ? 'Preparazione…' : 'Esporta pacchetto web'}
           </button>
         </div>

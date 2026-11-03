@@ -42,15 +42,16 @@ test.describe('first launch', () => {
     await expect(page.locator('#lab')).toBeHidden();
   });
 
-  test('"Parti da un preset Jello" makes a project with 4 materials and the example navbar, and it survives a reload', async ({ page }) => {
+  test('"Parti da un preset incluso" makes a project with 3 designer-facing materials (no diagnostic configuration) and the example navbar, and it survives a reload', async ({ page }) => {
     await startKit(page);
-    await expect(page.locator('#libTab-mine .count-badge')).toHaveText('4');
+    await expect(page.locator('#libTab-mine .count-badge')).toHaveText('3');
+    await expect(page.locator('#libPanel [data-origin=user]').filter({ hasText: 'Refraction Test' })).toHaveCount(0);
     await page.reload();
     await ready(page);
     await expect(page.locator('#lab')).toBeVisible();
     await page.locator('#brandHome').click();
     await expect(page.locator('.project-card')).toHaveCount(1);
-    await expect(page.locator('.project-card').first()).toContainText('1 componente · 4 materiali');
+    await expect(page.locator('.project-card').first()).toContainText('1 componente · 3 materiali');
     // The preview is laid out as soon as the lab is shown again.
     await page.locator('#ws-material').click();
     await showPanel(page);
@@ -81,11 +82,11 @@ test.describe('projects', () => {
     await expect(page.getByText('Progetto B')).toBeVisible();
     await expect(page.locator('.summary')).toContainText('Android');
     await page.locator('#createProject').click();
-    // The new project holds one Glass material; the first one's four are not here.
+    // The new project holds one Glass material; the first one's three are not here.
     await expect(page.locator('#libTab-mine .count-badge')).toHaveText('1');
     await expect(page.locator('#projectSwitch')).toBeVisible();
     await page.locator('#projectSwitch').selectOption({ label: 'Il mio progetto' });
-    await expect(page.locator('#libTab-mine .count-badge')).toHaveText('4');
+    await expect(page.locator('#libTab-mine .count-badge')).toHaveText('3');
     await page.locator('#projectSwitch').selectOption({ label: 'Progetto B' });
     await expect(page.locator('#libTab-mine .count-badge')).toHaveText('1');
   });
@@ -96,7 +97,7 @@ test.describe('projects', () => {
     await page.getByRole('button', { name: /Azioni di Il mio progetto/ }).click();
     await page.getByRole('menuitem', { name: 'Elimina…' }).click();
     const dlg = page.getByRole('alertdialog');
-    await expect(dlg).toContainText('4 materiali');
+    await expect(dlg).toContainText('3 materiali');
     await expect(dlg).toContainText('1 componente');
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
@@ -231,7 +232,7 @@ test.describe('export and import', () => {
     await startKit(page);
     await page.locator('#nav-assets').click();
     await page.locator('#exportOpen').click();
-    await expect(page.locator('.export-group').first()).toContainText('4 di 4');
+    await expect(page.locator('.export-group').first()).toContainText('3 di 3');
     await page.getByRole('button', { name: 'Continua' }).click();
     await page.locator('#exportFileName').fill('kit-prova');
     await page.locator('#exportRun').click();
@@ -257,14 +258,14 @@ test.describe('export and import', () => {
     await page.getByRole('button', { name: 'Chiudi', exact: true }).click();
     await page.locator('#ws-material').click();
     await showPanel(page);
-    // 4 originals + 4 copies; the copies are renamed, never overwriting.
-    await expect(page.locator('#libTab-mine .count-badge')).toHaveText('8');
+    // 3 originals + 3 copies; the copies are renamed, never overwriting.
+    await expect(page.locator('#libTab-mine .count-badge')).toHaveText('6');
   });
 
   for (const [choice, label, blur, count] of [
-    ['replace', 'Sostituisci il materiale esistente', 33, 4],
-    ['skip', 'Salta', 14, 4],
-    ['both', 'Mantieni entrambi', 14, 5],
+    ['replace', 'Sostituisci il materiale esistente', 33, 3],
+    ['skip', 'Salta', 14, 3],
+    ['both', 'Mantieni entrambi', 14, 4],
   ] as const) {
     test(`a pasted material with an existing name: «${label}» leaves ${count} materials and Glass · Frosted at blur ${blur}`, async ({ page }) => {
       await startKit(page);

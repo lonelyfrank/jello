@@ -784,7 +784,7 @@ function ButtonInspector({ session }: { session: LabSession }) {
       </Section>
       <Section id="material" title={SECTION_LABEL.material} open={false}>
         <MaterialPanel session={session} />
-        <h3 className="panel-sub">Prova Jelly · sperimentale</h3>
+        <h3 className="panel-sub">Prova Jello · sperimentale</h3>
         <BuilderJellyTrial session={session} />
       </Section>
       <Section id="states" title="Stati e interazioni" open={false}>

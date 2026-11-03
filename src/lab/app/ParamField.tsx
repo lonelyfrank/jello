@@ -39,7 +39,7 @@ export function ParamField({ d, value, applicability: a, support, onChange, idKe
   const label = (
     <span className="control-label"><label htmlFor={`param-${k}`} id={`label-${k}`}>
       {d.label}
-    </label><button type="button" className="control-reset" aria-label={`Ripristina ${d.label}`} disabled={disabled || value === d.default} onClick={() => onChange(d.default)}>↺</button></span>
+    </label><button type="button" className="control-reset" aria-label={`Ripristina ${d.label}`} title={`Valore di partenza: ${d.type === 'number' ? formatValue(d, d.default) : String(d.default)}${d.type === 'number' && d.unit ? ` ${d.unit}` : ''}`} disabled={disabled || value === d.default} onClick={() => onChange(d.default)}>↺</button></span>
   );
   const notes = (
     <>

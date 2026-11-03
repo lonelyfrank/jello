@@ -1,0 +1,1025 @@
+{
+  "baseline": {
+    "commit": "7692b4c3c4894707fc6b68e1be5365a446864769 (origin/main), built in a separate git worktree, served on :4180",
+    "generated": "2026-11-03T12:34:25.399Z"
+  },
+  "candidate": {
+    "commit": "branch m642-studio-material-quality-gate at bd6838b (+ docs), served on :4173",
+    "generated": "2026-11-03T12:34:25.300Z"
+  },
+  "noise": 12,
+  "summary": {
+    "identical": 47,
+    "changed": 55,
+    "only-in-baseline": 0,
+    "only-in-candidate": 0,
+    "size-differs": 0
+  },
+  "rows": [
+    {
+      "file": "component-button-glass-default.png",
+      "status": "identical",
+      "what": "Button (glass) default"
+    },
+    {
+      "file": "component-button-glass-disabled.png",
+      "status": "identical",
+      "what": "Button (glass) state Disabled"
+    },
+    {
+      "file": "component-button-glass-hover.png",
+      "status": "identical",
+      "what": "Button (glass) state Hover"
+    },
+    {
+      "file": "component-button-glass-pressed.png",
+      "status": "identical",
+      "what": "Button (glass) state Pressed"
+    },
+    {
+      "file": "component-button-solid-default.png",
+      "status": "changed",
+      "changedPixels": 50,
+      "changedShare": 0.022,
+      "bbox": [
+        1,
+        1,
+        536,
+        416
+      ],
+      "what": "Button (solid) default",
+      "review": "unreviewed"
+    },
+    {
+      "file": "component-button-solid-disabled.png",
+      "status": "changed",
+      "changedPixels": 50,
+      "changedShare": 0.022,
+      "bbox": [
+        1,
+        1,
+        536,
+        416
+      ],
+      "what": "Button (solid) state Disabled",
+      "review": "unreviewed"
+    },
+    {
+      "file": "component-button-solid-hover.png",
+      "status": "changed",
+      "changedPixels": 50,
+      "changedShare": 0.022,
+      "bbox": [
+        1,
+        1,
+        536,
+        416
+      ],
+      "what": "Button (solid) state Hover",
+      "review": "unreviewed"
+    },
+    {
+      "file": "component-button-solid-pressed.png",
+      "status": "changed",
+      "changedPixels": 50,
+      "changedShare": 0.022,
+      "bbox": [
+        1,
+        1,
+        536,
+        416
+      ],
+      "what": "Button (solid) state Pressed",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-dark-disabled.png",
+      "status": "changed",
+      "changedPixels": 2023,
+      "changedShare": 0.939,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · dark background · state disabled",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-dark-hover.png",
+      "status": "changed",
+      "changedPixels": 2023,
+      "changedShare": 0.939,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · dark background · state hover",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-dark-live.png",
+      "status": "changed",
+      "changedPixels": 2023,
+      "changedShare": 0.939,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · dark background · state live",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-dark-pressed.png",
+      "status": "changed",
+      "changedPixels": 2023,
+      "changedShare": 0.939,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · dark background · state pressed",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-gradient-disabled.png",
+      "status": "changed",
+      "changedPixels": 1938,
+      "changedShare": 0.899,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · gradient background · state disabled",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-gradient-hover.png",
+      "status": "changed",
+      "changedPixels": 1938,
+      "changedShare": 0.899,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · gradient background · state hover",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-gradient-live.png",
+      "status": "changed",
+      "changedPixels": 1938,
+      "changedShare": 0.899,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · gradient background · state live",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-gradient-pressed.png",
+      "status": "changed",
+      "changedPixels": 1938,
+      "changedShare": 0.899,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · gradient background · state pressed",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-light-disabled.png",
+      "status": "changed",
+      "changedPixels": 1968,
+      "changedShare": 0.913,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · light background · state disabled",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-light-hover.png",
+      "status": "changed",
+      "changedPixels": 1968,
+      "changedShare": 0.913,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · light background · state hover",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-light-live.png",
+      "status": "changed",
+      "changedPixels": 1968,
+      "changedShare": 0.913,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · light background · state live",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-compare-light-pressed.png",
+      "status": "changed",
+      "changedPixels": 1968,
+      "changedShare": 0.913,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four candidate presets side by side · light background · state pressed",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-env-forced-colors.png",
+      "status": "changed",
+      "changedPixels": 2022,
+      "changedShare": 0.938,
+      "bbox": [
+        86,
+        179,
+        438,
+        302
+      ],
+      "what": "Jello · four presets · forced-colors: active (emulated)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-motion-jelly-candy-1-idle.png",
+      "status": "identical",
+      "what": "jelly-candy · 1-idle"
+    },
+    {
+      "file": "jello-motion-jelly-candy-2-press.png",
+      "status": "changed",
+      "changedPixels": 13,
+      "changedShare": 0.072,
+      "bbox": [
+        92,
+        65,
+        104,
+        65
+      ],
+      "what": "jelly-candy · 2-press",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-motion-jelly-candy-3-hold.png",
+      "status": "identical",
+      "what": "jelly-candy · 3-hold"
+    },
+    {
+      "file": "jello-motion-jelly-candy-4-release.png",
+      "status": "changed",
+      "changedPixels": 10,
+      "changedShare": 0.055,
+      "bbox": [
+        31,
+        65,
+        164,
+        67
+      ],
+      "what": "jelly-candy · 4-release",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-motion-jelly-candy-5-rebound.png",
+      "status": "changed",
+      "changedPixels": 32,
+      "changedShare": 0.177,
+      "bbox": [
+        82,
+        67,
+        113,
+        67
+      ],
+      "what": "jelly-candy · 5-rebound",
+      "review": "unreviewed"
+    },
+    {
+      "file": "jello-motion-jelly-candy-6-rest.png",
+      "status": "identical",
+      "what": "jelly-candy · 6-rest"
+    },
+    {
+      "file": "jello-motion-jelly-clear-1-idle.png",
+      "status": "identical",
+      "what": "jelly-clear · 1-idle"
+    },
+    {
+      "file": "jello-motion-jelly-clear-2-press.png",
+      "status": "identical",
+      "what": "jelly-clear · 2-press"
+    },
+    {
+      "file": "jello-motion-jelly-clear-3-hold.png",
+      "status": "identical",
+      "what": "jelly-clear · 3-hold"
+    },
+    {
+      "file": "jello-motion-jelly-clear-4-release.png",
+      "status": "identical",
+      "what": "jelly-clear · 4-release"
+    },
+    {
+      "file": "jello-motion-jelly-clear-5-rebound.png",
+      "status": "identical",
+      "what": "jelly-clear · 5-rebound"
+    },
+    {
+      "file": "jello-motion-jelly-clear-6-rest.png",
+      "status": "identical",
+      "what": "jelly-clear · 6-rest"
+    },
+    {
+      "file": "jello-motion-jelly-dense-1-idle.png",
+      "status": "identical",
+      "what": "jelly-dense · 1-idle"
+    },
+    {
+      "file": "jello-motion-jelly-dense-2-press.png",
+      "status": "identical",
+      "what": "jelly-dense · 2-press"
+    },
+    {
+      "file": "jello-motion-jelly-dense-3-hold.png",
+      "status": "identical",
+      "what": "jelly-dense · 3-hold"
+    },
+    {
+      "file": "jello-motion-jelly-dense-4-release.png",
+      "status": "identical",
+      "what": "jelly-dense · 4-release"
+    },
+    {
+      "file": "jello-motion-jelly-dense-5-rebound.png",
+      "status": "identical",
+      "what": "jelly-dense · 5-rebound"
+    },
+    {
+      "file": "jello-motion-jelly-dense-6-rest.png",
+      "status": "identical",
+      "what": "jelly-dense · 6-rest"
+    },
+    {
+      "file": "jello-motion-jelly-soft-1-idle.png",
+      "status": "identical",
+      "what": "jelly-soft · 1-idle"
+    },
+    {
+      "file": "jello-motion-jelly-soft-2-press.png",
+      "status": "identical",
+      "what": "jelly-soft · 2-press"
+    },
+    {
+      "file": "jello-motion-jelly-soft-3-hold.png",
+      "status": "identical",
+      "what": "jelly-soft · 3-hold"
+    },
+    {
+      "file": "jello-motion-jelly-soft-4-release.png",
+      "status": "identical",
+      "what": "jelly-soft · 4-release"
+    },
+    {
+      "file": "jello-motion-jelly-soft-5-rebound.png",
+      "status": "identical",
+      "what": "jelly-soft · 5-rebound"
+    },
+    {
+      "file": "jello-motion-jelly-soft-6-rest.png",
+      "status": "identical",
+      "what": "jelly-soft · 6-rest"
+    },
+    {
+      "file": "material-glass-deep-dark.png",
+      "status": "changed",
+      "changedPixels": 256508,
+      "changedShare": 98.305,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset deep on the jello-dark test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-deep-gradient.png",
+      "status": "changed",
+      "changedPixels": 256542,
+      "changedShare": 98.318,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset deep on the gradient test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-deep-light.png",
+      "status": "changed",
+      "changedPixels": 253377,
+      "changedShare": 97.105,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset deep on the jello-light test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-deep-photo.png",
+      "status": "identical",
+      "what": "glass preset deep on the photo test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-deep-text.png",
+      "status": "identical",
+      "what": "glass preset deep on the text test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-deep-uniform.png",
+      "status": "identical",
+      "what": "glass preset deep on the solid test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-jello-dark.png",
+      "status": "changed",
+      "changedPixels": 256492,
+      "changedShare": 98.299,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset jello on the jello-dark test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-jello-gradient.png",
+      "status": "changed",
+      "changedPixels": 256664,
+      "changedShare": 98.365,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset jello on the gradient test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-jello-light.png",
+      "status": "changed",
+      "changedPixels": 252966,
+      "changedShare": 96.948,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset jello on the jello-light test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-jello-photo.png",
+      "status": "identical",
+      "what": "glass preset jello on the photo test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-jello-text.png",
+      "status": "identical",
+      "what": "glass preset jello on the text test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-jello-uniform.png",
+      "status": "identical",
+      "what": "glass preset jello on the solid test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-navbar-dark.png",
+      "status": "changed",
+      "changedPixels": 256420,
+      "changedShare": 98.272,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset navbar on the jello-dark test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-navbar-gradient.png",
+      "status": "changed",
+      "changedPixels": 256764,
+      "changedShare": 98.403,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset navbar on the gradient test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-navbar-light.png",
+      "status": "changed",
+      "changedPixels": 252760,
+      "changedShare": 96.869,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset navbar on the jello-light test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-navbar-photo.png",
+      "status": "identical",
+      "what": "glass preset navbar on the photo test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-navbar-text.png",
+      "status": "identical",
+      "what": "glass preset navbar on the text test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-navbar-uniform.png",
+      "status": "identical",
+      "what": "glass preset navbar on the solid test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-satin-dark.png",
+      "status": "changed",
+      "changedPixels": 256700,
+      "changedShare": 98.379,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset satin on the jello-dark test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-satin-gradient.png",
+      "status": "changed",
+      "changedPixels": 256851,
+      "changedShare": 98.437,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset satin on the gradient test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-satin-light.png",
+      "status": "changed",
+      "changedPixels": 251681,
+      "changedShare": 96.455,
+      "bbox": [
+        1,
+        1,
+        536,
+        482
+      ],
+      "what": "glass preset satin on the jello-light test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-glass-satin-photo.png",
+      "status": "identical",
+      "what": "glass preset satin on the photo test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-satin-text.png",
+      "status": "identical",
+      "what": "glass preset satin on the text test background (Stage raster)"
+    },
+    {
+      "file": "material-glass-satin-uniform.png",
+      "status": "identical",
+      "what": "glass preset satin on the solid test background (Stage raster)"
+    },
+    {
+      "file": "material-solid-solid-accent-dark.png",
+      "status": "changed",
+      "changedPixels": 277564,
+      "changedShare": 97.527,
+      "bbox": [
+        1,
+        1,
+        536,
+        526
+      ],
+      "what": "solid preset solid-accent on the jello-dark test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-solid-solid-accent-light.png",
+      "status": "changed",
+      "changedPixels": 277346,
+      "changedShare": 97.45,
+      "bbox": [
+        1,
+        1,
+        536,
+        526
+      ],
+      "what": "solid preset solid-accent on the jello-light test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-solid-solid-dark-dark.png",
+      "status": "changed",
+      "changedPixels": 277236,
+      "changedShare": 97.412,
+      "bbox": [
+        1,
+        1,
+        536,
+        526
+      ],
+      "what": "solid preset solid-dark on the jello-dark test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-solid-solid-dark-light.png",
+      "status": "changed",
+      "changedPixels": 277068,
+      "changedShare": 97.353,
+      "bbox": [
+        1,
+        1,
+        536,
+        526
+      ],
+      "what": "solid preset solid-dark on the jello-light test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-solid-solid-neutral-dark.png",
+      "status": "changed",
+      "changedPixels": 277236,
+      "changedShare": 97.412,
+      "bbox": [
+        1,
+        1,
+        536,
+        526
+      ],
+      "what": "solid preset solid-neutral on the jello-dark test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-solid-solid-neutral-light.png",
+      "status": "changed",
+      "changedPixels": 277075,
+      "changedShare": 97.355,
+      "bbox": [
+        1,
+        1,
+        536,
+        526
+      ],
+      "what": "solid preset solid-neutral on the jello-light test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-solid-solid-outline-dark.png",
+      "status": "changed",
+      "changedPixels": 277237,
+      "changedShare": 97.412,
+      "bbox": [
+        1,
+        1,
+        536,
+        526
+      ],
+      "what": "solid preset solid-outline on the jello-dark test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "material-solid-solid-outline-light.png",
+      "status": "changed",
+      "changedPixels": 277077,
+      "changedShare": 97.356,
+      "bbox": [
+        1,
+        1,
+        536,
+        526
+      ],
+      "what": "solid preset solid-outline on the jello-light test background (Stage raster)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-01-home-first-launch.png",
+      "status": "changed",
+      "changedPixels": 134284,
+      "changedShare": 12.199,
+      "bbox": [
+        97,
+        303,
+        1245,
+        859
+      ],
+      "what": "Home at first launch: locked areas explain themselves",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-02-material-lab.png",
+      "status": "changed",
+      "changedPixels": 43,
+      "changedShare": 0.004,
+      "bbox": [
+        235,
+        289,
+        241,
+        297
+      ],
+      "what": "Material Lab right after the kit project (Glass Default)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-03-home-project.png",
+      "status": "changed",
+      "changedPixels": 4306,
+      "changedShare": 0.391,
+      "bbox": [
+        201,
+        341,
+        954,
+        859
+      ],
+      "what": "Home with a project",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-04-library-all.png",
+      "status": "changed",
+      "changedPixels": 627,
+      "changedShare": 0.057,
+      "bbox": [
+        382,
+        435,
+        866,
+        509
+      ],
+      "what": "Library · all stable items",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-05-library-jello.png",
+      "status": "changed",
+      "changedPixels": 15444,
+      "changedShare": 1.403,
+      "bbox": [
+        330,
+        363,
+        1011,
+        461
+      ],
+      "what": "Library · Jello family (experimental, live previews)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-06-builder-button.png",
+      "status": "changed",
+      "changedPixels": 31,
+      "changedShare": 0.003,
+      "bbox": [
+        35,
+        594,
+        1170,
+        848
+      ],
+      "what": "Component Builder · button",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-06-builder-desktop-navbar.png",
+      "status": "changed",
+      "changedPixels": 789,
+      "changedShare": 0.072,
+      "bbox": [
+        1015,
+        840,
+        1171,
+        851
+      ],
+      "what": "Component Builder · desktop-navbar",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-06-builder-mobile-navbar.png",
+      "status": "changed",
+      "changedPixels": 32,
+      "changedShare": 0.003,
+      "bbox": [
+        1165,
+        841,
+        1171,
+        848
+      ],
+      "what": "Component Builder · mobile-navbar",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-07-preview-test.png",
+      "status": "changed",
+      "changedPixels": 765,
+      "changedShare": 0.069,
+      "bbox": [
+        1015,
+        840,
+        1171,
+        851
+      ],
+      "what": "Preview & Test",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-08-export.png",
+      "status": "changed",
+      "changedPixels": 518,
+      "changedShare": 0.047,
+      "bbox": [
+        1015,
+        840,
+        1171,
+        850
+      ],
+      "what": "Export flow",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-09-jello-lab.png",
+      "status": "changed",
+      "changedPixels": 1578,
+      "changedShare": 0.143,
+      "bbox": [
+        1017,
+        242,
+        1164,
+        483
+      ],
+      "what": "Jello β lab (experimental)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-desktop-10-inspector-base.png",
+      "status": "identical",
+      "what": "Builder inspector · base"
+    },
+    {
+      "file": "studio-desktop-11-assets.png",
+      "status": "identical",
+      "what": "Asset del progetto"
+    },
+    {
+      "file": "studio-desktop-12-settings.png",
+      "status": "identical",
+      "what": "Impostazioni"
+    },
+    {
+      "file": "studio-mobile-01-home-first-launch.png",
+      "status": "changed",
+      "changedPixels": 63255,
+      "changedShare": 19.217,
+      "bbox": [
+        13,
+        328,
+        373,
+        843
+      ],
+      "what": "Home at first launch: locked areas explain themselves",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-mobile-02-material-lab.png",
+      "status": "identical",
+      "what": "Material Lab right after the kit project (Glass Default)"
+    },
+    {
+      "file": "studio-mobile-03-home-project.png",
+      "status": "changed",
+      "changedPixels": 3027,
+      "changedShare": 0.92,
+      "bbox": [
+        72,
+        625,
+        137,
+        709
+      ],
+      "what": "Home with a project",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-mobile-04-library-all.png",
+      "status": "changed",
+      "changedPixels": 1614,
+      "changedShare": 0.49,
+      "bbox": [
+        21,
+        456,
+        377,
+        585
+      ],
+      "what": "Library · all stable items",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-mobile-05-library-jello.png",
+      "status": "changed",
+      "changedPixels": 5780,
+      "changedShare": 1.756,
+      "bbox": [
+        129,
+        399,
+        377,
+        467
+      ],
+      "what": "Library · Jello family (experimental, live previews)",
+      "review": "unreviewed"
+    },
+    {
+      "file": "studio-mobile-06-builder-button.png",
+      "status": "identical",
+      "what": "Component Builder · button"
+    },
+    {
+      "file": "studio-mobile-06-builder-desktop-navbar.png",
+      "status": "identical",
+      "what": "Component Builder · desktop-navbar"
+    },
+    {
+      "file": "studio-mobile-06-builder-mobile-navbar.png",
+      "status": "identical",
+      "what": "Component Builder · mobile-navbar"
+    },
+    {
+      "file": "studio-mobile-07-preview-test.png",
+      "status": "identical",
+      "what": "Preview & Test"
+    },
+    {
+      "file": "studio-mobile-08-export.png",
+      "status": "identical",
+      "what": "Export flow"
+    },
+    {
+      "file": "studio-mobile-09-jello-lab.png",
+      "status": "identical",
+      "what": "Jello β lab (experimental)"
+    }
+  ]
+}

@@ -15,9 +15,16 @@ export function sceneBackendLoaded(): boolean {
 }
 
 export async function createSceneView(options: SceneViewOptions): Promise<SceneView> {
-  loaded ??= import('./webgl2/scene-view');
-  const { WebGLSceneView } = await loaded;
-  return new WebGLSceneView(options);
+  const attempt = (loaded ??= import('./webgl2/scene-view'));
+  let chunk: Awaited<typeof attempt>;
+  try {
+    chunk = await attempt;
+  } catch (error) {
+    // A failed load (offline, a blocked request) is not remembered: the next call fetches the chunk again.
+    if (loaded === attempt) loaded = null;
+    throw error;
+  }
+  return new chunk.WebGLSceneView(options);
 }
 
 /** Cheap probe without keeping a context alive. */

@@ -10,7 +10,7 @@ import {
   type PreviewBackground, type PreviewSize, type PreviewState,
 } from './preview-model';
 import { setJellyView, setPrimaryBridge, useJellyView, useWorkbench } from './studio';
-import { presetDoc, type JellyWorkbench } from './workbench';
+import { presetDoc, presetLabel, type JellyWorkbench } from './workbench';
 
 const BACKEND_NAME = { svg: 'SVG', css: 'CSS' } as const;
 
@@ -91,7 +91,7 @@ export function JellyPreview({ wb }: { wb: JellyWorkbench }) {
       </div>
 
       {anyRejected && <p className="jl-banner" role="status" id="jl-rejected">Una modifica non valida è stata rifiutata: il Button mostra l’ultimo valore valido. Vedi il messaggio accanto al parametro.</p>}
-      {bridge?.errors && <p className="jl-banner" data-kind="danger" role="alert" id="jl-invalid">Documento Jelly non valido: {bridge.errors[0]}. Il Button resta un pulsante nativo senza decorazione.</p>}
+      {bridge?.errors && <p className="jl-banner" data-kind="danger" role="alert" id="jl-invalid">Documento Jello non valido: {bridge.errors[0]}. Il Button resta un pulsante nativo senza decorazione.</p>}
 
       <div className="jl-stage" data-background={view.background} data-compare={view.compare} id="jl-stage">
         {!view.compare ? (
@@ -138,7 +138,7 @@ function Compare({ wb, coordinator }: { wb: JellyWorkbench; coordinator: JellyCo
           <div className="jl-scale">
             <JellyButton testId={`compare-${d.id}`} doc={d} env={view.env} state={view.state} size={view.size} coordinator={coordinator} label={d.name.replace('Jelly ', '')} />
           </div>
-          <figcaption>{d.name}</figcaption>
+          <figcaption>{presetLabel(d)}</figcaption>
         </figure>
       ))}
     </div>

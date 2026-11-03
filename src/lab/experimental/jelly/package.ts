@@ -168,7 +168,7 @@ ${manifest.limits.map((l) => `- ${l}`).join('\n')}
 
 export async function buildJellyPackage(input: JellyPackageInput): Promise<JellyPackageResult> {
   const parsed = parseExperimentalJelly(input.doc);
-  if (!parsed.ok) throw new Error(`Documento Jelly non valido, nessun pacchetto generato: ${parsed.errors[0]}`);
+  if (!parsed.ok) throw new Error(`Documento Jello non valido, nessun pacchetto generato: ${parsed.errors[0]}`);
   const doc = parsed.doc;
   const warnings: string[] = [];
   const byPath = new Map(input.runtime.files.map((f) => [f.path, f]));

@@ -37,6 +37,7 @@ npm run dev          # laboratorio: http://localhost:5173 · anteprima leggera: 
 | `npm run test:e2e:local` | Playwright su Chromium, Firefox e viewport Pixel 7 emulato (avvia laboratorio, esempio, progetti React e Vanilla esterni e relay) |
 | `npm run test:e2e` | come sopra + WebKit (dipendenze di sistema necessarie) |
 | `npm run test:perf` / `node scripts/perf.mjs --suite navbar\|scene` | misure headless → `docs/perf/` |
+| `node scripts/m642-perf.mjs` · `m642-screenshots.mjs` · `m642-compare.mjs` · `m642-verify-jelly-package.mjs` | quality gate M6.4.2: RAF/lifecycle, matrice di screenshot e confronto, verifica dei pacchetti Jello → `docs/m642/` |
 | `npm run example:prepare` · `npm run example:serve` | pacchetto del preset `navbar` → esempio consumatore `examples/navbar` su :4175 |
 | `npm run consumer:prepare` · `npm run consumer:serve` | navbar React esportata → progetto esterno `examples/react-consumer` (npm install, typecheck, build) su :4176 |
 | `npm run vanilla:prepare` · `npm run vanilla:serve` | quattro componenti Vanilla e materiale Solid autonomo, con typecheck dei tipi pubblici, senza installazione React, su :4177 |
@@ -169,6 +170,7 @@ nei browser headless. Dati in `docs/perf/`.
 - [Esportazione](docs/export.md) · [Anteprima sul telefono e app Android](docs/phone-preview.md)
 - [Compatibilità ed evidenze](docs/compatibility.md) · [Prove su dispositivo](docs/device-testing.md)
 - [Mappatura Android nativa (prevista)](docs/android-mapping.md) · [Renderer Android: indicazioni](docs/android.md)
+- [Quality gate M6.4.2: consegna, audit, qualità dei materiali, verifica](docs/m642/delivery.md)
 - [Riferimenti e attribuzioni](docs/references.md)
 
 ## Licenze

@@ -77,6 +77,8 @@ export interface WorkbenchDeps {
   draftDelay?: number;
 }
 
+const DRAFT_CONFLICT = 'La bozza di questo progetto è stata aggiornata da un’altra scheda. La tua non è stata scritta: nulla è stato sovrascritto.';
+
 export class JellyWorkbench {
   private state: JellyWorkState;
   private readonly listeners = new Set<() => void>();
@@ -233,10 +235,15 @@ export class JellyWorkbench {
 
   // ---------------------------------------------------------------- documents
 
+  /** The draft conflict, if the draft is waiting for a choice. It is shown only when no conflict about a copy is (that one comes first). */
+  private draftConflict(): JellyConflictState | null {
+    return this.draftPaused ? { kind: 'draft', message: DRAFT_CONFLICT } : null;
+  }
+
   /** Moving to another document ends a conflict about the previous one (the unsaved draft stays; the Library asks before discarding). */
   private leavingConflict(): Partial<JellyWorkState> {
     const c = this.state.conflict;
-    return c && c.kind !== 'draft' ? { conflict: null } : {};
+    return c && c.kind !== 'draft' ? { conflict: this.draftConflict() } : {};
   }
 
   selectPreset(id: string): boolean {
@@ -305,15 +312,14 @@ export class JellyWorkbench {
       return false;
     }
     if (this.destroyed || this.state.projectId !== projectId) return true;
-    if (revs.draft !== undefined) this.draftRev = revs.draft;
+    if (revs.draft !== undefined) { this.draftRev = revs.draft; this.draftPaused = false; } // the draft was just rewritten with the current revision
     const saved: StoredJelly = { ...record, rev: revs.record ?? 0 };
     const records = [...this.state.records.filter((r) => r.id !== id), saved].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     if (this.state.doc === startDoc && this.navigation === startNavigation) {
-      this.draftPaused = false;
-      this.set({ records, doc: structuredClone(doc), base: { kind: 'record', id, doc: structuredClone(doc) }, recordId: id, rejections: {}, save: { kind: 'saved', at }, conflict: null });
+      this.set({ records, doc: structuredClone(doc), base: { kind: 'record', id, doc: structuredClone(doc) }, recordId: id, rejections: {}, save: { kind: 'saved', at }, conflict: this.draftConflict() });
     } else if (this.navigation === startNavigation) {
       // Edited while the write was in flight (same working document): those edits are newer than what was saved. Keep them.
-      this.set({ records, base: { kind: 'record', id, doc: structuredClone(doc) }, recordId: id, save: { kind: 'dirty' }, conflict: null });
+      this.set({ records, base: { kind: 'record', id, doc: structuredClone(doc) }, recordId: id, save: { kind: 'dirty' }, conflict: this.draftConflict() });
       this.scheduleDraft();
     } else {
       // The user moved to another document meanwhile: only the list of saved copies changes.
@@ -365,9 +371,7 @@ export class JellyWorkbench {
     const c = this.state.conflict;
     if (c?.kind !== 'record' || c.reason !== 'changed') return false;
     await this.refresh();
-    const ok = this.openRecord(c.recordId);
-    if (ok) this.set({ conflict: null });
-    return ok;
+    return this.openRecord(c.recordId); // leaves the conflict, surfacing a waiting draft conflict if there is one
   }
 
   /** Draft conflict → write my draft over the other tab's (explicit). */
@@ -444,7 +448,7 @@ export class JellyWorkbench {
       if (this.destroyed || this.state.projectId !== projectId) return; // an answer about a project we left says nothing about this one
       if (e instanceof JellyConflictError) {
         this.draftPaused = true;
-        this.set({ conflict: { kind: 'draft', message: 'La bozza di questo progetto è stata aggiornata da un’altra scheda. La tua non è stata scritta: nulla è stato sovrascritto.' } });
+        if (!this.state.conflict) this.set({ conflict: this.draftConflict() }); // a conflict about a copy, if any, is shown first
       } else this.set({ save: { kind: 'error', message: (e as Error).message } });
     }
   }

@@ -721,6 +721,39 @@ describe.each([
     expect(tab2.get().records[0]!.doc.bubbles.density).toBe(10); // the list was refreshed
   });
 
+  it('a draft conflict never masks a conflict about the copy; it surfaces once that one is resolved', async () => {
+    const { tab1, tab2 } = await twoTabs();
+    const id = tab1.get().records[0]!.id;
+    tab2.openRecord(id);
+    tab1.edit('density', 10);
+    await tab1.save(); // also rewrites the shared draft: tab 2's draft revision is now stale too
+    tab2.edit('density', 18);
+    await tab2.save();
+    await tick(40); // tab 2 retries its draft, which is refused as well
+    expect(tab2.get().conflict).toMatchObject({ kind: 'record', reason: 'changed' }); // still the copy's, with its «save as copy» way out
+    expect(await tab2.takeTheirs()).toBe(true);
+    expect(tab2.get().conflict).toMatchObject({ kind: 'draft' }); // now the waiting draft conflict is shown
+    expect(await tab2.overwriteDraft()).toBe(true);
+    expect(tab2.get().conflict).toBeNull();
+  });
+
+  it('saving a copy resolves the draft conflict that was waiting behind a copy conflict', async () => {
+    const { shared, tab1, tab2 } = await twoTabs();
+    const id = tab1.get().records[0]!.id;
+    tab2.openRecord(id);
+    tab1.edit('density', 10);
+    await tab1.save();
+    tab2.edit('density', 18);
+    await tab2.save();
+    await tick(40);
+    expect(await tab2.saveAsCopy('Mia')).toBe(true);
+    expect(tab2.get().conflict).toBeNull();
+    tab2.edit('density', 19);
+    await tab2.flushDraft();
+    await tick(30);
+    expect((await shared.getDraft('P'))!.doc.bubbles.density).toBe(19); // the draft is writable again
+  });
+
   it('the shared draft is not overwritten by the other tab: it asks', async () => {
     const shared = await open();
     const tab1 = mk(shared, 't1');

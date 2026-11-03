@@ -46,6 +46,14 @@ export function setStudioPreferences(patch: Partial<StudioPreferences>) {
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* Preferences are optional; IndexedDB reports document persistence independently. */ }
   listeners.forEach((listener) => listener());
 }
+/**
+ * Back to the default layout: widths, closed panels, builder pane, inspector tab and zoom. The Studio area the person is in and the
+ * «Avanzato: diagnostica» choice are not layout and stay as they are.
+ */
+export function resetLayoutPreferences() {
+  const { area, diagnostics } = state;
+  setStudioPreferences({ ...defaults, area, diagnostics });
+}
 export function studioPreferences() { return state; }
 export function useStudioPreferences() {
   return useSyncExternalStore((listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; }, () => state);

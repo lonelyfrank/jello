@@ -21,7 +21,9 @@ import {
   type QualityProfileId,
 } from '../../model';
 import { PATH_LABEL, REQUEST_LABEL } from '../../stage/controller';
+import { presetDisplayName } from '../../model/catalog';
 import { applicability } from '../applicability';
+import { baseMaterial, baseValue } from '../material-base';
 import type { LabSession } from '../session';
 import { useLab } from '../store';
 import { ParamField } from './ParamField';
@@ -61,11 +63,18 @@ function SolidProperties({ session }: { session: LabSession }) {
   const doc = useLab((s) => s.doc);
   const def = MATERIALS.get(doc.family)!;
   const model = inspectorModel(def, doc);
+  const origin = useLab((s) => s.origin);
+  const materialId = useLab((s) => s.materialId);
+  const base = baseMaterial(doc, origin, materialId);
+  // The per-field reset goes back to the base preset's value (as in the Jello lab); with no base, to the descriptor default.
+  // Memoised: a NEW descriptor object makes the numeric field re-sync its text (its effect depends on `d`), which would wipe what is being typed.
+  const based = useMemo(() => new Map(def.params.map((d) => { const v = baseValue(base, d.key); return [d.key, v === null || v === d.default ? d : ({ ...d, default: v } as typeof d)] as const; })), [def, base]);
+  const withBase = (d: (typeof def.params)[number]) => based.get(d.key) ?? d;
   const [previewState, setPreviewState] = useState('default');
   return <div className="panel-inner" id="panelInner" data-family={doc.family}>
     <div className="panel-head"><h2>{doc.name}</h2><span className="chip chip-accent">{def.name}</span></div>
     <div className="panel-body">
-      {model.groups.map((g) => <Section key={g.id} id={g.id} title={g.label}>{g.controls.map((c) => <ParamField key={c.key} d={def.params.find((d) => d.key === c.key)!} value={c.value} applicability={undefined} support={undefined} onChange={(v) => session.setMaterialControl({ key: c.key }, v)} />)}</Section>)}
+      {model.groups.map((g) => <Section key={g.id} id={g.id} title={g.label}>{g.controls.map((c) => <ParamField key={c.key} d={withBase(def.params.find((d) => d.key === c.key)!)} value={c.value} applicability={undefined} support={undefined} onChange={(v) => session.setMaterialControl({ key: c.key }, v)} />)}</Section>)}
       <Section id="solid-states" title="Stati" open={false}>
         <label className="field" htmlFor="solid-preview-state"><span>Anteprima dello stato del materiale</span><select id="solid-preview-state" value={previewState} onChange={(e) => { setPreviewState(e.target.value); session.controller?.previewMaterialState(e.target.value as 'default' | 'hover' | 'pressed' | 'active' | 'disabled'); }}>{def.states.map((state) => <option key={state} value={state}>{state}</option>)}</select></label>
         <p className="hint">Simulazione sulla superficie. Default ripristina l’interazione reale; Focus e semantica appartengono alla componente.</p>
@@ -96,11 +105,15 @@ function GlassProperties({ session, doc }: { session: LabSession; doc: GlassDocu
   );
   const tab = useLab((s) => s.panelTab);
   const preset = origin === 'builtin' && !modified ? materialId : '';
+  const base = useMemo(() => baseMaterial(doc, origin, materialId), [doc, origin, materialId]);
   const presetInfo = BUILTIN_MATERIALS.find((b) => b.doc.id === preset);
+  // The per-field reset goes back to the base preset's value (as in the Jello lab); with no base, to the descriptor default.
+  // Memoised: a NEW descriptor object makes the numeric field re-sync its text (its effect depends on `d`), which would wipe what is being typed.
+  const resettable = useMemo(() => new Map<string, ParamDescriptor>(PARAMS.map((p) => { const from = baseValue(base, p.key); return [p.key, from === null || from === p.default ? p : ({ ...p, default: from } as ParamDescriptor)]; })), [base]);
 
   const fields = (keys: readonly string[]) =>
     keys.map((k) => {
-      const d = PARAM_INDEX[k as keyof typeof PARAM_INDEX] as ParamDescriptor;
+      const d = resettable.get(k)!;
       return (
         <ParamField
           key={d.key}
@@ -434,6 +447,12 @@ export function Diagnostics({ session }: { session: LabSession }) {
 
 function ImportExport({ session }: { session: LabSession }) {
   const glass = useLab((s) => s.doc.family === 'glass');
+  const doc = useLab((s) => s.doc);
+  const origin = useLab((s) => s.origin);
+  const materialId = useLab((s) => s.materialId);
+  const base = baseMaterial(doc, origin, materialId);
+  const def = MATERIALS.get(doc.family);
+  const atBase = !!base && !!def && JSON.stringify(def.read(doc)) === JSON.stringify(def.read(base));
   const messages = useLab((s) => s.importMessages);
   const exportText = useLab((s) => s.exportText);
   const [text, setText] = useState('');
@@ -442,8 +461,13 @@ function ImportExport({ session }: { session: LabSession }) {
   return (
     <Section id="io" title="Importa ed esporta" open={false}>
       <div className="button-row">
-        <button type="button" className="button" id="resetParams" onClick={() => session.resetParams()}>
-          Ripristina iniziali
+        {base && (
+          <button type="button" className="button" id="resetToBase" disabled={atBase} onClick={() => session.resetToBase()} title="Torna ai valori del preset di partenza; nome e note restano">
+            Ripristina «{presetDisplayName(base.id) ?? base.name}»
+          </button>
+        )}
+        <button type="button" className="button" id="resetParams" onClick={() => session.resetParams()} title="Valori predefiniti della famiglia, non di un preset">
+          Valori di base {def?.name ?? ''}
         </button>
       </div>
       <h3 className="panel-sub">Preset JSON (jello-material v2)</h3>
