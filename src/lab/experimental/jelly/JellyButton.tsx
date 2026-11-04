@@ -6,6 +6,7 @@
  */
 import { useLayoutEffect, useRef, type CSSProperties } from 'react';
 import type { JellyExperimentalDocument } from '../../../model/experimental/jelly';
+import type { JellyRenderOptions } from '../../../runtime/experimental/jelly';
 import type { JellyCoordinator } from '../../../runtime/experimental/jelly-scheduler';
 import { JellyBridge, realDeps } from './bridge';
 import { effectiveDoc, previewSizePx, renderOptions, type PreviewEnv, type PreviewSize, type PreviewState } from './preview-model';
@@ -19,6 +20,10 @@ export interface JellyButtonProps {
   box?: { width?: number | 'auto'; height: number; paddingX?: number; fontWeight?: number };
   label?: string;
   icon?: boolean;
+  /** Accessible name when the visible label is empty (icon-only button). */
+  ariaLabel?: string;
+  /** Extra renderer options (the review workspace's treatment); merged over the environment's. Memoise it: identity drives updates. */
+  renderExtra?: JellyRenderOptions;
   coordinator?: JellyCoordinator;
   onBridge?(bridge: JellyBridge | null): void;
   onClick?(): void;
@@ -33,21 +38,21 @@ const StarIcon = () => (
   </svg>
 );
 
-export function JellyButton({ doc, env, state, size = 'md', box, label = 'Jelly', icon = true, coordinator, onBridge, onClick, id, testId, fontSize }: JellyButtonProps) {
+export function JellyButton({ doc, env, state, size = 'md', box, label = 'Jelly', icon = true, ariaLabel, renderExtra, coordinator, onBridge, onClick, id, testId, fontSize }: JellyButtonProps) {
   const host = useRef<HTMLButtonElement>(null);
   const bridge = useRef<JellyBridge | null>(null);
-  const latest = useRef({ doc, env, state, onBridge });
-  latest.current = { doc, env, state, onBridge };
-  const applied = useRef<{ doc: JellyExperimentalDocument; env: PreviewEnv } | null>(null);
+  const latest = useRef({ doc, env, state, onBridge, renderExtra });
+  latest.current = { doc, env, state, onBridge, renderExtra };
+  const applied = useRef<{ doc: JellyExperimentalDocument; env: PreviewEnv; renderExtra: JellyRenderOptions | undefined } | null>(null);
 
   // Create and destroy only with the host (or a different coordinator): never for a parameter change.
   useLayoutEffect(() => {
     const b = new JellyBridge(host.current!, realDeps, coordinator);
     bridge.current = b;
-    const { doc: d, env: e, state: s } = latest.current;
+    const { doc: d, env: e, state: s, renderExtra: x } = latest.current;
     b.setPreviewState(s);
-    b.apply(effectiveDoc(d, e), renderOptions(e));
-    applied.current = { doc: d, env: e };
+    b.apply(effectiveDoc(d, e), { ...renderOptions(e), ...x });
+    applied.current = { doc: d, env: e, renderExtra: x };
     latest.current.onBridge?.(b);
     return () => {
       latest.current.onBridge?.(null);
@@ -59,10 +64,10 @@ export function JellyButton({ doc, env, state, size = 'md', box, label = 'Jelly'
 
   useLayoutEffect(() => {
     const prev = applied.current;
-    if (!bridge.current || (prev && prev.doc === doc && prev.env === env)) return;
-    bridge.current.apply(effectiveDoc(doc, env), renderOptions(env));
-    applied.current = { doc, env };
-  }, [doc, env]);
+    if (!bridge.current || (prev && prev.doc === doc && prev.env === env && prev.renderExtra === renderExtra)) return;
+    bridge.current.apply(effectiveDoc(doc, env), { ...renderOptions(env), ...renderExtra });
+    applied.current = { doc, env, renderExtra };
+  }, [doc, env, renderExtra]);
 
   useLayoutEffect(() => { bridge.current?.setPreviewState(state); }, [state]);
 
@@ -81,11 +86,12 @@ export function JellyButton({ doc, env, state, size = 'md', box, label = 'Jelly'
       style={style}
       disabled={state === 'disabled'}
       aria-pressed={state === 'active' ? true : undefined}
+      aria-label={ariaLabel}
       onClick={onClick}
     >
       <span className="jl-btn-content">
         {icon && <StarIcon />}
-        <span>{label}</span>
+        {label !== '' && <span>{label}</span>}
       </span>
     </button>
   );

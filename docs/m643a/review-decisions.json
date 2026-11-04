@@ -1,0 +1,54 @@
+{
+  "schema": "jello-visual-review",
+  "version": 1,
+  "decisions": {
+    "jelly-soft": {
+      "presetId": "jelly-soft",
+      "status": "pending",
+      "variant": null,
+      "rationale": "",
+      "positives": "",
+      "issues": "",
+      "requestedChanges": "",
+      "acceptedLimitations": "",
+      "technicalNotes": "",
+      "decidedAt": null
+    },
+    "jelly-clear": {
+      "presetId": "jelly-clear",
+      "status": "pending",
+      "variant": null,
+      "rationale": "",
+      "positives": "",
+      "issues": "",
+      "requestedChanges": "",
+      "acceptedLimitations": "",
+      "technicalNotes": "",
+      "decidedAt": null
+    },
+    "jelly-candy": {
+      "presetId": "jelly-candy",
+      "status": "pending",
+      "variant": null,
+      "rationale": "",
+      "positives": "",
+      "issues": "",
+      "requestedChanges": "",
+      "acceptedLimitations": "",
+      "technicalNotes": "",
+      "decidedAt": null
+    },
+    "jelly-dense": {
+      "presetId": "jelly-dense",
+      "status": "pending",
+      "variant": null,
+      "rationale": "",
+      "positives": "",
+      "issues": "",
+      "requestedChanges": "",
+      "acceptedLimitations": "",
+      "technicalNotes": "",
+      "decidedAt": null
+    }
+  }
+}

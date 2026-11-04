@@ -1,0 +1,153 @@
+{
+ "date": "2026-11-04",
+ "build": "Vite development server (not minified)",
+ "cpu": "Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz",
+ "reps": 5,
+ "scope": "UI + renderer together (switches) and the Review workspace in the real Studio; renderer-only figures are in docs/m643/perf-results.json and this run of docs/m643/tools/perf.mjs",
+ "switchMs": {
+  "variant": {
+   "n": 60,
+   "syncInDispatch": {
+    "median": 0.2,
+    "p95": 0.3,
+    "min": 0,
+    "max": 0.5
+   },
+   "mainThreadTaskWindow": {
+    "median": 34.086,
+    "p95": 43.598,
+    "min": 12.929,
+    "max": 49.585
+   }
+  },
+  "preset": {
+   "n": 20,
+   "syncInDispatch": {
+    "median": 0.2,
+    "p95": 0.2,
+    "min": 0,
+    "max": 0.2
+   },
+   "mainThreadTaskWindow": {
+    "median": 45.556,
+    "p95": 56.915,
+    "min": 22.598,
+    "max": 56.915
+   }
+  },
+  "viewport": {
+   "n": 20,
+   "syncInDispatch": {
+    "median": 11.6,
+    "p95": 13.5,
+    "min": 3.9,
+    "max": 13.5
+   },
+   "mainThreadTaskWindow": {
+    "median": 23.066,
+    "p95": 48.059,
+    "min": 13.025,
+    "max": 48.059
+   }
+  },
+  "mode": {
+   "n": 12,
+   "syncInDispatch": {
+    "median": 0.1,
+    "p95": 0.2,
+    "min": 0.1,
+    "max": 0.2
+   },
+   "mainThreadTaskWindow": {
+    "median": 21.915,
+    "p95": 40.361,
+    "min": 11.221,
+    "max": 40.361
+   }
+  }
+ },
+ "fourSurfacesPressHoldRelease": {
+  "A": {
+   "scriptMs": {
+    "median": 54.977,
+    "p95": 55.229,
+    "min": 46.692,
+    "max": 55.229
+   },
+   "layoutMs": {
+    "median": 9.778,
+    "p95": 9.993,
+    "min": 9.035,
+    "max": 9.993
+   },
+   "taskMs": {
+    "median": 248.233,
+    "p95": 277.136,
+    "min": 215.457,
+    "max": 277.136
+   },
+   "recalcMs": {
+    "median": 23.965,
+    "p95": 27.976,
+    "min": 23.185,
+    "max": 27.976
+   }
+  },
+  "B3": {
+   "scriptMs": {
+    "median": 48.924,
+    "p95": 60.62,
+    "min": 44.789,
+    "max": 60.62
+   },
+   "layoutMs": {
+    "median": 9.406,
+    "p95": 11.215,
+    "min": 8.895,
+    "max": 11.215
+   },
+   "taskMs": {
+    "median": 246.723,
+    "p95": 313.847,
+    "min": 217.331,
+    "max": 313.847
+   },
+   "recalcMs": {
+    "median": 24.033,
+    "p95": 29.865,
+    "min": 22.417,
+    "max": 29.865
+   }
+  }
+ },
+ "lifecycle": {
+  "labOnly": {
+   "nodes": 3015,
+   "listeners": 509,
+   "heapMB": 18.59
+  },
+  "reviewOpen": {
+   "nodes": 4184,
+   "listeners": 652,
+   "heapMB": 20.24
+  },
+  "afterAB300": {
+   "nodes": 4193,
+   "listeners": 652,
+   "heapMB": 21.36
+  },
+  "beforeAB300": {
+   "nodes": 4193,
+   "listeners": 652,
+   "heapMB": 21.17
+  },
+  "afterLeave": {
+   "nodes": 3031,
+   "listeners": 509,
+   "heapMB": 20.59
+  }
+ },
+ "idleRafPerSecond": 0,
+ "reviewElementsAfterLeave": 0,
+ "errors": []
+}

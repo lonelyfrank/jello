@@ -125,7 +125,7 @@ describe('experimental Jelly Studio boundary (M6.4)', () => {
     const dir = 'src/lab/experimental/jelly';
     const files = readdirSync(join(repo, dir)).filter((f) => /\.tsx?$/.test(f)).map((f) => `${dir}/${f}`);
     expect(files.length).toBeGreaterThan(8);
-    const STUDIO = /^src\/lab\/(session|store|studio-preferences)\.ts$|^src\/lab\/app\/(PanelResize|ParamField|StudioNav|ui)\.tsx$/;
+    const STUDIO = /^src\/lab\/(session|store|studio-preferences)\.ts$|^src\/lab\/app\/(PanelResize|ParamField|StudioNav|ui)\.tsx$|^src\/lab\/app\/ExperimentalBoundary\.tsx$/; // M6.4.3.A: the Visual Review chunk reuses the shared failure-isolation block
     for (const f of files) {
       for (const m of strip(readFileSync(join(repo, f), 'utf8')).matchAll(IMPORT)) {
         const spec = m[1] ?? m[2] ?? m[3]!;
