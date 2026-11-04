@@ -22,7 +22,7 @@ import { stateFlags, type PreviewState } from './preview-model';
 export interface SurfaceLike {
   update(doc: JellyExperimentalDocument, options?: JellyRenderOptions): void;
   setState(flags: Partial<Record<JellyOverrideState, boolean>>): void;
-  setPressed(pressed: boolean): void;
+  setPressed(pressed: boolean, point?: { x: number; y: number }): void;
   cancelPress(): void;
   setHovered(hover: boolean): void;
   setDisabled(disabled: boolean): void;
@@ -146,6 +146,20 @@ export class JellyBridge {
   reset(): void {
     this.clearTimers();
     this.surface?.cancelPress();
+  }
+
+  /**
+   * Semantic input for the review workspace: the same surface calls the DOM adapter makes, without any
+   * DOM event (no pointer, no click). Honoured only while the host is live, like real input.
+   */
+  press(pressed: boolean, point?: { x: number; y: number }): void {
+    if (!this.surface || this.destroyed || this.state !== 'live') return;
+    this.clearTimers();
+    this.surface.setPressed(pressed, point);
+  }
+  hover(hovered: boolean): void {
+    if (!this.surface || this.destroyed || this.state !== 'live') return;
+    this.surface.setHovered(hovered);
   }
 
   setSuspended(suspended: boolean): void { this.surface?.setSuspended(suspended); }

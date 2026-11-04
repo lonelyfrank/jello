@@ -20,7 +20,7 @@ export function backendSummary(s: JellyRenderStatus | null): string {
   return `${BACKEND_NAME[s.backend]}${s.opaque ? ' · opaco' : ''} (richiesto: ${requested})`;
 }
 
-export function JellyPreview({ wb }: { wb: JellyWorkbench }) {
+export function JellyPreview({ wb, onOpenReview }: { wb: JellyWorkbench; onOpenReview?: () => void }) {
   const doc = useWorkbench(wb, (s) => s.doc);
   const errors = useWorkbench(wb, (s) => s.rejections);
   const view = useJellyView();
@@ -87,6 +87,11 @@ export function JellyPreview({ wb }: { wb: JellyWorkbench }) {
           <button type="button" className="button small" id="jl-compare" aria-pressed={view.compare} onClick={() => setJellyView({ compare: !view.compare })} title="Soft, Candy, Clear e Dense affiancati con i parametri originali dei preset">
             <Ic name="split" size={14} /> Confronta preset
           </button>
+          {onOpenReview && (
+            <button type="button" className="button small" id="jl-open-review" onClick={onOpenReview} title="Revisione visiva sperimentale: confronta le varianti A/B dei quattro preset. Non modifica nulla.">
+              <Ic name="eye" size={14} /> Visual Review
+            </button>
+          )}
         </div>
       </div>
 

@@ -1,0 +1,76 @@
+{
+  "engine": "chromium",
+  "note": "File names encode variant_size_background_dpr; see docs/m643/tools",
+  "files": [
+    {
+      "file": "A_timeline_160x44_dark.png",
+      "bytes": 314581,
+      "sha256": "6991fc2ca6d1a9da"
+    },
+    {
+      "file": "A_timeline_160x44_light.png",
+      "bytes": 321617,
+      "sha256": "0c919ed2ce55c7f8"
+    },
+    {
+      "file": "A_timeline_80x32_dark.png",
+      "bytes": 168040,
+      "sha256": "a8eddcf8d009d8fc"
+    },
+    {
+      "file": "A_timeline_80x32_light.png",
+      "bytes": 171368,
+      "sha256": "b4674a8770b6f463"
+    },
+    {
+      "file": "B2_timeline_160x44_dark.png",
+      "bytes": 318804,
+      "sha256": "c0dfad50adc52d64"
+    },
+    {
+      "file": "B2_timeline_160x44_light.png",
+      "bytes": 326297,
+      "sha256": "760f09067da3fb34"
+    },
+    {
+      "file": "B2_timeline_80x32_dark.png",
+      "bytes": 170979,
+      "sha256": "9869a8519d42ac0e"
+    },
+    {
+      "file": "B2_timeline_80x32_light.png",
+      "bytes": 174150,
+      "sha256": "d68de8460bdf467a"
+    },
+    {
+      "file": "B3_timeline_160x44_dark.png",
+      "bytes": 325502,
+      "sha256": "bf587e6cea73a56d"
+    },
+    {
+      "file": "B3_timeline_160x44_light.png",
+      "bytes": 336436,
+      "sha256": "302b2348db5e0fd6"
+    },
+    {
+      "file": "B3_timeline_80x32_dark.png",
+      "bytes": 170166,
+      "sha256": "b5007adecc85b1ed"
+    },
+    {
+      "file": "B3_timeline_80x32_light.png",
+      "bytes": 174909,
+      "sha256": "44915465b4e0b6bc"
+    },
+    {
+      "file": "NB3_timeline_160x44_light.png",
+      "bytes": 330630,
+      "sha256": "d4e7dd4820f0eecd"
+    },
+    {
+      "file": "N_timeline_160x44_light.png",
+      "bytes": 317449,
+      "sha256": "4d4a1104851d0c84"
+    }
+  ]
+}

@@ -1,0 +1,1970 @@
+{
+ "tool": "docs/m643a/tools/contrast-states.mjs",
+ "engine": "chromium",
+ "dpr": 1,
+ "errors": [],
+ "summary": {
+  "A idle": {
+   "minP5": 4.54,
+   "below45": 0,
+   "of": 24
+  },
+  "A hover": {
+   "minP5": 4.8,
+   "below45": 0,
+   "of": 24
+  },
+  "A hold": {
+   "minP5": 4.08,
+   "below45": 4,
+   "of": 24
+  },
+  "A disabled": {
+   "minP5": 1.58,
+   "below45": 8,
+   "of": 24
+  },
+  "B3 idle": {
+   "minP5": 4.81,
+   "below45": 0,
+   "of": 24
+  },
+  "B3 hover": {
+   "minP5": 4.9,
+   "below45": 0,
+   "of": 24
+  },
+  "B3 hold": {
+   "minP5": 4.14,
+   "below45": 2,
+   "of": 24
+  },
+  "B3 disabled": {
+   "minP5": 1.72,
+   "below45": 8,
+   "of": 24
+  }
+ },
+ "rows": [
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 10.08,
+   "median": 11.03
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 9.56,
+   "median": 10.69
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 8.27,
+   "median": 9.46
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 6,
+   "median": 6.46
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 12.45,
+   "median": 13.32
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 12.4,
+   "median": 13.31
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 11.64,
+   "median": 12.8
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 6.34,
+   "median": 6.77
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 6.48,
+   "median": 7.58
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 6.33,
+   "median": 7.41
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 5.05,
+   "median": 6.23
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.67,
+   "median": 6.34
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 8.2,
+   "median": 9.13
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 8.2,
+   "median": 9.17
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 6.43,
+   "median": 7.25
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.77,
+   "median": 6.3
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 4.71,
+   "median": 5.09
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 5.8,
+   "median": 6.32
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 4.96,
+   "median": 5.49
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 2.31,
+   "median": 2.45
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 4.9,
+   "median": 5.3
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 5.08,
+   "median": 5.49
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 4.41,
+   "median": 4.79
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 1.58,
+   "median": 1.69
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 4.61,
+   "median": 5.3
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 4.9,
+   "median": 5.69
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.2,
+   "median": 5
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 2.82,
+   "median": 3.17
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 7.12,
+   "median": 7.87
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 7.04,
+   "median": 7.72
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 5.79,
+   "median": 6.48
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 3.07,
+   "median": 3.34
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 8.62,
+   "median": 9.43
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 8.61,
+   "median": 9.55
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 7.45,
+   "median": 8.45
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.97,
+   "median": 5.33
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 10.43,
+   "median": 11.07
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 10.44,
+   "median": 11.14
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 9.73,
+   "median": 10.55
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.91,
+   "median": 5.21
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 5.98,
+   "median": 6.99
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 5.96,
+   "median": 6.97
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.84,
+   "median": 5.92
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.92,
+   "median": 5.49
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 7.94,
+   "median": 8.84
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 7.93,
+   "median": 8.82
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 6.29,
+   "median": 7.09
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.05,
+   "median": 5.53
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 9.99,
+   "median": 11.02
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 9.46,
+   "median": 10.69
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 8.11,
+   "median": 9.45
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.94,
+   "median": 6.46
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 12.34,
+   "median": 13.31
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 12.33,
+   "median": 13.31
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 11.53,
+   "median": 12.82
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 6.28,
+   "median": 6.76
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 6.33,
+   "median": 7.57
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 6.18,
+   "median": 7.39
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.91,
+   "median": 6.21
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.61,
+   "median": 6.33
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 8.1,
+   "median": 9.12
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 8.14,
+   "median": 9.16
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 6.3,
+   "median": 7.25
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.72,
+   "median": 6.31
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 4.71,
+   "median": 5.09
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 5.78,
+   "median": 6.32
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 4.91,
+   "median": 5.49
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 2.31,
+   "median": 2.44
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 4.9,
+   "median": 5.3
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 5.08,
+   "median": 5.49
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 4.39,
+   "median": 4.79
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 1.58,
+   "median": 1.69
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 4.54,
+   "median": 5.31
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 4.8,
+   "median": 5.67
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.08,
+   "median": 5.01
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 2.79,
+   "median": 3.17
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 7.02,
+   "median": 7.85
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 6.93,
+   "median": 7.72
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 5.72,
+   "median": 6.49
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 3.03,
+   "median": 3.34
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 8.58,
+   "median": 9.42
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 8.55,
+   "median": 9.55
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 7.33,
+   "median": 8.44
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.93,
+   "median": 5.33
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 10.38,
+   "median": 11.08
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 10.42,
+   "median": 11.16
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 9.63,
+   "median": 10.57
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.89,
+   "median": 5.21
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 5.87,
+   "median": 6.97
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 5.83,
+   "median": 6.95
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.7,
+   "median": 5.92
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.86,
+   "median": 5.49
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 7.84,
+   "median": 8.85
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 7.84,
+   "median": 8.82
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 6.19,
+   "median": 7.07
+  },
+  {
+   "variant": "A",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5,
+   "median": 5.52
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 9.92,
+   "median": 10.94
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 9.58,
+   "median": 10.67
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 8.02,
+   "median": 9.18
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.94,
+   "median": 6.46
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 11.83,
+   "median": 12.82
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 11.74,
+   "median": 12.83
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 10.78,
+   "median": 12.21
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 6.21,
+   "median": 6.7
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 6.26,
+   "median": 7.47
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 6.18,
+   "median": 7.41
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.98,
+   "median": 6.19
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.61,
+   "median": 6.3
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 6.78,
+   "median": 7.96
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 6.8,
+   "median": 8.06
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 5.53,
+   "median": 6.6
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.61,
+   "median": 6.29
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 5.45,
+   "median": 5.96
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 6.3,
+   "median": 6.91
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 5.38,
+   "median": 5.99
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 2.51,
+   "median": 2.68
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 4.96,
+   "median": 5.37
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 5.29,
+   "median": 5.72
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 4.63,
+   "median": 5.07
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 1.72,
+   "median": 1.84
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 4.89,
+   "median": 5.78
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 4.99,
+   "median": 5.88
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.29,
+   "median": 5.24
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 2.88,
+   "median": 3.26
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 6.32,
+   "median": 7.45
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 6,
+   "median": 7.16
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 5.14,
+   "median": 6.21
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 3.03,
+   "median": 3.49
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 8.78,
+   "median": 9.7
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 8.77,
+   "median": 9.73
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 7.38,
+   "median": 8.4
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.02,
+   "median": 5.42
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 10.03,
+   "median": 10.79
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 10.11,
+   "median": 10.91
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 9.19,
+   "median": 10.26
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.89,
+   "median": 5.24
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 5.91,
+   "median": 7.04
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 5.88,
+   "median": 7.02
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.8,
+   "median": 5.96
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.89,
+   "median": 5.5
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 6.7,
+   "median": 7.87
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 6.63,
+   "median": 7.87
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 5.41,
+   "median": 6.52
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "80x32",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.92,
+   "median": 5.54
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 9.76,
+   "median": 10.93
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 9.46,
+   "median": 10.67
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 7.93,
+   "median": 9.18
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.89,
+   "median": 6.45
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 11.71,
+   "median": 12.84
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 11.68,
+   "median": 12.82
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 10.67,
+   "median": 12.28
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 6.17,
+   "median": 6.71
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 6.15,
+   "median": 7.47
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 6.06,
+   "median": 7.41
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.79,
+   "median": 6.2
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.55,
+   "median": 6.28
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "light",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 6.65,
+   "median": 7.98
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 6.66,
+   "median": 8.07
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "light",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 5.39,
+   "median": 6.58
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "light",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 5.51,
+   "median": 6.29
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 5.42,
+   "median": 5.98
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 6.23,
+   "median": 6.92
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 5.36,
+   "median": 5.98
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 2.5,
+   "median": 2.68
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 4.95,
+   "median": 5.32
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 5.28,
+   "median": 5.71
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 4.58,
+   "median": 5.04
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 1.72,
+   "median": 1.83
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 4.81,
+   "median": 5.78
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 4.9,
+   "median": 5.88
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.14,
+   "median": 5.24
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 2.82,
+   "median": 3.26
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 6.2,
+   "median": 7.47
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 5.87,
+   "median": 7.16
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 5.01,
+   "median": 6.19
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "dark",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 2.96,
+   "median": 3.49
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#171022",
+   "p5": 8.67,
+   "median": 9.67
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#171022",
+   "p5": 8.67,
+   "median": 9.74
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#171022",
+   "p5": 7.3,
+   "median": 8.39
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-soft",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.95,
+   "median": 5.4
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#101b22",
+   "p5": 9.93,
+   "median": 10.81
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#101b22",
+   "p5": 9.99,
+   "median": 10.91
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#101b22",
+   "p5": 9.06,
+   "median": 10.3
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-clear",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.86,
+   "median": 5.24
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#180912",
+   "p5": 5.78,
+   "median": 7.03
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#180912",
+   "p5": 5.77,
+   "median": 7.02
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#180912",
+   "p5": 4.63,
+   "median": 5.96
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-candy",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.82,
+   "median": 5.47
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "idle",
+   "labelColor": "#172e25",
+   "p5": 6.56,
+   "median": 7.88
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hover",
+   "labelColor": "#172e25",
+   "p5": 6.49,
+   "median": 7.86
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "hold",
+   "labelColor": "#172e25",
+   "p5": 5.29,
+   "median": 6.5
+  },
+  {
+   "variant": "B3",
+   "preset": "jelly-dense",
+   "size": "160x44",
+   "bg": "gradient",
+   "state": "disabled",
+   "labelColor": "#534b62",
+   "p5": 4.87,
+   "median": 5.56
+  }
+ ]
+}

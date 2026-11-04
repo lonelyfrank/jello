@@ -1,0 +1,71 @@
+{
+  "engine": "chromium",
+  "version": "156.0.8078.4",
+  "states": [
+    "idle",
+    "hover",
+    "press",
+    "hold",
+    "release",
+    "rebound",
+    "rest",
+    "disabled"
+  ],
+  "presets": [
+    "jelly-soft",
+    "jelly-clear",
+    "jelly-candy",
+    "jelly-dense"
+  ],
+  "files": [
+    {
+      "file": "B3_80x32_light_dpr2.png",
+      "variant": "B3",
+      "size": "80x32",
+      "bg": "light",
+      "dpr": 2,
+      "pixels": "b230e21255aa869c"
+    },
+    {
+      "file": "B3_80x32_dark_dpr2.png",
+      "variant": "B3",
+      "size": "80x32",
+      "bg": "dark",
+      "dpr": 2,
+      "pixels": "9ab061c8d6030c5c"
+    },
+    {
+      "file": "B3_80x32_gradient_dpr2.png",
+      "variant": "B3",
+      "size": "80x32",
+      "bg": "gradient",
+      "dpr": 2,
+      "pixels": "8ec1c6626db7ad52"
+    },
+    {
+      "file": "B3_160x44_light_dpr2.png",
+      "variant": "B3",
+      "size": "160x44",
+      "bg": "light",
+      "dpr": 2,
+      "pixels": "6070f8c7cc4652db"
+    },
+    {
+      "file": "B3_160x44_dark_dpr2.png",
+      "variant": "B3",
+      "size": "160x44",
+      "bg": "dark",
+      "dpr": 2,
+      "pixels": "7613f44717b8099b"
+    },
+    {
+      "file": "B3_160x44_gradient_dpr2.png",
+      "variant": "B3",
+      "size": "160x44",
+      "bg": "gradient",
+      "dpr": 2,
+      "pixels": "9960bda0d81864b2"
+    }
+  ],
+  "errors": []
+}

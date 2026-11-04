@@ -72,11 +72,21 @@ export function jellyGeometry(width: number, height: number, geometry: JellyGeom
   return { ...g, path };
 }
 
+/** Render treatment, a diagnostic render option and never persisted: 'm642' is the historical rendering (default),
+ * 'm643' the refined anatomy under evaluation. Same candidates, same seed, same geometry for both. */
+export type JellyTreatment = 'm642' | 'm643';
 export interface ProjectedBubble { index: number; x: number; y: number; radius: number; depth: number; opacity: number }
-export function projectBubble(c: BubbleCandidate, b: JellyBubbles, g: JellyVisualGeometry, m: JellyMaterial): ProjectedBubble {
+export function projectBubble(c: BubbleCandidate, b: JellyBubbles, g: JellyVisualGeometry, m: JellyMaterial, treatment: JellyTreatment = 'm642'): ProjectedBubble {
   const depth = b.depthMin + c.depth * (b.depthMax - b.depthMin);
   const radius = (b.radiusMin + c.size * (b.radiusMax - b.radiusMin)) * (1 - 0.35 * depth);
   const point = surfacePoint(g, c.x * g.width, c.y * g.height);
+  if (treatment === 'm643') {
+    // Continuous protection of the label area (a flat super-Gaussian window instead of a hard box) and a milder
+    // depth/scattering attenuation, so the inclusion stays legible at UI sizes without ever sitting at full strength behind text.
+    const core = Math.exp(-(((c.x - 0.5) / 0.3) ** 4 + ((c.y - 0.5) / 0.22) ** 4));
+    return { index: c.index, ...point, radius, depth,
+      opacity: b.opacity * Math.exp(-depth * (0.3 + 0.35 * m.absorption * m.thickness)) * (1 - m.scattering * 0.35) * (1 - 0.62 * core) };
+  }
   // A content-independent central band reduces contrast behind typical button text/icons.
   const central = c.x > 0.18 && c.x < 0.82 && c.y > 0.28 && c.y < 0.72 ? 0.38 : 1;
   return { index: c.index, ...point, radius, depth,

@@ -1,0 +1,126 @@
+{
+  "engine": "chromium",
+  "note": "File names encode variant_size_background_dpr; see docs/m643/tools",
+  "files": [
+    {
+      "file": "compare_candy_160x44_dark_A-B1-B3.png",
+      "bytes": 275513,
+      "sha256": "fe022dd59da9ab0c"
+    },
+    {
+      "file": "compare_candy_160x44_dark_A-B2.png",
+      "bytes": 183778,
+      "sha256": "dc38eaabd2e454af"
+    },
+    {
+      "file": "compare_candy_160x44_light_A-B1-B3.png",
+      "bytes": 292053,
+      "sha256": "3f962d6a116de3a4"
+    },
+    {
+      "file": "compare_candy_160x44_light_A-B2.png",
+      "bytes": 195233,
+      "sha256": "8480e793a4fd353f"
+    },
+    {
+      "file": "compare_candy_80x32_dark_A-B1-B3.png",
+      "bytes": 138382,
+      "sha256": "34a3b9e266799f1d"
+    },
+    {
+      "file": "compare_candy_80x32_light_A-B1-B3.png",
+      "bytes": 150658,
+      "sha256": "b94283623374ae3e"
+    },
+    {
+      "file": "compare_clear_160x44_dark_A-B1-B3.png",
+      "bytes": 269885,
+      "sha256": "823faee37fb52ad6"
+    },
+    {
+      "file": "compare_clear_160x44_dark_A-B2.png",
+      "bytes": 178970,
+      "sha256": "d38a7026955e675f"
+    },
+    {
+      "file": "compare_clear_160x44_light_A-B1-B3.png",
+      "bytes": 281271,
+      "sha256": "246bc0ac43eacafd"
+    },
+    {
+      "file": "compare_clear_160x44_light_A-B2.png",
+      "bytes": 184514,
+      "sha256": "fbd8f9342f7b40e2"
+    },
+    {
+      "file": "compare_clear_80x32_dark_A-B1-B3.png",
+      "bytes": 132996,
+      "sha256": "8b988ab5bad8414a"
+    },
+    {
+      "file": "compare_clear_80x32_light_A-B1-B3.png",
+      "bytes": 142041,
+      "sha256": "f1c40b887c028884"
+    },
+    {
+      "file": "compare_dense_160x44_dark_A-B1-B3.png",
+      "bytes": 271621,
+      "sha256": "a114bf29b1e502a8"
+    },
+    {
+      "file": "compare_dense_160x44_dark_A-B2.png",
+      "bytes": 178271,
+      "sha256": "c3e15e89f5ba20ab"
+    },
+    {
+      "file": "compare_dense_160x44_light_A-B1-B3.png",
+      "bytes": 286047,
+      "sha256": "e0ebae70eab4e801"
+    },
+    {
+      "file": "compare_dense_160x44_light_A-B2.png",
+      "bytes": 185955,
+      "sha256": "3a49b36fefdd68e4"
+    },
+    {
+      "file": "compare_dense_80x32_dark_A-B1-B3.png",
+      "bytes": 138251,
+      "sha256": "b0393a49e4322c59"
+    },
+    {
+      "file": "compare_dense_80x32_light_A-B1-B3.png",
+      "bytes": 149939,
+      "sha256": "eafa3e6c7fb011bd"
+    },
+    {
+      "file": "compare_soft_160x44_dark_A-B1-B3.png",
+      "bytes": 262754,
+      "sha256": "704b890d51e33c94"
+    },
+    {
+      "file": "compare_soft_160x44_dark_A-B2.png",
+      "bytes": 175852,
+      "sha256": "645560b628ba39d1"
+    },
+    {
+      "file": "compare_soft_160x44_light_A-B1-B3.png",
+      "bytes": 282209,
+      "sha256": "30cf5da7bdd1f5a4"
+    },
+    {
+      "file": "compare_soft_160x44_light_A-B2.png",
+      "bytes": 184824,
+      "sha256": "0154fcf6ff51cfc9"
+    },
+    {
+      "file": "compare_soft_80x32_dark_A-B1-B3.png",
+      "bytes": 132345,
+      "sha256": "4a910ffb1ad11784"
+    },
+    {
+      "file": "compare_soft_80x32_light_A-B1-B3.png",
+      "bytes": 147219,
+      "sha256": "821ea0c8e97b824e"
+    }
+  ]
+}

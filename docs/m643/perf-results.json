@@ -1,0 +1,526 @@
+{
+  "date": "2026-11-03",
+  "build": "Vite development server (not minified)",
+  "platform": "linux",
+  "kernel": "7.2.13-200.fc44.x86_64",
+  "cpu": "Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz",
+  "chromium": "156.0.8078.4",
+  "reps": 5,
+  "scenarios": {
+    "motion_1_surfaces": {
+      "A": {
+        "perFrameTotalMs": {
+          "median": 0.21,
+          "min": 0.192,
+          "max": 0.247
+        },
+        "perUpdateP95Ms": {
+          "median": 0.3,
+          "min": 0.3,
+          "max": 0.4
+        },
+        "scriptMs": {
+          "median": 19.5,
+          "min": 18.1,
+          "max": 23.5
+        },
+        "layoutMs": {
+          "median": 4.6,
+          "min": 4,
+          "max": 7.3
+        },
+        "styleMs": {
+          "median": 10.5,
+          "min": 9.3,
+          "max": 12.2
+        },
+        "frames": {
+          "median": 85,
+          "min": 84,
+          "max": 85
+        },
+        "idleFramesBefore": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "idleFramesAfter": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "longTasks": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "nodes": {
+          "before": 77,
+          "during": 77,
+          "after": 77
+        }
+      },
+      "B3": {
+        "perFrameTotalMs": {
+          "median": 0.22,
+          "min": 0.165,
+          "max": 0.227
+        },
+        "perUpdateP95Ms": {
+          "median": 0.3,
+          "min": 0.3,
+          "max": 0.4
+        },
+        "scriptMs": {
+          "median": 20.5,
+          "min": 16.2,
+          "max": 21.7
+        },
+        "layoutMs": {
+          "median": 4.5,
+          "min": 3.7,
+          "max": 5.3
+        },
+        "styleMs": {
+          "median": 10.4,
+          "min": 8.4,
+          "max": 11.8
+        },
+        "frames": {
+          "median": 85,
+          "min": 84,
+          "max": 85
+        },
+        "idleFramesBefore": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "idleFramesAfter": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "longTasks": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "nodes": {
+          "before": 80,
+          "during": 80,
+          "after": 80
+        }
+      }
+    },
+    "motion_12_surfaces": {
+      "A": {
+        "perFrameTotalMs": {
+          "median": 1.253,
+          "min": 1.228,
+          "max": 1.418
+        },
+        "perUpdateP95Ms": {
+          "median": 0.2,
+          "min": 0.2,
+          "max": 0.2
+        },
+        "scriptMs": {
+          "median": 107.9,
+          "min": 106.5,
+          "max": 123.7
+        },
+        "layoutMs": {
+          "median": 25,
+          "min": 21.8,
+          "max": 27.9
+        },
+        "styleMs": {
+          "median": 59.6,
+          "min": 57.9,
+          "max": 72.5
+        },
+        "frames": {
+          "median": 85,
+          "min": 85,
+          "max": 85
+        },
+        "idleFramesBefore": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "idleFramesAfter": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "longTasks": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "nodes": {
+          "before": 924,
+          "during": 924,
+          "after": 924
+        }
+      },
+      "B3": {
+        "perFrameTotalMs": {
+          "median": 1.32,
+          "min": 1.259,
+          "max": 1.466
+        },
+        "perUpdateP95Ms": {
+          "median": 0.2,
+          "min": 0.2,
+          "max": 0.2
+        },
+        "scriptMs": {
+          "median": 115.2,
+          "min": 111.4,
+          "max": 127.9
+        },
+        "layoutMs": {
+          "median": 25.8,
+          "min": 22.9,
+          "max": 28.4
+        },
+        "styleMs": {
+          "median": 63.8,
+          "min": 59.1,
+          "max": 69.4
+        },
+        "frames": {
+          "median": 85,
+          "min": 85,
+          "max": 86
+        },
+        "idleFramesBefore": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "idleFramesAfter": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "longTasks": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "nodes": {
+          "before": 960,
+          "during": 960,
+          "after": 960
+        }
+      }
+    },
+    "motion_24_surfaces": {
+      "A": {
+        "perFrameTotalMs": {
+          "median": 3.552,
+          "min": 3.297,
+          "max": 3.949
+        },
+        "perUpdateP95Ms": {
+          "median": 0.3,
+          "min": 0.3,
+          "max": 0.3
+        },
+        "scriptMs": {
+          "median": 255,
+          "min": 233.1,
+          "max": 284.7
+        },
+        "layoutMs": {
+          "median": 60,
+          "min": 55.2,
+          "max": 63.6
+        },
+        "styleMs": {
+          "median": 170.4,
+          "min": 157.8,
+          "max": 183.2
+        },
+        "frames": {
+          "median": 70,
+          "min": 69,
+          "max": 71
+        },
+        "idleFramesBefore": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "idleFramesAfter": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "longTasks": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "nodes": {
+          "before": 1848,
+          "during": 1848,
+          "after": 1848
+        }
+      },
+      "B3": {
+        "perFrameTotalMs": {
+          "median": 3.555,
+          "min": 3.387,
+          "max": 3.757
+        },
+        "perUpdateP95Ms": {
+          "median": 0.3,
+          "min": 0.3,
+          "max": 0.3
+        },
+        "scriptMs": {
+          "median": 263.8,
+          "min": 245.1,
+          "max": 265.9
+        },
+        "layoutMs": {
+          "median": 61.4,
+          "min": 55.3,
+          "max": 63.4
+        },
+        "styleMs": {
+          "median": 173.6,
+          "min": 161.6,
+          "max": 182.6
+        },
+        "frames": {
+          "median": 71,
+          "min": 70,
+          "max": 72
+        },
+        "idleFramesBefore": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "idleFramesAfter": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "longTasks": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "nodes": {
+          "before": 1920,
+          "during": 1920,
+          "after": 1920
+        }
+      }
+    },
+    "churn_preset_12_surfaces_2400_updates": {
+      "A": {
+        "usPerUpdate": {
+          "median": 166.4,
+          "min": 163,
+          "max": 181.4
+        },
+        "nodesStart": 852,
+        "nodesMax": 852,
+        "nodesEnd": 843
+      },
+      "B3": {
+        "usPerUpdate": {
+          "median": 207.3,
+          "min": 206.2,
+          "max": 229.9
+        },
+        "nodesStart": 912,
+        "nodesMax": 912,
+        "nodesEnd": 900
+      }
+    },
+    "churn_quality_12_surfaces_2400_updates": {
+      "A": {
+        "usPerUpdate": {
+          "median": 195.3,
+          "min": 180.5,
+          "max": 200
+        },
+        "nodesStart": 852,
+        "nodesMax": 912,
+        "nodesEnd": 912
+      },
+      "B3": {
+        "usPerUpdate": {
+          "median": 230.6,
+          "min": 230.3,
+          "max": 264.8
+        },
+        "nodesStart": 912,
+        "nodesMax": 992,
+        "nodesEnd": 992
+      }
+    },
+    "churn_resize_12_surfaces_2400_updates": {
+      "A": {
+        "usPerUpdate": {
+          "median": 301.8,
+          "min": 298.5,
+          "max": 338.8
+        },
+        "nodesStart": 852,
+        "nodesMax": 873,
+        "nodesEnd": 864
+      },
+      "B3": {
+        "usPerUpdate": {
+          "median": 337.3,
+          "min": 325.3,
+          "max": 372.8
+        },
+        "nodesStart": 912,
+        "nodesMax": 940,
+        "nodesEnd": 928
+      }
+    },
+    "lifecycle_mount_unmount": {
+      "A": {
+        "start": {
+          "nodes": 20,
+          "listeners": 18,
+          "heapMB": 4.8
+        },
+        "series": [
+          {
+            "nodes": 20,
+            "listeners": 18,
+            "heapMB": 5
+          },
+          {
+            "nodes": 20,
+            "listeners": 18,
+            "heapMB": 4.8
+          },
+          {
+            "nodes": 20,
+            "listeners": 18,
+            "heapMB": 4.82
+          },
+          {
+            "nodes": 20,
+            "listeners": 18,
+            "heapMB": 5.02
+          },
+          {
+            "nodes": 268,
+            "listeners": 18,
+            "heapMB": 4.82
+          }
+        ],
+        "afterEachBatchOfSixtyMountUnmount": [
+          20,
+          20,
+          20,
+          20,
+          268
+        ]
+      },
+      "B3": {
+        "start": {
+          "nodes": 20,
+          "listeners": 18,
+          "heapMB": 4.82
+        },
+        "series": [
+          {
+            "nodes": 20,
+            "listeners": 18,
+            "heapMB": 4.82
+          },
+          {
+            "nodes": 20,
+            "listeners": 18,
+            "heapMB": 4.82
+          },
+          {
+            "nodes": 20,
+            "listeners": 18,
+            "heapMB": 4.82
+          },
+          {
+            "nodes": 20,
+            "listeners": 18,
+            "heapMB": 4.83
+          },
+          {
+            "nodes": 20,
+            "listeners": 18,
+            "heapMB": 4.83
+          }
+        ],
+        "afterEachBatchOfSixtyMountUnmount": [
+          20,
+          20,
+          20,
+          20,
+          20
+        ]
+      }
+    },
+    "listener_attribution_one_motion": {
+      "A": {
+        "added": {},
+        "removed": {}
+      },
+      "B3": {
+        "added": {},
+        "removed": {}
+      }
+    }
+  },
+  "errors": []
+}

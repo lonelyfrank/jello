@@ -1,0 +1,91 @@
+{
+  "engine": "chromium",
+  "note": "File names encode variant_size_background_dpr; see docs/m643/tools",
+  "files": [
+    {
+      "file": "A_160x44_dark_dpr1.png",
+      "bytes": 233354,
+      "sha256": "981127a22ee3af14"
+    },
+    {
+      "file": "A_160x44_dark_dpr2.png",
+      "bytes": 755899,
+      "sha256": "8471c359a04d8561"
+    },
+    {
+      "file": "A_160x44_gradient_dpr1.png",
+      "bytes": 363215,
+      "sha256": "84ba13ed9969e31f"
+    },
+    {
+      "file": "A_160x44_gradient_dpr2.png",
+      "bytes": 1226859,
+      "sha256": "9a3db61131bfff92"
+    },
+    {
+      "file": "A_160x44_light_dpr1.png",
+      "bytes": 237830,
+      "sha256": "2f1b6a5353338daa"
+    },
+    {
+      "file": "A_160x44_light_dpr2.png",
+      "bytes": 774173,
+      "sha256": "a98e1523bd632416"
+    },
+    {
+      "file": "A_160x44_structured_dpr1.png",
+      "bytes": 307530,
+      "sha256": "faf209c57c77315f"
+    },
+    {
+      "file": "A_160x44_text_dpr1.png",
+      "bytes": 406918,
+      "sha256": "46ddfa9254c4a944"
+    },
+    {
+      "file": "A_320x96_dark_dpr1.png",
+      "bytes": 727940,
+      "sha256": "9f028d674f810b73"
+    },
+    {
+      "file": "A_320x96_gradient_dpr1.png",
+      "bytes": 980865,
+      "sha256": "4be78009894f7c8e"
+    },
+    {
+      "file": "A_320x96_light_dpr1.png",
+      "bytes": 732099,
+      "sha256": "3ec43880fd29d96d"
+    },
+    {
+      "file": "A_80x32_dark_dpr1.png",
+      "bytes": 118987,
+      "sha256": "e3d070f2f934f4be"
+    },
+    {
+      "file": "A_80x32_dark_dpr2.png",
+      "bytes": 360885,
+      "sha256": "a733af0928d44ca0"
+    },
+    {
+      "file": "A_80x32_gradient_dpr1.png",
+      "bytes": 214277,
+      "sha256": "7a3a63238210ba40"
+    },
+    {
+      "file": "A_80x32_gradient_dpr2.png",
+      "bytes": 661771,
+      "sha256": "1710c4f49ee69869"
+    },
+    {
+      "file": "A_80x32_light_dpr1.png",
+      "bytes": 122006,
+      "sha256": "460fb5f924ccbf6e"
+    },
+    {
+      "file": "A_80x32_light_dpr2.png",
+      "bytes": 369557,
+      "sha256": "69bca23b6d5a797f"
+    }
+  ]
+}

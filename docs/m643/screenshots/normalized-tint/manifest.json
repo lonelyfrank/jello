@@ -1,0 +1,116 @@
+{
+  "engine": "chromium",
+  "note": "File names encode variant_size_background_dpr; see docs/m643/tools",
+  "files": [
+    {
+      "file": "NB3_160x44_dark_dpr1.png",
+      "bytes": 232402,
+      "sha256": "15c59cc5e4916db4"
+    },
+    {
+      "file": "NB3_160x44_dark_dpr2.png",
+      "bytes": 323102,
+      "sha256": "ea824de88574feef"
+    },
+    {
+      "file": "NB3_160x44_gradient_dpr1.png",
+      "bytes": 363910,
+      "sha256": "9384b7d41dd9baa9"
+    },
+    {
+      "file": "NB3_160x44_light_dpr1.png",
+      "bytes": 238774,
+      "sha256": "d15ddcdc0181483a"
+    },
+    {
+      "file": "NB3_160x44_light_dpr2.png",
+      "bytes": 332749,
+      "sha256": "876ef613a84adafb"
+    },
+    {
+      "file": "NB3_320x96_dark_dpr1.png",
+      "bytes": 724347,
+      "sha256": "caea9b5d73f787bf"
+    },
+    {
+      "file": "NB3_320x96_gradient_dpr1.png",
+      "bytes": 962185,
+      "sha256": "0288a580e020991a"
+    },
+    {
+      "file": "NB3_320x96_light_dpr1.png",
+      "bytes": 725988,
+      "sha256": "92da72cef1a2be83"
+    },
+    {
+      "file": "NB3_80x32_dark_dpr1.png",
+      "bytes": 120518,
+      "sha256": "807c7e0ae862c019"
+    },
+    {
+      "file": "NB3_80x32_gradient_dpr1.png",
+      "bytes": 218744,
+      "sha256": "5f1a4bfa746016a4"
+    },
+    {
+      "file": "NB3_80x32_light_dpr1.png",
+      "bytes": 124289,
+      "sha256": "ae1c8d91e6ff2d02"
+    },
+    {
+      "file": "N_160x44_dark_dpr1.png",
+      "bytes": 231445,
+      "sha256": "7f32ac66f1e3d12f"
+    },
+    {
+      "file": "N_160x44_dark_dpr2.png",
+      "bytes": 323231,
+      "sha256": "b33089332959a2f2"
+    },
+    {
+      "file": "N_160x44_gradient_dpr1.png",
+      "bytes": 360640,
+      "sha256": "d8c15f12d1b21cbf"
+    },
+    {
+      "file": "N_160x44_light_dpr1.png",
+      "bytes": 235222,
+      "sha256": "6d004aac91c8629f"
+    },
+    {
+      "file": "N_160x44_light_dpr2.png",
+      "bytes": 332568,
+      "sha256": "5057c69bb360a02c"
+    },
+    {
+      "file": "N_320x96_dark_dpr1.png",
+      "bytes": 722289,
+      "sha256": "0eca27f054fb8cd9"
+    },
+    {
+      "file": "N_320x96_gradient_dpr1.png",
+      "bytes": 970552,
+      "sha256": "c2d3349d89a25be0"
+    },
+    {
+      "file": "N_320x96_light_dpr1.png",
+      "bytes": 722790,
+      "sha256": "e251dd1b4dfaeb38"
+    },
+    {
+      "file": "N_80x32_dark_dpr1.png",
+      "bytes": 118034,
+      "sha256": "043580783bdee71d"
+    },
+    {
+      "file": "N_80x32_gradient_dpr1.png",
+      "bytes": 213262,
+      "sha256": "35a33967ba71129d"
+    },
+    {
+      "file": "N_80x32_light_dpr1.png",
+      "bytes": 121090,
+      "sha256": "6f21a553d5e27c3a"
+    }
+  ]
+}

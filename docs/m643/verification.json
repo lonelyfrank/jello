@@ -1,0 +1,51 @@
+{
+  "milestone": "M6.4.3",
+  "branch": "m643-jello-visual-refinement",
+  "baseline": "0582f65e6fc6f1a27778f7e33faf21e154749346",
+  "environment": "Fedora 44, kernel 7.2.13, Intel Core i7-10510U, Chromium 156 / Firefox 157 headless, Node 22.23.1",
+  "visualApproval": "PENDING: no independent visual review; built-in presets unchanged; visuallyVerified false for all four",
+  "gates": {
+    "baseline": {
+      "typecheck": "PASS",
+      "unit": "776 passed",
+      "build": "PASS (build:lib, build:jelly, tsc, vite build)",
+      "e2e_subset_chromium_firefox": "40 passed (jelly-studio.spec, m642-resilience.spec)"
+    },
+    "final": {
+      "typecheck": "PASS",
+      "unit": "850 passed (776 existing + 74 new in m643-visual.test.ts); 3 consecutive full runs 850/850; 1 earlier run had 1 intermittent failure in jelly-integrity 'two tabs ... resolution 3', not reproduced in 6 isolated runs, 3 full runs and 12 runs under CPU contention; 12/12 baseline runs under the same contention passed; cause undiagnosed",
+      "build": "PASS",
+      "git_diff_check": "PASS",
+      "e2e_full_local": "930 passed, 131 skipped, 1 failed (17.6 min; chromium, firefox, mobile-emulated). The failure is firefox m642-control-effect.spec.ts:148 'glass ... stiffness' (Glass spring timing, no Jello involved): isolated reruns flake on this branch (2 failed / 1 mixed / 2 passed) AND on the pristine baseline (2 of 4 reruns had a failure). Pre-existing timing flake, not caused by M6.4.3 (cause not otherwise diagnosed)",
+      "e2e_private_fixture_suite": "54 passed (playwright.jelly.config.ts: jelly.spec.ts + new jelly-m643.spec.ts, chromium and firefox)",
+      "new_browser_tests": "16 passed (jelly-m643.spec.ts: 8 tests x chromium/firefox)",
+      "consumer_packages": "ok: 4 packages, 16 runs (npm run jelly-consumer:prepare && scripts/m642-verify-jelly-package.mjs; result copied to docs/m643/package-verification.json, docs/m642 record restored)",
+      "default_rendering_regression": "0 differing pixels over 17 baseline sheets (regression-check.json), all 8 states, 80x32/160x44/320x96, DPR 1 and 2",
+      "webkit": "NOT RUN (host cannot launch WebKit)",
+      "not_tested": [
+        "Safari iOS",
+        "Android WebView",
+        "real phones",
+        "GPU/paint cost",
+        "production bundle served for perf",
+        "contrast in pressed/hover state",
+        "screen reader"
+      ]
+    }
+  },
+  "measurements": {
+    "motion": "docs/m643/motion-metrics.json (baseline A reproduces docs/m642/jello-motion-metrics.json exactly)",
+    "performance": "docs/m643/perf-results.json (A vs B3: 1/12/24 surfaces, churn, lifecycle, listener attribution); docs/m643/studio-listeners.json",
+    "raster": "docs/m643/metrics-*.json, normalization.json, coupling-analysis.json"
+  },
+  "boundary": {
+    "schemaChanged": false,
+    "persistedFormatChanged": false,
+    "builtinPresetsChanged": false,
+    "productionRuntimeBytes": 202194,
+    "productionRuntimeBytesM642": "202.2 kB",
+    "jellyPackageBytes": 89294,
+    "jellyPackageBytesM642": "87.0 kB",
+    "jelloStatusInProductionRegistry": "planned (unchanged)"
+  }
+}

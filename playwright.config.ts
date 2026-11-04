@@ -7,7 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: 'tests/e2e',
-  testIgnore: 'jelly.spec.ts', // private dev fixture has its own configuration
+  testIgnore: ['jelly.spec.ts', 'jelly-m643.spec.ts'], // private dev fixtures have their own configuration
   timeout: 60_000,
   fullyParallel: false,
   workers: 2,
